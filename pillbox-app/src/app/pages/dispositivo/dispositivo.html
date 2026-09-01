@@ -1,0 +1,91 @@
+<div class="dispositivos-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Hardware</p>
+      <h2>Dispositivos</h2>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="resetForm()">Nuevo dispositivo</button>
+  </div>
+
+  <div class="card form-card shadow-sm mb-4">
+    <h3>{{ isEditMode ? 'Editar dispositivo' : 'Registrar nuevo dispositivo' }}</h3>
+
+    <form (ngSubmit)="onSubmit()" novalidate>
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label" for="dispositivo-nombre">Nombre</label>
+          <input id="dispositivo-nombre" type="text" class="form-control" [(ngModel)]="form.nombre" name="nombre" />
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label" for="dispositivo-ip">IP ESP32</label>
+          <input id="dispositivo-ip" type="text" class="form-control" [(ngModel)]="form.ip_esp32" name="ip_esp32" />
+        </div>
+
+        <div class="col-md-2">
+          <div class="form-check form-switch mt-4">
+            <input
+              id="dispositivo-estado"
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              [(ngModel)]="form.estado_conexion"
+              name="estado_conexion"
+            />
+            <label class="form-check-label" for="dispositivo-estado">Conectado</label>
+          </div>
+        </div>
+
+        <div class="col-md-2 text-end">
+          <button type="submit" class="btn btn-primary w-100" [disabled]="submitting">
+            {{ submitting ? '...' : (isEditMode ? 'Guardar' : 'Registrar') }}
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <div *ngIf="errorMessage" class="alert alert-danger mt-3 mb-0" role="alert">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="successMessage" class="alert alert-success mt-3 mb-0" role="status">
+      {{ successMessage }}
+    </div>
+  </div>
+
+  <div class="card table-card shadow-sm">
+    <div *ngIf="loading" class="state-message">Cargando dispositivos...</div>
+
+    <div *ngIf="!loading && dispositivos.length === 0" class="state-message">
+      No hay dispositivos registrados.
+    </div>
+
+    <div *ngIf="!loading && dispositivos.length > 0" class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>IP ESP32</th>
+            <th>Estado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let dispositivo of dispositivos">
+            <td>{{ dispositivo.nombre }}</td>
+            <td>{{ dispositivo.ip_esp32 }}</td>
+            <td>
+              <span class="badge" [class.badge-success]="dispositivo.estado_conexion" [class.badge-secondary]="!dispositivo.estado_conexion">
+                {{ dispositivo.estado_conexion ? 'Conectado' : 'Desconectado' }}
+              </span>
+            </td>
+            <td class="actions-cell">
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="editarDispositivo(dispositivo)">Editar</button>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="eliminarDispositivo(dispositivo.id)">Eliminar</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

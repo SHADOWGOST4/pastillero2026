@@ -1,0 +1,78 @@
+<div class="contactos-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Emergencia</p>
+      <h2>Contactos</h2>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="resetForm()">Nuevo contacto</button>
+  </div>
+
+  <div class="card form-card shadow-sm mb-4">
+    <h3>{{ isEditMode ? 'Editar contacto' : 'Agregar nuevo contacto' }}</h3>
+
+    <form (ngSubmit)="onSubmit()" novalidate>
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label" for="contacto-nombre">Nombre</label>
+          <input id="contacto-nombre" type="text" class="form-control" [(ngModel)]="form.nombre" name="nombre" />
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label" for="contacto-correo">Correo</label>
+          <input id="contacto-correo" type="email" class="form-control" [(ngModel)]="form.correo" name="correo" />
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label" for="contacto-telefono">Teléfono</label>
+          <input id="contacto-telefono" type="tel" class="form-control" [(ngModel)]="form.telefono" name="telefono" />
+        </div>
+
+        <div class="col-md-1 text-end">
+          <button type="submit" class="btn btn-primary w-100" [disabled]="submitting">
+            {{ submitting ? '...' : (isEditMode ? 'Guardar' : 'Agregar') }}
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <div *ngIf="errorMessage" class="alert alert-danger mt-3 mb-0" role="alert">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="successMessage" class="alert alert-success mt-3 mb-0" role="status">
+      {{ successMessage }}
+    </div>
+  </div>
+
+  <div class="card table-card shadow-sm">
+    <div *ngIf="loading" class="state-message">Cargando contactos...</div>
+
+    <div *ngIf="!loading && contactos.length === 0" class="state-message">
+      No hay contactos registrados.
+    </div>
+
+    <div *ngIf="!loading && contactos.length > 0" class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Teléfono</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let contacto of contactos">
+            <td>{{ contacto.nombre }}</td>
+            <td>{{ contacto.correo }}</td>
+            <td>{{ contacto.telefono }}</td>
+            <td class="actions-cell">
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="editarContacto(contacto)">Editar</button>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="eliminarContacto(contacto.id)">Eliminar</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

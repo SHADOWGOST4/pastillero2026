@@ -1,0 +1,108 @@
+<div class="medicamentos-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Inventario</p>
+      <h2>Mis medicamentos</h2>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="resetForm()">Nuevo medicamento</button>
+  </div>
+
+  <div class="card form-card shadow-sm mb-4">
+    <h3>{{ isEditMode ? 'Editar medicamento' : 'Agregar medicamento' }}</h3>
+
+    <form (ngSubmit)="onSubmit()" novalidate>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label" for="nombre-medicamento">Nombre</label>
+          <input
+            id="nombre-medicamento"
+            type="text"
+            class="form-control"
+            [(ngModel)]="form.nombre"
+            name="nombre"
+            placeholder="Ej: Amoxicilina"
+            required
+          />
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label" for="dosis-medicamento">Dosis</label>
+          <input
+            id="dosis-medicamento"
+            type="text"
+            class="form-control"
+            [(ngModel)]="form.dosis"
+            name="dosis"
+            placeholder="Ej: 500mg cada 8 horas"
+            required
+          />
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label" for="descripcion-medicamento">Descripción</label>
+          <input
+            id="descripcion-medicamento"
+            type="text"
+            class="form-control"
+            [(ngModel)]="form.descripcion"
+            name="descripcion"
+            placeholder="Opcional"
+          />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" *ngIf="isEditMode" class="btn btn-outline-secondary" (click)="cancelEdit()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="submitting">
+          {{ submitting ? (isEditMode ? 'Guardando...' : 'Creando...') : (isEditMode ? 'Guardar cambios' : 'Agregar medicamento') }}
+        </button>
+      </div>
+    </form>
+
+    <div *ngIf="errorMessage" class="alert alert-danger mt-3 mb-0" role="alert">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="successMessage" class="alert alert-success mt-3 mb-0" role="status">
+      {{ successMessage }}
+    </div>
+  </div>
+
+  <div class="card table-card shadow-sm">
+    <div *ngIf="loading" class="state-message">Cargando medicamentos...</div>
+
+    <div *ngIf="!loading && medicamentos.length === 0" class="state-message">
+      No hay medicamentos registrados.
+    </div>
+
+    <div *ngIf="!loading && medicamentos.length > 0" class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Dosis</th>
+            <th>Descripción</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let med of medicamentos">
+            <td>{{ med.nombre }}</td>
+            <td>{{ med.dosis }}</td>
+            <td>{{ med.descripcion || 'Sin descripción' }}</td>
+            <td class="actions-cell">
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="editarMedicamento(med)">
+                Editar
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="eliminarMedicamento(med.id)">
+                Eliminar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

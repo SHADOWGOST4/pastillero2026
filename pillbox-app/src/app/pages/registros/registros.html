@@ -1,0 +1,106 @@
+<div class="registros-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Historial</p>
+      <h2>Registros de toma</h2>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="cargarRegistros()">Recargar</button>
+  </div>
+
+  <div class="card form-card shadow-sm mb-4">
+    <h3>Registrar toma</h3>
+
+    <form (ngSubmit)="onSubmit()" novalidate>
+      <div class="row g-3 align-items-end">
+        <div class="col-md-5">
+          <label class="form-label" for="registro-horario">Horario</label>
+          <select id="registro-horario" class="form-select" [(ngModel)]="form.id_horario" name="id_horario">
+            <option [ngValue]="0">Seleccione horario</option>
+            <option *ngFor="let horario of horarios" [ngValue]="horario.id">
+              Horario #{{ horario.id }} · {{ horario.medicamento_nombre }} · {{ horario.hora_toma }}
+            </option>
+          </select>
+        </div>
+
+        <div class="col-md-5">
+          <label class="form-label" for="registro-fecha">Fecha y hora programada</label>
+          <input
+            id="registro-fecha"
+            type="datetime-local"
+            class="form-control"
+            [(ngModel)]="form.fecha_hora_programada"
+            name="fecha_hora_programada"
+          />
+        </div>
+
+        <div class="col-md-2 text-end">
+          <button type="submit" class="btn btn-primary w-100" [disabled]="submitting">
+            {{ submitting ? 'Guardando...' : 'Registrar' }}
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <div *ngIf="errorMessage" class="alert alert-danger mt-3 mb-0" role="alert">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="successMessage" class="alert alert-success mt-3 mb-0" role="status">
+      {{ successMessage }}
+    </div>
+  </div>
+
+  <div class="card table-card shadow-sm">
+    <div *ngIf="loading" class="state-message">Cargando registros...</div>
+
+    <div *ngIf="!loading && registros.length === 0" class="state-message">
+      No hay registros de toma.
+    </div>
+
+    <div *ngIf="!loading && registros.length > 0" class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Horario</th>
+            <th>Programada</th>
+            <th>Real</th>
+            <th>Estado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let registro of registros">
+            <td>#{{ registro.id }}</td>
+            <td>{{ registro.id_horario }}</td>
+            <td>{{ registro.fecha_hora_programada | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>
+              <span *ngIf="registro.fecha_hora_real; else pendiente">
+                {{ registro.fecha_hora_real | date: 'dd/MM/yyyy HH:mm' }}
+              </span>
+              <ng-template #pendiente>Pendiente</ng-template>
+            </td>
+            <td>
+              <span class="badge" [class.text-bg-success]="registro.fecha_hora_real" [class.text-bg-warning]="!registro.fecha_hora_real">
+                {{ registro.fecha_hora_real ? 'Confirmada' : 'Pendiente' }}
+              </span>
+            </td>
+            <td class="actions-cell">
+              <button
+                *ngIf="!registro.fecha_hora_real"
+                type="button"
+                class="btn btn-sm btn-outline-success"
+                (click)="confirmarRegistro(registro.id)"
+              >
+                Confirmar
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="eliminarRegistro(registro.id)">
+                Eliminar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

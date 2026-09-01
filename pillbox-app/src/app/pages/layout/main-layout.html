@@ -1,0 +1,72 @@
+﻿<div class="app-shell">
+  <aside class="sidebar" [class.abierto]="sidebarAbierto">
+    <div>
+      <div class="brand">
+        <div class="brand-mark">EP</div>
+        <div class="brand-text">
+          <span>Electronic</span>
+          <strong>Pillbox</strong>
+        </div>
+      </div>
+
+      <nav class="nav-menu" aria-label="Menu principal">
+        <button class="nav-item" routerLink="/dashboard" routerLinkActive="selected" (click)="sidebarAbierto = false">
+          <span class="material-icons">dashboard</span>
+          <span>Dashboard</span>
+        </button>
+
+        <button class="nav-item" routerLink="/medicamentos" routerLinkActive="selected" (click)="sidebarAbierto = false">
+          <span class="material-icons">medication</span>
+          <span>Medicamentos</span>
+        </button>
+
+        <button class="nav-item" routerLink="/horarios" routerLinkActive="selected" (click)="sidebarAbierto = false">
+          <span class="material-icons">schedule</span>
+          <span>Horarios</span>
+        </button>
+
+        <button class="nav-item" routerLink="/registros" routerLinkActive="selected" (click)="sidebarAbierto = false">
+          <span class="material-icons">history</span>
+          <span>Registros</span>
+        </button>
+
+        <button class="nav-item" routerLink="/contactos" routerLinkActive="selected" (click)="sidebarAbierto = false">
+          <span class="material-icons">contact_emergency</span>
+          <span>Contactos</span>
+        </button>
+
+        <button class="nav-item" routerLink="/dispositivo" routerLinkActive="selected" (click)="sidebarAbierto = false">
+          <span class="material-icons">devices</span>
+          <span>Dispositivo</span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="nav-item logout" (click)="cerrarSesion()">
+        <span class="material-icons">logout</span>
+        <span>Salir</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-panel" [class.with-sidebar]="sidebarAbierto">
+    <header class="topbar">
+      <button class="menu-button" type="button" (click)="toggleSidebar()" aria-label="Abrir menú">
+        <span class="material-icons">menu</span>
+      </button>
+
+      <div class="topbar-user">
+        <div class="user-avatar">{{ usuario?.nombre?.charAt(0)?.toUpperCase() || 'U' }}</div>
+        <div>
+          <small>Usuario</small>
+          <strong>{{ usuario?.nombre || 'Sin nombre' }}</strong>
+        </div>
+      </div>
+    </header>
+
+    <main class="content-area">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

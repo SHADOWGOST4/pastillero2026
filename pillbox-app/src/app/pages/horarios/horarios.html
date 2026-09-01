@@ -1,0 +1,94 @@
+<div class="horarios-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Programación</p>
+      <h2>Horarios</h2>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="resetForm()">Nuevo horario</button>
+  </div>
+
+  <div class="card form-card shadow-sm mb-4">
+    <h3>{{ isEditMode ? 'Editar horario' : 'Agregar nuevo horario' }}</h3>
+
+    <form (ngSubmit)="onSubmit()" novalidate>
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label" for="horario-medicamento">Medicamento</label>
+          <select id="horario-medicamento" class="form-select" [(ngModel)]="form.id_medicamento" name="id_medicamento">
+            <option [ngValue]="0">Seleccione medicamento</option>
+            <option *ngFor="let medicamento of medicamentos" [ngValue]="medicamento.id">
+              {{ medicamento.nombre }}
+            </option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label" for="horario-hora">Hora</label>
+          <input id="horario-hora" type="time" class="form-control" [(ngModel)]="form.hora_toma" name="hora_toma" />
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label" for="horario-frecuencia">Frecuencia</label>
+          <input
+            id="horario-frecuencia"
+            type="number"
+            class="form-control"
+            [(ngModel)]="form.frecuencia"
+            name="frecuencia"
+            min="0"
+            step="1"
+            placeholder="Ej: 8"
+          />
+        </div>
+
+        <div class="col-md-2 text-end">
+          <button type="submit" class="btn btn-primary w-100" [disabled]="submitting">
+            {{ submitting ? (isEditMode ? 'Guardando...' : 'Creando...') : (isEditMode ? 'Guardar' : 'Agregar') }}
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <div *ngIf="errorMessage" class="alert alert-danger mt-3 mb-0" role="alert">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="successMessage" class="alert alert-success mt-3 mb-0" role="status">
+      {{ successMessage }}
+    </div>
+  </div>
+
+  <div class="card table-card shadow-sm">
+    <div *ngIf="loading" class="state-message">Cargando horarios...</div>
+
+    <div *ngIf="!loading && horarios.length === 0" class="state-message">
+      No hay horarios programados.
+    </div>
+
+    <div *ngIf="!loading && horarios.length > 0" class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Medicamento</th>
+            <th>Hora</th>
+            <th>Frecuencia</th>
+            <th>Próxima toma</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let horario of horarios">
+            <td>{{ horario.medicamento_nombre }}</td>
+            <td>{{ horario.hora_toma }}</td>
+            <td>{{ horario.frecuencia === 0 ? 'Diaria' : 'Cada ' + horario.frecuencia + ' h' }}</td>
+            <td>{{ horario.proxima_toma | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td class="actions-cell">
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="editarHorario(horario)">Editar</button>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="eliminarHorario(horario.id)">Eliminar</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

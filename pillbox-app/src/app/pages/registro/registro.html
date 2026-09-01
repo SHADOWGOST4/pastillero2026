@@ -1,0 +1,44 @@
+<body>
+  <div class="background">
+    <div class="shape"></div>
+    <div class="shape"></div>
+  </div>
+
+  <div class="login-container">
+    <div class="login-box">
+      <div class="logo-section">
+        <img src="logo_fet.png" alt="Logo fet" class="logo-img-form">
+        <h1>Registro</h1>
+      </div>
+
+      <div *ngIf="mensaje" class="alert alert-success">{{ mensaje }}</div>
+      <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+      <div class="form-group">
+        <label for="nombre">Nombre completo</label>
+        <input id="nombre" [(ngModel)]="nuevoUsuario.nombre" placeholder="Tu nombre completo" type="text">
+      </div>
+
+      <div class="form-group">
+        <label for="correo">Correo</label>
+        <input id="correo" [(ngModel)]="nuevoUsuario.correo" placeholder="ejemplo@mabsbygabs.com" type="email">
+      </div>
+
+      <div class="form-group">
+        <label for="telefono">Teléfono</label>
+        <input id="telefono" [(ngModel)]="nuevoUsuario.telefono" placeholder="Número de teléfono" type="text">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input id="password" [(ngModel)]="nuevoUsuario.password" placeholder="••••••••" type="password">
+      </div>
+
+      <button class="btn-login" (click)="registrar()">Registrar</button>
+
+      <div class="register">
+        <p>¿Ya tienes una cuenta? <a href="/login">Inicia sesión aquí</a></p>
+      </div>
+    </div>
+  </div>
+</body>
