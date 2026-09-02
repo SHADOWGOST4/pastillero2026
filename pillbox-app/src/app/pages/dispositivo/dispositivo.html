@@ -1,91 +1,181 @@
-<div class="dispositivos-page">
-  <div class="page-header">
+<div class="dispositivo-page">
+  <header class="page-header">
     <div>
-      <p class="eyebrow">Hardware</p>
-      <h2>Dispositivos</h2>
+      <p class="eyebrow">Conectividad</p>
+      <h1>Mi pastillero</h1>
+      <p class="page-intro">Consulta el estado de tu dispositivo inteligente.</p>
     </div>
-    <button type="button" class="btn btn-primary" (click)="resetForm()">Nuevo dispositivo</button>
-  </div>
+    <button type="button" class="btn btn-primary refresh-button" (click)="cargarDispositivos()">
+      <span class="material-icons" aria-hidden="true">refresh</span>
+      Actualizar estado
+    </button>
+  </header>
 
-  <div class="card form-card shadow-sm mb-4">
-    <h3>{{ isEditMode ? 'Editar dispositivo' : 'Registrar nuevo dispositivo' }}</h3>
+  <section class="form-card" [class.form-card-editing]="isEditMode">
+    <div class="section-header">
+      <div>
+        <p class="section-kicker">{{ isEditMode ? 'Actualizar dispositivo' : 'Vinculación' }}</p>
+        <h2>{{ isEditMode ? 'Editar pastillero' : 'Registrar pastillero' }}</h2>
+      </div>
+      <span class="edit-indicator" *ngIf="isEditMode">
+        <span class="material-icons" aria-hidden="true">edit</span>
+        Editando
+      </span>
+    </div>
 
-    <form (ngSubmit)="onSubmit()" novalidate>
-      <div class="row g-3 align-items-end">
-        <div class="col-md-4">
-          <label class="form-label" for="dispositivo-nombre">Nombre</label>
-          <input id="dispositivo-nombre" type="text" class="form-control" [(ngModel)]="form.nombre" name="nombre" />
+    <form #dispositivoForm="ngForm" (ngSubmit)="onSubmit()" novalidate>
+      <div class="form-grid">
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nombre</mat-label>
+            <input
+              matInput
+              id="dispositivo-nombre"
+              type="text"
+              [(ngModel)]="form.nombre"
+              #nombre="ngModel"
+              name="nombre"
+              placeholder="Ej. Pastillero principal"
+              required
+            />
+            <mat-hint>Un nombre para identificar tu pastillero.</mat-hint>
+            <mat-error *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)">El nombre es obligatorio.</mat-error>
+          </mat-form-field>
         </div>
 
-        <div class="col-md-4">
-          <label class="form-label" for="dispositivo-ip">IP ESP32</label>
-          <input id="dispositivo-ip" type="text" class="form-control" [(ngModel)]="form.ip_esp32" name="ip_esp32" />
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>IP del ESP32</mat-label>
+            <input
+              matInput
+              id="dispositivo-ip"
+              type="text"
+              [(ngModel)]="form.ip_esp32"
+              #ip="ngModel"
+              name="ip_esp32"
+              placeholder="Ej. 192.168.1.100"
+              autocomplete="off"
+              required
+            />
+            <mat-hint>Dirección IP configurada en el dispositivo.</mat-hint>
+            <mat-error *ngIf="ip.invalid && (ip.dirty || ip.touched)">La IP del dispositivo es obligatoria.</mat-error>
+          </mat-form-field>
         </div>
 
-        <div class="col-md-2">
-          <div class="form-check form-switch mt-4">
+        <div class="connection-field">
+          <label class="switch-label" for="dispositivo-estado">Estado de conexión</label>
+          <label class="connection-switch">
             <input
               id="dispositivo-estado"
-              class="form-check-input"
               type="checkbox"
               role="switch"
               [(ngModel)]="form.estado_conexion"
               name="estado_conexion"
             />
-            <label class="form-check-label" for="dispositivo-estado">Conectado</label>
-          </div>
+            <span class="switch-track" aria-hidden="true"></span>
+            <span>{{ form.estado_conexion ? 'Conectado' : 'Desconectado' }}</span>
+          </label>
+          <small class="field-help">Indica el estado actual conocido del pastillero.</small>
         </div>
+      </div>
 
-        <div class="col-md-2 text-end">
-          <button type="submit" class="btn btn-primary w-100" [disabled]="submitting">
-            {{ submitting ? '...' : (isEditMode ? 'Guardar' : 'Registrar') }}
-          </button>
-        </div>
+      <div class="form-actions">
+        <button type="button" *ngIf="isEditMode" class="btn btn-outline-secondary" (click)="resetForm()">Cancelar</button>
+        <button type="submit" class="btn btn-primary save-button" [disabled]="submitting">
+          <span class="material-icons" aria-hidden="true" *ngIf="!submitting">save</span>
+          <span class="loading-dot" aria-hidden="true" *ngIf="submitting"></span>
+          {{ submitting ? 'Guardando...' : 'Guardar dispositivo' }}
+        </button>
       </div>
     </form>
 
-    <div *ngIf="errorMessage" class="alert alert-danger mt-3 mb-0" role="alert">
-      {{ errorMessage }}
+    <div *ngIf="errorMessage" class="alert alert-danger feedback" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      <span>{{ errorMessage }}</span>
+    </div>
+    <div *ngIf="successMessage" class="alert alert-success feedback" role="status">
+      <span class="material-icons" aria-hidden="true">check_circle</span>
+      <span>{{ successMessage }}</span>
+    </div>
+  </section>
+
+  <section class="devices-section">
+    <div class="section-header list-header">
+      <div>
+        <p class="section-kicker">Dispositivo conectado</p>
+        <h2>Estado del pastillero</h2>
+      </div>
+      <span class="list-count" *ngIf="!loading">{{ dispositivos.length }} registrados</span>
     </div>
 
-    <div *ngIf="successMessage" class="alert alert-success mt-3 mb-0" role="status">
-      {{ successMessage }}
-    </div>
-  </div>
-
-  <div class="card table-card shadow-sm">
-    <div *ngIf="loading" class="state-message">Cargando dispositivos...</div>
-
-    <div *ngIf="!loading && dispositivos.length === 0" class="state-message">
-      No hay dispositivos registrados.
+    <div *ngIf="loading" class="state-message loading-state">
+      <span class="spinner" aria-hidden="true"></span>
+      <span>Consultando dispositivo...</span>
     </div>
 
-    <div *ngIf="!loading && dispositivos.length > 0" class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>IP ESP32</th>
-            <th>Estado</th>
-            <th class="text-center">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let dispositivo of dispositivos">
-            <td>{{ dispositivo.nombre }}</td>
-            <td>{{ dispositivo.ip_esp32 }}</td>
-            <td>
-              <span class="badge" [class.badge-success]="dispositivo.estado_conexion" [class.badge-secondary]="!dispositivo.estado_conexion">
-                {{ dispositivo.estado_conexion ? 'Conectado' : 'Desconectado' }}
-              </span>
-            </td>
-            <td class="actions-cell">
-              <button type="button" class="btn btn-sm btn-outline-primary" (click)="editarDispositivo(dispositivo)">Editar</button>
-              <button type="button" class="btn btn-sm btn-outline-danger" (click)="eliminarDispositivo(dispositivo.id)">Eliminar</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div *ngIf="!loading && dispositivos.length === 0" class="state-message empty-state">
+      <span class="empty-icon material-icons" aria-hidden="true">devices</span>
+      <h3>No tienes un pastillero conectado</h3>
+      <p>Registra tu dispositivo para consultar aquí su estado y dirección de conexión.</p>
+      <button type="button" class="btn btn-primary" (click)="resetForm()">
+        <span class="material-icons" aria-hidden="true">add_link</span>
+        Registrar pastillero
+      </button>
     </div>
-  </div>
+
+    <div *ngIf="!loading && dispositivos.length > 0" class="devices-grid">
+      <article class="device-card" *ngFor="let dispositivo of dispositivos" [class.device-offline]="!dispositivo.estado_conexion">
+        <div class="device-card-top">
+          <div class="device-icon" [class.offline]="!dispositivo.estado_conexion" aria-hidden="true">
+            <span class="material-icons">devices</span>
+          </div>
+          <span class="connection-status" [class.status-offline]="!dispositivo.estado_conexion">
+            <span class="status-dot" aria-hidden="true"></span>
+            {{ dispositivo.estado_conexion ? 'Conectado' : 'Desconectado' }}
+          </span>
+        </div>
+
+        <div class="device-heading">
+          <p class="device-type">Pastillero inteligente</p>
+          <h3>{{ dispositivo.nombre }}</h3>
+        </div>
+
+        <div class="device-details">
+          <div class="device-detail">
+            <span class="material-icons" aria-hidden="true">lan</span>
+            <div>
+              <span>IP del ESP32</span>
+              <strong>{{ dispositivo.ip_esp32 }}</strong>
+            </div>
+          </div>
+          <p class="connection-explanation">
+            {{ dispositivo.estado_conexion
+              ? 'El dispositivo figura conectado y disponible.'
+              : 'El dispositivo figura desconectado actualmente.' }}
+          </p>
+        </div>
+
+        <div class="device-actions">
+          <button type="button" class="btn btn-sm btn-outline-primary action-button" (click)="editarDispositivo(dispositivo)">
+            <span class="material-icons" aria-hidden="true">edit</span>
+            Editar
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-danger action-button" (click)="eliminarDispositivo(dispositivo.id)">
+            <span class="material-icons" aria-hidden="true">link_off</span>
+            Desvincular
+          </button>
+        </div>
+      </article>
+    </div>
+  </section>
 </div>
+
+<app-confirm-modal
+  [visible]="modalEliminarAbierto"
+  [busy]="eliminando"
+  title="Desvincular pastillero"
+  message="Desvincularás este dispositivo de tu cuenta. Esta acción no se puede deshacer."
+  confirmLabel="Desvincular"
+  (closed)="cancelarEliminacion()"
+  (confirmed)="confirmarEliminacion()"
+/>

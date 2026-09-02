@@ -1,78 +1,186 @@
 <div class="contactos-page">
-  <div class="page-header">
+  <header class="page-header">
     <div>
-      <p class="eyebrow">Emergencia</p>
-      <h2>Contactos</h2>
+      <p class="eyebrow">Red de apoyo</p>
+      <h1>Contactos de emergencia</h1>
+      <p class="page-intro">Gestiona las personas que pueden recibir alertas relacionadas con tu medicación.</p>
     </div>
-    <button type="button" class="btn btn-primary" (click)="resetForm()">Nuevo contacto</button>
-  </div>
+    <button type="button" class="btn btn-primary add-button" (click)="resetForm()">
+      <span class="material-icons" aria-hidden="true">person_add</span>
+      Agregar contacto
+    </button>
+  </header>
 
-  <div class="card form-card shadow-sm mb-4">
-    <h3>{{ isEditMode ? 'Editar contacto' : 'Agregar nuevo contacto' }}</h3>
+  <section class="summary-card" aria-label="Resumen de contactos">
+    <span class="summary-icon material-icons" aria-hidden="true">contacts</span>
+    <div>
+      <span class="summary-label">Contactos registrados</span>
+      <strong>{{ contactos.length }}</strong>
+    </div>
+  </section>
 
-    <form (ngSubmit)="onSubmit()" novalidate>
-      <div class="row g-3 align-items-end">
-        <div class="col-md-4">
-          <label class="form-label" for="contacto-nombre">Nombre</label>
-          <input id="contacto-nombre" type="text" class="form-control" [(ngModel)]="form.nombre" name="nombre" />
+  <section class="form-card" [class.form-card-editing]="isEditMode">
+    <div class="section-header">
+      <div>
+        <p class="section-kicker">{{ isEditMode ? 'Actualizar información' : 'Nueva persona de apoyo' }}</p>
+        <h2>{{ isEditMode ? 'Editar contacto' : 'Agregar contacto' }}</h2>
+      </div>
+      <span class="edit-indicator" *ngIf="isEditMode">
+        <span class="material-icons" aria-hidden="true">edit</span>
+        Editando
+      </span>
+    </div>
+
+    <form #contactoForm="ngForm" (ngSubmit)="onSubmit()" novalidate>
+      <div class="form-grid">
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nombre</mat-label>
+            <input
+              matInput
+              id="contacto-nombre"
+              type="text"
+              [(ngModel)]="form.nombre"
+              #nombre="ngModel"
+              name="nombre"
+              placeholder="Ej. Ana García"
+              autocomplete="name"
+              required
+            />
+            <mat-hint>Nombre de la persona de contacto.</mat-hint>
+            <mat-error *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)">El nombre es obligatorio.</mat-error>
+          </mat-form-field>
         </div>
 
-        <div class="col-md-4">
-          <label class="form-label" for="contacto-correo">Correo</label>
-          <input id="contacto-correo" type="email" class="form-control" [(ngModel)]="form.correo" name="correo" />
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Correo electrónico</mat-label>
+            <input
+              matInput
+              id="contacto-correo"
+              type="email"
+              [(ngModel)]="form.correo"
+              #correo="ngModel"
+              name="correo"
+              placeholder="correo@ejemplo.com"
+              autocomplete="email"
+              required
+              email
+            />
+            <mat-hint>Se utilizará para comunicaciones de emergencia.</mat-hint>
+            <mat-error *ngIf="correo.invalid && (correo.dirty || correo.touched)">Introduce un correo válido.</mat-error>
+          </mat-form-field>
         </div>
 
-        <div class="col-md-3">
-          <label class="form-label" for="contacto-telefono">Teléfono</label>
-          <input id="contacto-telefono" type="tel" class="form-control" [(ngModel)]="form.telefono" name="telefono" />
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Teléfono</mat-label>
+            <input
+              matInput
+              id="contacto-telefono"
+              type="tel"
+              [(ngModel)]="form.telefono"
+              #telefono="ngModel"
+              name="telefono"
+              placeholder="Ej. +57 300 000 0000"
+              autocomplete="tel"
+              required
+            />
+            <mat-hint>Número para contactar rápidamente.</mat-hint>
+            <mat-error *ngIf="telefono.invalid && (telefono.dirty || telefono.touched)">El teléfono es obligatorio.</mat-error>
+          </mat-form-field>
         </div>
+      </div>
 
-        <div class="col-md-1 text-end">
-          <button type="submit" class="btn btn-primary w-100" [disabled]="submitting">
-            {{ submitting ? '...' : (isEditMode ? 'Guardar' : 'Agregar') }}
-          </button>
-        </div>
+      <div class="form-actions">
+        <button type="button" *ngIf="isEditMode" class="btn btn-outline-secondary" (click)="resetForm()">Cancelar</button>
+        <button type="submit" class="btn btn-primary save-button" [disabled]="submitting">
+          <span class="material-icons" aria-hidden="true" *ngIf="!submitting">save</span>
+          <span class="loading-dot" aria-hidden="true" *ngIf="submitting"></span>
+          {{ submitting ? 'Guardando...' : 'Guardar contacto' }}
+        </button>
       </div>
     </form>
 
-    <div *ngIf="errorMessage" class="alert alert-danger mt-3 mb-0" role="alert">
-      {{ errorMessage }}
+    <div *ngIf="errorMessage" class="alert alert-danger feedback" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      <span>{{ errorMessage }}</span>
+    </div>
+    <div *ngIf="successMessage" class="alert alert-success feedback" role="status">
+      <span class="material-icons" aria-hidden="true">check_circle</span>
+      <span>{{ successMessage }}</span>
+    </div>
+  </section>
+
+  <section class="list-section">
+    <div class="section-header list-header">
+      <div>
+        <p class="section-kicker">Personas de confianza</p>
+        <h2>Contactos registrados</h2>
+      </div>
+      <span class="list-count" *ngIf="!loading">{{ contactos.length }} registrados</span>
     </div>
 
-    <div *ngIf="successMessage" class="alert alert-success mt-3 mb-0" role="status">
-      {{ successMessage }}
-    </div>
-  </div>
-
-  <div class="card table-card shadow-sm">
-    <div *ngIf="loading" class="state-message">Cargando contactos...</div>
-
-    <div *ngIf="!loading && contactos.length === 0" class="state-message">
-      No hay contactos registrados.
+    <div *ngIf="loading" class="state-message loading-state">
+      <span class="spinner" aria-hidden="true"></span>
+      <span>Cargando contactos...</span>
     </div>
 
-    <div *ngIf="!loading && contactos.length > 0" class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Correo</th>
-            <th>Teléfono</th>
-            <th class="text-center">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let contacto of contactos">
-            <td>{{ contacto.nombre }}</td>
-            <td>{{ contacto.correo }}</td>
-            <td>{{ contacto.telefono }}</td>
-            <td class="actions-cell">
-              <button type="button" class="btn btn-sm btn-outline-primary" (click)="editarContacto(contacto)">Editar</button>
-              <button type="button" class="btn btn-sm btn-outline-danger" (click)="eliminarContacto(contacto.id)">Eliminar</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div *ngIf="!loading && contactos.length === 0" class="state-message empty-state">
+      <span class="empty-icon material-icons" aria-hidden="true">people_outline</span>
+      <h3>No tienes contactos registrados</h3>
+      <p>Agrega un contacto de emergencia para tenerlo disponible cuando sea necesario.</p>
+      <button type="button" class="btn btn-primary" (click)="resetForm()">
+        <span class="material-icons" aria-hidden="true">person_add</span>
+        Agregar contacto
+      </button>
     </div>
-  </div>
+
+    <div *ngIf="!loading && contactos.length > 0" class="contacts-grid">
+      <article class="contact-card" *ngFor="let contacto of contactos">
+        <div class="contact-card-header">
+          <div class="contact-avatar" aria-hidden="true">{{ obtenerIniciales(contacto.nombre) }}</div>
+          <div class="contact-heading">
+            <h3>{{ contacto.nombre }}</h3>
+            <span class="contact-label">
+              <span class="material-icons" aria-hidden="true">verified_user</span>
+              Contacto de emergencia
+            </span>
+          </div>
+        </div>
+
+        <div class="contact-details">
+          <a [href]="'tel:' + contacto.telefono" class="contact-detail">
+            <span class="material-icons" aria-hidden="true">phone</span>
+            <span>{{ contacto.telefono }}</span>
+          </a>
+          <a [href]="'mailto:' + contacto.correo" class="contact-detail">
+            <span class="material-icons" aria-hidden="true">mail_outline</span>
+            <span>{{ contacto.correo }}</span>
+          </a>
+        </div>
+
+        <div class="contact-actions">
+          <button type="button" class="btn btn-sm btn-outline-primary action-button" (click)="editarContacto(contacto)">
+            <span class="material-icons" aria-hidden="true">edit</span>
+            Editar
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-danger action-button" (click)="eliminarContacto(contacto.id)">
+            <span class="material-icons" aria-hidden="true">delete_outline</span>
+            Eliminar
+          </button>
+        </div>
+      </article>
+    </div>
+  </section>
 </div>
+
+<app-confirm-modal
+  [visible]="modalEliminarAbierto"
+  [busy]="eliminando"
+  title="Eliminar contacto"
+  message="Eliminarás este contacto de emergencia. Esta acción no se puede deshacer."
+  confirmLabel="Eliminar contacto"
+  (closed)="cancelarEliminacion()"
+  (confirmed)="confirmarEliminacion()"
+/>

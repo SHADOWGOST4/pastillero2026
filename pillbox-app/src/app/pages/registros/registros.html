@@ -1,100 +1,177 @@
 <div class="registros-page">
-  <div class="page-header">
+  <header class="page-header">
     <div>
-      <p class="eyebrow">Historial</p>
-      <h2>Registros de toma</h2>
+      <p class="eyebrow">Seguimiento de medicación</p>
+      <h1>Historial de tomas</h1>
+      <p class="page-intro">Consulta y realiza seguimiento de tus medicamentos.</p>
     </div>
-    <button type="button" class="btn btn-primary" (click)="cargarRegistros()">Recargar</button>
-  </div>
+    <button type="button" class="btn btn-primary refresh-button" (click)="cargarRegistros()">
+      <span class="material-icons" aria-hidden="true">refresh</span>
+      Actualizar
+    </button>
+  </header>
 
-  <div class="card form-card shadow-sm mb-4">
-    <h3>Registrar toma</h3>
+  <section class="summary-grid" aria-label="Resumen del historial">
+    <article class="summary-card">
+      <span class="summary-icon material-icons" aria-hidden="true">history</span>
+      <div>
+        <span class="summary-label">Tomas registradas</span>
+        <strong>{{ registros.length }}</strong>
+      </div>
+    </article>
+    <article class="summary-card summary-success">
+      <span class="summary-icon material-icons" aria-hidden="true">check_circle</span>
+      <div>
+        <span class="summary-label">Realizadas</span>
+        <strong>{{ tomasRealizadas }}</strong>
+      </div>
+    </article>
+    <article class="summary-card summary-pending">
+      <span class="summary-icon material-icons" aria-hidden="true">schedule</span>
+      <div>
+        <span class="summary-label">Pendientes</span>
+        <strong>{{ tomasPendientes }}</strong>
+      </div>
+    </article>
+  </section>
 
-    <form (ngSubmit)="onSubmit()" novalidate>
-      <div class="row g-3 align-items-end">
-        <div class="col-md-5">
-          <label class="form-label" for="registro-horario">Horario</label>
-          <select id="registro-horario" class="form-select" [(ngModel)]="form.id_horario" name="id_horario">
-            <option [ngValue]="0">Seleccione horario</option>
-            <option *ngFor="let horario of horarios" [ngValue]="horario.id">
-              Horario #{{ horario.id }} · {{ horario.medicamento_nombre }} · {{ horario.hora_toma }}
-            </option>
-          </select>
+  <section class="form-card">
+    <div class="section-header">
+      <div>
+        <p class="section-kicker">Nuevo registro</p>
+        <h2>Registrar toma</h2>
+      </div>
+    </div>
+
+    <form #registroForm="ngForm" (ngSubmit)="onSubmit()" novalidate>
+      <div class="form-grid">
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Horario</mat-label>
+            <mat-select
+              id="registro-horario"
+              [(ngModel)]="form.id_horario"
+              #horario="ngModel"
+              name="id_horario"
+              required
+            >
+              <mat-option [value]="0">Selecciona un horario</mat-option>
+              <mat-option *ngFor="let item of horarios" [value]="item.id">
+                {{ item.medicamento_nombre }} · {{ item.hora_toma | slice:0:5 }}
+              </mat-option>
+            </mat-select>
+            <mat-hint>Elige el horario correspondiente a la toma.</mat-hint>
+            <mat-error *ngIf="horario.invalid && (horario.dirty || horario.touched)">Debes seleccionar un horario.</mat-error>
+          </mat-form-field>
         </div>
 
-        <div class="col-md-5">
-          <label class="form-label" for="registro-fecha">Fecha y hora programada</label>
-          <input
-            id="registro-fecha"
-            type="datetime-local"
-            class="form-control"
-            [(ngModel)]="form.fecha_hora_programada"
-            name="fecha_hora_programada"
-          />
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Fecha y hora programada</mat-label>
+            <input
+              matInput
+              id="registro-fecha"
+              type="datetime-local"
+              [(ngModel)]="form.fecha_hora_programada"
+              #fecha="ngModel"
+              name="fecha_hora_programada"
+              required
+            />
+            <mat-hint>Indica cuándo estaba programada la toma.</mat-hint>
+            <mat-error *ngIf="fecha.invalid && (fecha.dirty || fecha.touched)">Debes indicar fecha y hora.</mat-error>
+          </mat-form-field>
         </div>
+      </div>
 
-        <div class="col-md-2 text-end">
-          <button type="submit" class="btn btn-primary w-100" [disabled]="submitting">
-            {{ submitting ? 'Guardando...' : 'Registrar' }}
-          </button>
-        </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline-secondary" (click)="resetForm()">Limpiar</button>
+        <button type="submit" class="btn btn-primary save-button" [disabled]="submitting">
+          <span class="material-icons" aria-hidden="true" *ngIf="!submitting">add_task</span>
+          <span class="loading-dot" aria-hidden="true" *ngIf="submitting"></span>
+          {{ submitting ? 'Guardando...' : 'Registrar toma' }}
+        </button>
       </div>
     </form>
 
-    <div *ngIf="errorMessage" class="alert alert-danger mt-3 mb-0" role="alert">
-      {{ errorMessage }}
+    <div *ngIf="errorMessage" class="alert alert-danger feedback" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      <span>{{ errorMessage }}</span>
+      <button type="button" class="retry-button" (click)="cargarRegistros()">Reintentar</button>
+    </div>
+    <div *ngIf="successMessage" class="alert alert-success feedback" role="status">
+      <span class="material-icons" aria-hidden="true">check_circle</span>
+      <span>{{ successMessage }}</span>
+    </div>
+  </section>
+
+  <section class="list-section">
+    <div class="section-header list-header">
+      <div>
+        <p class="section-kicker">Actividad</p>
+        <h2>Historial de tomas</h2>
+      </div>
+      <span class="list-count" *ngIf="!loading">{{ registros.length }} registros</span>
     </div>
 
-    <div *ngIf="successMessage" class="alert alert-success mt-3 mb-0" role="status">
-      {{ successMessage }}
-    </div>
-  </div>
-
-  <div class="card table-card shadow-sm">
-    <div *ngIf="loading" class="state-message">Cargando registros...</div>
-
-    <div *ngIf="!loading && registros.length === 0" class="state-message">
-      No hay registros de toma.
+    <div *ngIf="loading" class="state-message loading-state">
+      <span class="spinner" aria-hidden="true"></span>
+      <span>Cargando historial...</span>
     </div>
 
-    <div *ngIf="!loading && registros.length > 0" class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
+    <div *ngIf="!loading && registros.length === 0" class="state-message empty-state">
+      <span class="empty-icon material-icons" aria-hidden="true">history</span>
+      <h3>No hay registros de tomas</h3>
+      <p>Cuando registres una toma, podrás consultar aquí su seguimiento y confirmación.</p>
+    </div>
+
+    <div *ngIf="!loading && registros.length > 0" class="table-wrapper">
+      <table class="table history-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Horario</th>
-            <th>Programada</th>
-            <th>Real</th>
+            <th>Medicamento</th>
+            <th>Fecha programada</th>
+            <th>Fecha realizada</th>
             <th>Estado</th>
-            <th class="text-center">Acciones</th>
+            <th class="actions-heading">Acciones</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let registro of registros">
-            <td>#{{ registro.id }}</td>
-            <td>{{ registro.id_horario }}</td>
+            <td>
+              <div class="medication-name">
+                <span class="medication-icon material-icons" aria-hidden="true">medication</span>
+                <strong>{{ obtenerNombreMedicamento(registro.id_horario) }}</strong>
+              </div>
+            </td>
             <td>{{ registro.fecha_hora_programada | date: 'dd/MM/yyyy HH:mm' }}</td>
             <td>
-              <span *ngIf="registro.fecha_hora_real; else pendiente">
+              <span *ngIf="registro.fecha_hora_real; else pendingDate">
                 {{ registro.fecha_hora_real | date: 'dd/MM/yyyy HH:mm' }}
               </span>
-              <ng-template #pendiente>Pendiente</ng-template>
+              <ng-template #pendingDate><span class="muted">Pendiente</span></ng-template>
             </td>
             <td>
-              <span class="badge" [class.text-bg-success]="registro.fecha_hora_real" [class.text-bg-warning]="!registro.fecha_hora_real">
-                {{ registro.fecha_hora_real ? 'Confirmada' : 'Pendiente' }}
+              <span class="status-badge" [class.status-done]="registro.fecha_hora_real" [class.status-pending]="!registro.fecha_hora_real">
+                <span class="material-icons" aria-hidden="true">{{ registro.fecha_hora_real ? 'check' : 'schedule' }}</span>
+                {{ registro.fecha_hora_real ? 'Realizada' : 'Pendiente' }}
               </span>
             </td>
             <td class="actions-cell">
               <button
                 *ngIf="!registro.fecha_hora_real"
                 type="button"
-                class="btn btn-sm btn-outline-success"
+                class="btn btn-sm btn-success confirm-button"
                 (click)="confirmarRegistro(registro.id)"
               >
-                Confirmar
+                <span class="material-icons" aria-hidden="true">check</span>
+                Confirmar toma
               </button>
-              <button type="button" class="btn btn-sm btn-outline-danger" (click)="eliminarRegistro(registro.id)">
+              <span *ngIf="registro.fecha_hora_real" class="confirmed-label">
+                <span class="material-icons" aria-hidden="true">check_circle</span>
+                Toma confirmada
+              </span>
+              <button type="button" class="btn btn-sm btn-outline-danger action-button" (click)="eliminarRegistro(registro.id)">
+                <span class="material-icons" aria-hidden="true">delete_outline</span>
                 Eliminar
               </button>
             </td>
@@ -102,5 +179,59 @@
         </tbody>
       </table>
     </div>
-  </div>
+
+    <div *ngIf="!loading && registros.length > 0" class="mobile-history-list">
+      <article class="mobile-history-card" *ngFor="let registro of registros">
+        <div class="mobile-card-heading">
+          <div class="medication-name">
+            <span class="medication-icon material-icons" aria-hidden="true">medication</span>
+            <strong>{{ obtenerNombreMedicamento(registro.id_horario) }}</strong>
+          </div>
+          <span class="status-badge" [class.status-done]="registro.fecha_hora_real" [class.status-pending]="!registro.fecha_hora_real">
+            <span class="material-icons" aria-hidden="true">{{ registro.fecha_hora_real ? 'check' : 'schedule' }}</span>
+            {{ registro.fecha_hora_real ? 'Realizada' : 'Pendiente' }}
+          </span>
+        </div>
+        <dl class="date-details">
+          <div>
+            <dt>Fecha programada</dt>
+            <dd>{{ registro.fecha_hora_programada | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          </div>
+          <div>
+            <dt>Fecha realizada</dt>
+            <dd>{{ registro.fecha_hora_real ? (registro.fecha_hora_real | date: 'dd/MM/yyyy HH:mm') : 'Pendiente' }}</dd>
+          </div>
+        </dl>
+        <div class="mobile-actions">
+          <button
+            *ngIf="!registro.fecha_hora_real"
+            type="button"
+            class="btn btn-sm btn-success confirm-button"
+            (click)="confirmarRegistro(registro.id)"
+          >
+            <span class="material-icons" aria-hidden="true">check</span>
+            Confirmar toma
+          </button>
+          <span *ngIf="registro.fecha_hora_real" class="confirmed-label">
+            <span class="material-icons" aria-hidden="true">check_circle</span>
+            Toma confirmada
+          </span>
+          <button type="button" class="btn btn-sm btn-outline-danger action-button" (click)="eliminarRegistro(registro.id)">
+            <span class="material-icons" aria-hidden="true">delete_outline</span>
+            Eliminar
+          </button>
+        </div>
+      </article>
+    </div>
+  </section>
 </div>
+
+<app-confirm-modal
+  [visible]="modalEliminarAbierto"
+  [busy]="eliminando"
+  title="Eliminar registro"
+  message="Eliminarás este registro de toma. Esta acción no se puede deshacer."
+  confirmLabel="Eliminar registro"
+  (closed)="cancelarEliminacion()"
+  (confirmed)="confirmarEliminacion()"
+/>

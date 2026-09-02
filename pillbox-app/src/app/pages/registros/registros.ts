@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import {
   CrearRegistroTomaRequest,
   HorarioResponse,
@@ -8,11 +11,12 @@ import {
 } from '../../core/models/api.interfaces';
 import { Horario } from '../../services/horario';
 import { RegistroToma } from '../../services/registro-toma';
+import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
 
 @Component({
   selector: 'app-registros',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, ConfirmModal],
   templateUrl: './registros.html',
   styleUrl: './registros.css',
 })
@@ -23,6 +27,9 @@ export class Registros implements OnInit {
   submitting = false;
   errorMessage = '';
   successMessage = '';
+  modalEliminarAbierto = false;
+  eliminando = false;
+  registroPendienteEliminar: number | null = null;
 
   form = {
     id_horario: 0,
@@ -112,17 +119,30 @@ export class Registros implements OnInit {
   }
 
   eliminarRegistro(id: number): void {
-    const confirmado = window.confirm('¿Seguro que deseas eliminar este registro de toma?');
-    if (!confirmado) {
-      return;
-    }
+    this.registroPendienteEliminar = id;
+    this.modalEliminarAbierto = true;
+  }
+
+  cancelarEliminacion(): void {
+    this.modalEliminarAbierto = false;
+    this.registroPendienteEliminar = null;
+  }
+
+  confirmarEliminacion(): void {
+    if (this.registroPendienteEliminar === null || this.eliminando) return;
+    const id = this.registroPendienteEliminar;
+    this.eliminando = true;
 
     this.registroService.delete(id).subscribe({
       next: () => {
+        this.eliminando = false;
+        this.cancelarEliminacion();
         this.successMessage = 'Registro eliminado correctamente.';
         this.cargarRegistros();
       },
       error: (err) => {
+        this.eliminando = false;
+        this.cancelarEliminacion();
         this.errorMessage = this.extraerError(err, 'No se pudo eliminar el registro.');
       },
     });
@@ -133,6 +153,19 @@ export class Registros implements OnInit {
       id_horario: 0,
       fecha_hora_programada: '',
     };
+  }
+
+  get tomasRealizadas(): number {
+    return this.registros.filter((registro) => Boolean(registro.fecha_hora_real)).length;
+  }
+
+  get tomasPendientes(): number {
+    return this.registros.filter((registro) => !registro.fecha_hora_real).length;
+  }
+
+  obtenerNombreMedicamento(idHorario: number): string {
+    const horario = this.horarios.find((item) => item.id === idHorario);
+    return horario?.medicamento_nombre || `Horario #${idHorario}`;
   }
 
   private toISOString(value: string): string {

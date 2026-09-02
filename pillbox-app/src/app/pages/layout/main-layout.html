@@ -1,42 +1,46 @@
 ﻿<div class="app-shell">
-  <aside class="sidebar" [class.abierto]="sidebarAbierto">
+  <aside id="main-navigation" class="sidebar" [class.abierto]="sidebarAbierto">
     <div>
       <div class="brand">
-        <div class="brand-mark">EP</div>
+        <div class="brand-mark" aria-hidden="true"><span class="material-icons">medication</span></div>
         <div class="brand-text">
-          <span>Electronic</span>
           <strong>Pillbox</strong>
+          <span>Control de medicación</span>
         </div>
+        <button class="sidebar-close" type="button" (click)="toggleSidebar()" aria-label="Cerrar menú">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
       </div>
 
-      <nav class="nav-menu" aria-label="Menu principal">
-        <button class="nav-item" routerLink="/dashboard" routerLinkActive="selected" (click)="sidebarAbierto = false">
-          <span class="material-icons">dashboard</span>
+      <nav class="nav-menu" aria-label="Menú principal">
+        <p class="nav-title">NAVEGACIÓN</p>
+        <button class="nav-item" routerLink="/dashboard" routerLinkActive="selected" [routerLinkActiveOptions]="{ exact: true }">
+          <span class="material-icons" aria-hidden="true">dashboard</span>
           <span>Dashboard</span>
         </button>
 
-        <button class="nav-item" routerLink="/medicamentos" routerLinkActive="selected" (click)="sidebarAbierto = false">
-          <span class="material-icons">medication</span>
+        <button class="nav-item" routerLink="/medicamentos" routerLinkActive="selected" [routerLinkActiveOptions]="{ exact: true }">
+          <span class="material-icons" aria-hidden="true">medication</span>
           <span>Medicamentos</span>
         </button>
 
-        <button class="nav-item" routerLink="/horarios" routerLinkActive="selected" (click)="sidebarAbierto = false">
-          <span class="material-icons">schedule</span>
+        <button class="nav-item" routerLink="/horarios" routerLinkActive="selected" [routerLinkActiveOptions]="{ exact: true }">
+          <span class="material-icons" aria-hidden="true">schedule</span>
           <span>Horarios</span>
         </button>
 
-        <button class="nav-item" routerLink="/registros" routerLinkActive="selected" (click)="sidebarAbierto = false">
-          <span class="material-icons">history</span>
+        <button class="nav-item" routerLink="/registros" routerLinkActive="selected" [routerLinkActiveOptions]="{ exact: true }">
+          <span class="material-icons" aria-hidden="true">history</span>
           <span>Registros</span>
         </button>
 
-        <button class="nav-item" routerLink="/contactos" routerLinkActive="selected" (click)="sidebarAbierto = false">
-          <span class="material-icons">contact_emergency</span>
+        <button class="nav-item" routerLink="/contactos" routerLinkActive="selected" [routerLinkActiveOptions]="{ exact: true }">
+          <span class="material-icons" aria-hidden="true">contact_emergency</span>
           <span>Contactos</span>
         </button>
 
-        <button class="nav-item" routerLink="/dispositivo" routerLinkActive="selected" (click)="sidebarAbierto = false">
-          <span class="material-icons">devices</span>
+        <button class="nav-item" routerLink="/dispositivo" routerLinkActive="selected" [routerLinkActiveOptions]="{ exact: true }">
+          <span class="material-icons" aria-hidden="true">devices</span>
           <span>Dispositivo</span>
         </button>
       </nav>
@@ -44,17 +48,24 @@
 
     <div class="sidebar-footer">
       <button class="nav-item logout" (click)="cerrarSesion()">
-        <span class="material-icons">logout</span>
-        <span>Salir</span>
+        <span class="material-icons" aria-hidden="true">logout</span>
+        <span>Cerrar sesión</span>
       </button>
     </div>
   </aside>
 
   <div class="main-panel" [class.with-sidebar]="sidebarAbierto">
     <header class="topbar">
-      <button class="menu-button" type="button" (click)="toggleSidebar()" aria-label="Abrir menú">
-        <span class="material-icons">menu</span>
-      </button>
+      <div class="topbar-start">
+        <button class="menu-button" type="button" (click)="toggleSidebar()" [attr.aria-expanded]="sidebarAbierto" aria-controls="main-navigation" aria-label="Abrir menú">
+        <span class="material-icons" aria-hidden="true">menu</span>
+        </button>
+        <div class="breadcrumb" aria-label="Ubicación actual">
+          <span>Inicio</span>
+          <span class="material-icons" aria-hidden="true">chevron_right</span>
+          <strong>{{ breadcrumbActual }}</strong>
+        </div>
+      </div>
 
       <div class="topbar-user">
         <div class="user-avatar">{{ usuario?.nombre?.charAt(0)?.toUpperCase() || 'U' }}</div>
@@ -68,5 +79,11 @@
     <main class="content-area">
       <router-outlet></router-outlet>
     </main>
+
+    <footer class="app-footer">
+      <span>Electronic Pillbox</span><span class="footer-separator">•</span><span>Tu tratamiento, siempre organizado</span>
+    </footer>
   </div>
+
+  <button *ngIf="sidebarAbierto" class="sidebar-backdrop" type="button" (click)="toggleSidebar()" aria-label="Cerrar menú"></button>
 </div>

@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import {
   ActualizarHorarioRequest,
   CrearHorarioRequest,
@@ -9,11 +12,12 @@ import {
 } from '../../core/models/api.interfaces';
 import { Medicamento } from '../../services/medicamento';
 import { Horario } from '../../services/horario';
+import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
 
 @Component({
   selector: 'app-horarios',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, ConfirmModal],
   templateUrl: './horarios.html',
   styleUrl: './horarios.css',
 })
@@ -26,6 +30,9 @@ export class Horarios implements OnInit {
   successMessage = '';
   isEditMode = false;
   editingId: number | null = null;
+  modalEliminarAbierto = false;
+  eliminando = false;
+  horarioPendienteEliminar: number | null = null;
 
   form: CrearHorarioRequest = {
     id_medicamento: 0,
@@ -123,16 +130,27 @@ export class Horarios implements OnInit {
   }
 
   eliminarHorario(id: number): void {
-    const confirmado = window.confirm('¿Seguro que deseas eliminar este horario?');
-    if (!confirmado) {
-      return;
-    }
+    this.horarioPendienteEliminar = id;
+    this.modalEliminarAbierto = true;
+  }
+
+  cancelarEliminacion(): void {
+    this.modalEliminarAbierto = false;
+    this.horarioPendienteEliminar = null;
+  }
+
+  confirmarEliminacion(): void {
+    if (this.horarioPendienteEliminar === null || this.eliminando) return;
+    const id = this.horarioPendienteEliminar;
+    this.eliminando = true;
 
     this.errorMessage = '';
     this.successMessage = '';
 
     this.horarioService.delete(id).subscribe({
       next: () => {
+        this.eliminando = false;
+        this.cancelarEliminacion();
         this.successMessage = 'Horario eliminado correctamente.';
         if (this.editingId === id) {
           this.resetForm();
@@ -140,6 +158,8 @@ export class Horarios implements OnInit {
         this.cargarHorarios();
       },
       error: (err) => {
+        this.eliminando = false;
+        this.cancelarEliminacion();
         this.errorMessage = this.extraerError(err, 'No se pudo eliminar el horario.');
       },
     });

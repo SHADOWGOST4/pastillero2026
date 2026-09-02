@@ -14,17 +14,19 @@
       <div class="alert alert-danger" *ngIf="error">{{ error }}</div>
 
       <div class="form-group">
-        <label for="email">Correo Electrónico / Usuario</label>
-        <input id="email" [(ngModel)]="usuario.correo" placeholder="ejemplo@mabsbygabs.com" type="email">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Correo Electrónico / Usuario</mat-label>
+          <input matInput id="email" [(ngModel)]="usuario.correo" placeholder="ejemplo@mabsbygabs.com" type="email">
+        </mat-form-field>
       </div>
 
       <div class="form-group">
-        <label for="password">Contraseña</label>
-        <div class="password-wrapper">
-          <input id="password" [(ngModel)]="usuario.password" placeholder="••••••••" type="password">
-        </div>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Contraseña</mat-label>
+          <input matInput id="password" [(ngModel)]="usuario.password" placeholder="••••••••" type="password">
+        </mat-form-field>
       </div>
-        
+
       <button class="btn-login" (click)="login()">Ingresar</button>
 
       <div class="register">

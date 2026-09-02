@@ -1,87 +1,94 @@
 <div class="dashboard-page">
   <header class="dashboard-header">
     <div>
-      <p class="eyebrow">Electronic Pillbox</p>
-      <h1>Bienvenido, {{ usuario?.nombre || 'usuario' }}</h1>
+      <p class="eyebrow">Resumen de tu medicación</p>
+      <h1>Buenos días, {{ usuario?.nombre || 'usuario' }}</h1>
+      <p class="dashboard-intro">Consulta de un vistazo tus próximas tomas programadas.</p>
     </div>
-    <button class="secondary-button" (click)="cargarProximosHorarios()" [disabled]="isLoading">
+    <button class="btn btn-secondary refresh-button" (click)="cargarProximosHorarios()" [disabled]="isLoading">
+      <span class="material-icons" aria-hidden="true">refresh</span>
       {{ isLoading ? 'Actualizando...' : 'Actualizar' }}
     </button>
   </header>
 
   <section class="summary-grid" *ngIf="!hasError">
-    <article class="summary-card">
-      <div class="card-icon pill">💊</div>
+    <article class="summary-card summary-primary">
+      <span class="card-icon material-icons" aria-hidden="true">medication</span>
       <div>
         <span class="card-label">Próximas tomas</span>
         <strong class="card-value">{{ totalTomasProgramadas }}</strong>
+        <span class="card-note">programadas</span>
       </div>
     </article>
 
-    <article class="summary-card">
-      <div class="card-icon alert">⏰</div>
+    <article class="summary-card summary-next">
+      <span class="card-icon material-icons" aria-hidden="true">schedule</span>
       <div>
         <span class="card-label">Siguiente toma</span>
         <strong class="card-value">{{ proximaToma }}</strong>
       </div>
     </article>
-
-    <article class="summary-card">
-      <div class="card-icon device">📡</div>
-      <div>
-        <span class="card-label">Estado del sistema</span>
-        <strong class="card-value state-good">{{ estadoSistema }}</strong>
-      </div>
-    </article>
   </section>
 
-  <section class="status-panel" *ngIf="hasError">
+  <section class="status-panel" *ngIf="hasError" role="alert">
     <div class="status-box error">
-      <strong>Error al cargar el dashboard.</strong>
-      <p>{{ errorMessage }}</p>
-      <button class="primary-button" (click)="cargarProximosHorarios()">Reintentar</button>
-    </div>
-  </section>
-
-  <section class="modules-grid" *ngIf="!isLoading && !hasError">
-    <article class="module-card" *ngFor="let card of moduleCards">
-      <div class="module-header">
-        <span class="module-tag">{{ card.label }}</span>
+      <span class="status-icon material-icons" aria-hidden="true">error_outline</span>
+      <div>
+        <strong>No pudimos cargar tu información</strong>
+        <p>{{ errorMessage }}</p>
+        <button class="btn btn-primary" (click)="cargarProximosHorarios()">
+          <span class="material-icons" aria-hidden="true">refresh</span>
+          Reintentar
+        </button>
       </div>
-      <h3>{{ card.medicamento }}</h3>
-      <p class="module-hour">{{ card.hora }}</p>
-      <span class="module-badge">{{ card.estado }}</span>
-    </article>
+    </div>
   </section>
 
-  <section class="table-card" *ngIf="!isLoading && !hasError">
-    <div class="table-header">
-      <h2>Próximas tomas</h2>
+  <section class="upcoming-section" *ngIf="!hasError">
+    <div class="section-header">
+      <div>
+        <p class="section-kicker">Agenda de medicación</p>
+        <h2>Próximas tomas</h2>
+      </div>
+      <span class="list-count" *ngIf="!isLoading">{{ proximosHorarios.length }} programadas</span>
     </div>
 
-    <div class="loading-state" *ngIf="isLoading">Cargando información...</div>
+    <div class="loading-state" *ngIf="isLoading">
+      <span class="spinner" aria-hidden="true"></span>
+      <span>Actualizando tu agenda...</span>
+    </div>
 
     <div class="empty-state" *ngIf="!isLoading && proximosHorarios.length === 0">
-      No hay próximas tomas programadas.
+      <span class="empty-icon material-icons" aria-hidden="true">event_available</span>
+      <h3>No tienes tomas próximas</h3>
+      <p>Cuando programes un horario, sus próximas tomas aparecerán aquí.</p>
+      <button class="btn btn-primary" type="button" (click)="irA('/horarios')">
+        <span class="material-icons" aria-hidden="true">add</span>
+        Programar horario
+      </button>
     </div>
 
-    <table *ngIf="!isLoading && proximosHorarios.length > 0" class="data-table">
-      <thead>
-        <tr>
-          <th>Medicamento</th>
-          <th>Hora</th>
-          <th>Frecuencia</th>
-          <th>Próxima toma</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let item of proximosHorarios">
-          <td>{{ item.medicamento }}</td>
-          <td>{{ item.hora_toma }}</td>
-          <td>{{ item.frecuencia ? 'Cada ' + item.frecuencia + ' h' : 'Toma diaria' }}</td>
-          <td>{{ item.proxima_toma | date: 'dd/MM/yyyy HH:mm' }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="upcoming-list" *ngIf="!isLoading && proximosHorarios.length > 0">
+      <article class="upcoming-card" *ngFor="let item of proximosHorarios">
+        <div class="upcoming-time">
+          <span class="material-icons" aria-hidden="true">access_time</span>
+          <strong>{{ item.proxima_toma | date: 'HH:mm' }}</strong>
+          <span>{{ item.proxima_toma | date: 'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="upcoming-medication">
+          <span class="medication-icon material-icons" aria-hidden="true">medication</span>
+          <div>
+            <h3>{{ item.medicamento }}</h3>
+            <p>{{ item.dosis }}</p>
+          </div>
+        </div>
+        <div class="upcoming-meta">
+          <span class="meta-label">Próxima toma</span>
+          <span class="frequency-badge">
+            {{ item.frecuencia ? 'Cada ' + item.frecuencia + ' horas' : 'Toma diaria' }}
+          </span>
+        </div>
+      </article>
+    </div>
   </section>
 </div>

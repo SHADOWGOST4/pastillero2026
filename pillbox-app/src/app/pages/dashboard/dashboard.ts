@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { Dashboards } from '../../services/dashboard';
+import { Dashboard as DashboardService } from '../../services/dashboard';
 import { Auth } from '../../services/auth';
 import { ProximaTomaItem } from '../../core/models/api.interfaces';
 
@@ -30,7 +30,7 @@ export class Dashboard implements OnInit {
   moduleCards: ModuleCard[] = [];
 
   constructor(
-    private dashboardService: Dashboards,
+    private dashboardService: DashboardService,
     private auth: Auth,
     private router: Router,
     private datePipe: DatePipe

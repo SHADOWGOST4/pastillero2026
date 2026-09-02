@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class Usuario {
-private apiUrl = `${environment.apiUrl}medicamentos/`;
+  private apiUrl = `${environment.apiUrl}usuarios/`;
 
   constructor(private http: HttpClient) {}
 

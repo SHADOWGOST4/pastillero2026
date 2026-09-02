@@ -1,0 +1,19 @@
+<div *ngIf="visible" class="modal-backdrop" (click)="!busy && closed.emit()">
+  <section class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" (click)="$event.stopPropagation()">
+    <header class="confirm-modal-header">
+      <span class="modal-icon material-icons" aria-hidden="true">{{ icon }}</span>
+      <div>
+        <p class="modal-overline">Confirmación requerida</p>
+        <h2 id="confirm-modal-title">{{ title }}</h2>
+      </div>
+      <button type="button" class="modal-close" (click)="closed.emit()" [disabled]="busy" aria-label="Cerrar">×</button>
+    </header>
+    <div class="confirm-modal-body"><p>{{ message }}</p></div>
+    <footer class="confirm-modal-footer">
+      <button type="button" class="btn btn-outline-secondary" (click)="closed.emit()" [disabled]="busy">Cancelar</button>
+      <button type="button" class="btn btn-danger modal-confirm" (click)="confirmed.emit()" [disabled]="busy">
+        <span *ngIf="busy" class="modal-spinner" aria-hidden="true"></span>{{ busy ? 'Procesando...' : confirmLabel }}
+      </button>
+    </footer>
+  </section>
+</div>

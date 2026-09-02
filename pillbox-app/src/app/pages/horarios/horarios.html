@@ -1,94 +1,229 @@
 <div class="horarios-page">
-  <div class="page-header">
+  <header class="page-header">
     <div>
-      <p class="eyebrow">Programación</p>
-      <h2>Horarios</h2>
+      <p class="eyebrow">Planificación de tomas</p>
+      <h1>Horarios de toma</h1>
+      <p class="page-intro">Programa cuándo debes tomar cada medicamento.</p>
     </div>
-    <button type="button" class="btn btn-primary" (click)="resetForm()">Nuevo horario</button>
-  </div>
+    <button type="button" class="btn btn-primary add-button" (click)="resetForm()">
+      <span class="material-icons" aria-hidden="true">add</span>
+      Nuevo horario
+    </button>
+  </header>
 
-  <div class="card form-card shadow-sm mb-4">
-    <h3>{{ isEditMode ? 'Editar horario' : 'Agregar nuevo horario' }}</h3>
+  <section class="form-card" [class.form-card-editing]="isEditMode">
+    <div class="section-header">
+      <div>
+        <p class="section-kicker">{{ isEditMode ? 'Actualizar programación' : 'Nueva programación' }}</p>
+        <h2>{{ isEditMode ? 'Editar horario' : 'Agregar nuevo horario' }}</h2>
+      </div>
+      <span class="edit-indicator" *ngIf="isEditMode">
+        <span class="material-icons" aria-hidden="true">edit</span>
+        Editando
+      </span>
+    </div>
 
-    <form (ngSubmit)="onSubmit()" novalidate>
-      <div class="row g-3 align-items-end">
-        <div class="col-md-4">
-          <label class="form-label" for="horario-medicamento">Medicamento</label>
-          <select id="horario-medicamento" class="form-select" [(ngModel)]="form.id_medicamento" name="id_medicamento">
-            <option [ngValue]="0">Seleccione medicamento</option>
-            <option *ngFor="let medicamento of medicamentos" [ngValue]="medicamento.id">
-              {{ medicamento.nombre }}
-            </option>
-          </select>
+    <form #horarioForm="ngForm" (ngSubmit)="onSubmit()" novalidate>
+      <div class="form-grid">
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Medicamento</mat-label>
+            <mat-select
+              id="horario-medicamento"
+              [(ngModel)]="form.id_medicamento"
+              #medicamento="ngModel"
+              name="id_medicamento"
+              required
+            >
+              <mat-option [value]="0">Selecciona un medicamento</mat-option>
+              <mat-option *ngFor="let medicamento of medicamentos" [value]="medicamento.id">
+                {{ medicamento.nombre }}
+              </mat-option>
+            </mat-select>
+            <mat-hint>Selecciona el medicamento que deseas programar.</mat-hint>
+            <mat-error *ngIf="medicamento.invalid && (medicamento.dirty || medicamento.touched)">Debes seleccionar un medicamento.</mat-error>
+          </mat-form-field>
         </div>
 
-        <div class="col-md-3">
-          <label class="form-label" for="horario-hora">Hora</label>
-          <input id="horario-hora" type="time" class="form-control" [(ngModel)]="form.hora_toma" name="hora_toma" />
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Hora de toma</mat-label>
+            <input
+              matInput
+              id="horario-hora"
+              type="time"
+              [(ngModel)]="form.hora_toma"
+              #hora="ngModel"
+              name="hora_toma"
+              required
+            />
+            <mat-hint>Hora inicial para calcular las próximas tomas.</mat-hint>
+            <mat-error *ngIf="hora.invalid && (hora.dirty || hora.touched)">Debes indicar una hora.</mat-error>
+          </mat-form-field>
         </div>
 
-        <div class="col-md-3">
-          <label class="form-label" for="horario-frecuencia">Frecuencia</label>
-          <input
-            id="horario-frecuencia"
-            type="number"
-            class="form-control"
-            [(ngModel)]="form.frecuencia"
-            name="frecuencia"
-            min="0"
-            step="1"
-            placeholder="Ej: 8"
-          />
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Frecuencia (horas)</mat-label>
+            <input
+              matInput
+              id="horario-frecuencia"
+              type="number"
+              [(ngModel)]="form.frecuencia"
+              #frecuencia="ngModel"
+              name="frecuencia"
+              min="0"
+              step="1"
+              placeholder="Ej. 8"
+              required
+            />
+            <span matSuffix>h</span>
+            <mat-hint>Usa 0 para una toma diaria a la hora indicada.</mat-hint>
+            <mat-error *ngIf="frecuencia.invalid && (frecuencia.dirty || frecuencia.touched)">Indica una frecuencia válida.</mat-error>
+          </mat-form-field>
         </div>
+      </div>
 
-        <div class="col-md-2 text-end">
-          <button type="submit" class="btn btn-primary w-100" [disabled]="submitting">
-            {{ submitting ? (isEditMode ? 'Guardando...' : 'Creando...') : (isEditMode ? 'Guardar' : 'Agregar') }}
-          </button>
-        </div>
+      <div class="form-actions">
+        <button type="button" *ngIf="isEditMode" class="btn btn-outline-secondary" (click)="resetForm()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary save-button" [disabled]="submitting">
+          <span class="material-icons" aria-hidden="true" *ngIf="!submitting">save</span>
+          <span class="loading-dot" aria-hidden="true" *ngIf="submitting"></span>
+          {{ submitting ? 'Guardando...' : 'Guardar horario' }}
+        </button>
       </div>
     </form>
 
-    <div *ngIf="errorMessage" class="alert alert-danger mt-3 mb-0" role="alert">
-      {{ errorMessage }}
+    <div *ngIf="errorMessage" class="alert alert-danger feedback" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      <span>{{ errorMessage }}</span>
+      <button type="button" class="retry-button" *ngIf="!horarios.length" (click)="cargarHorarios()">Reintentar</button>
+    </div>
+    <div *ngIf="successMessage" class="alert alert-success feedback" role="status">
+      <span class="material-icons" aria-hidden="true">check_circle</span>
+      <span>{{ successMessage }}</span>
+    </div>
+  </section>
+
+  <section class="list-section">
+    <div class="section-header list-header">
+      <div>
+        <p class="section-kicker">Programación actual</p>
+        <h2>Horarios programados</h2>
+      </div>
+      <span class="list-count" *ngIf="!loading">{{ horarios.length }} programados</span>
     </div>
 
-    <div *ngIf="successMessage" class="alert alert-success mt-3 mb-0" role="status">
-      {{ successMessage }}
-    </div>
-  </div>
-
-  <div class="card table-card shadow-sm">
-    <div *ngIf="loading" class="state-message">Cargando horarios...</div>
-
-    <div *ngIf="!loading && horarios.length === 0" class="state-message">
-      No hay horarios programados.
+    <div *ngIf="loading" class="state-message loading-state">
+      <span class="spinner" aria-hidden="true"></span>
+      <span>Cargando horarios...</span>
     </div>
 
-    <div *ngIf="!loading && horarios.length > 0" class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
+    <div *ngIf="!loading && horarios.length === 0" class="state-message empty-state">
+      <span class="empty-icon material-icons" aria-hidden="true">schedule</span>
+      <h3>No tienes horarios programados</h3>
+      <p>Configura un horario para organizar las próximas tomas de tus medicamentos.</p>
+      <button type="button" class="btn btn-primary" (click)="resetForm()">
+        <span class="material-icons" aria-hidden="true">add</span>
+        Crear horario
+      </button>
+    </div>
+
+    <div *ngIf="!loading && horarios.length > 0" class="table-wrapper">
+      <table class="table schedule-table">
         <thead>
           <tr>
             <th>Medicamento</th>
             <th>Hora</th>
             <th>Frecuencia</th>
             <th>Próxima toma</th>
-            <th class="text-center">Acciones</th>
+            <th class="actions-heading">Acciones</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let horario of horarios">
-            <td>{{ horario.medicamento_nombre }}</td>
-            <td>{{ horario.hora_toma }}</td>
-            <td>{{ horario.frecuencia === 0 ? 'Diaria' : 'Cada ' + horario.frecuencia + ' h' }}</td>
-            <td>{{ horario.proxima_toma | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>
+              <div class="medication-name">
+                <span class="medication-icon material-icons" aria-hidden="true">medication</span>
+                <strong>{{ horario.medicamento_nombre }}</strong>
+              </div>
+            </td>
+            <td>
+              <div class="schedule-time">
+                <span class="material-icons" aria-hidden="true">access_time</span>
+                <strong>{{ horario.hora_toma | slice:0:5 }}</strong>
+              </div>
+            </td>
+            <td>
+              <span class="frequency-badge">
+                {{ horario.frecuencia === 0 ? 'Toma diaria' : 'Cada ' + horario.frecuencia + ' horas' }}
+              </span>
+            </td>
+            <td>
+              <div class="next-dose">
+                <span>Próxima toma</span>
+                <strong>{{ horario.proxima_toma | date: 'dd/MM/yyyy HH:mm' }}</strong>
+              </div>
+            </td>
             <td class="actions-cell">
-              <button type="button" class="btn btn-sm btn-outline-primary" (click)="editarHorario(horario)">Editar</button>
-              <button type="button" class="btn btn-sm btn-outline-danger" (click)="eliminarHorario(horario.id)">Eliminar</button>
+              <button type="button" class="btn btn-sm btn-outline-primary action-button" (click)="editarHorario(horario)">
+                <span class="material-icons" aria-hidden="true">edit</span>
+                Editar
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger action-button" (click)="eliminarHorario(horario.id)">
+                <span class="material-icons" aria-hidden="true">delete_outline</span>
+                Eliminar
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-  </div>
+
+    <div *ngIf="!loading && horarios.length > 0" class="mobile-schedule-list">
+      <article class="mobile-schedule-card" *ngFor="let horario of horarios">
+        <div class="mobile-card-heading">
+          <div class="medication-name">
+            <span class="medication-icon material-icons" aria-hidden="true">medication</span>
+            <strong>{{ horario.medicamento_nombre }}</strong>
+          </div>
+          <div class="schedule-time">
+            <span class="material-icons" aria-hidden="true">access_time</span>
+            <strong>{{ horario.hora_toma | slice:0:5 }}</strong>
+          </div>
+        </div>
+        <div class="mobile-schedule-details">
+          <span class="frequency-badge">
+            {{ horario.frecuencia === 0 ? 'Toma diaria' : 'Cada ' + horario.frecuencia + ' horas' }}
+          </span>
+          <div class="next-dose">
+            <span>Próxima toma</span>
+            <strong>{{ horario.proxima_toma | date: 'dd/MM/yyyy HH:mm' }}</strong>
+          </div>
+        </div>
+        <div class="mobile-actions">
+          <button type="button" class="btn btn-sm btn-outline-primary action-button" (click)="editarHorario(horario)">
+            <span class="material-icons" aria-hidden="true">edit</span>
+            Editar
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-danger action-button" (click)="eliminarHorario(horario.id)">
+            <span class="material-icons" aria-hidden="true">delete_outline</span>
+            Eliminar
+          </button>
+        </div>
+      </article>
+    </div>
+  </section>
 </div>
+
+<app-confirm-modal
+  [visible]="modalEliminarAbierto"
+  [busy]="eliminando"
+  title="Eliminar horario"
+  message="Eliminarás este horario de toma. Esta acción no se puede deshacer."
+  confirmLabel="Eliminar horario"
+  (closed)="cancelarEliminacion()"
+  (confirmed)="confirmarEliminacion()"
+/>

@@ -1,17 +1,20 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import {
   ActualizarDispositivoRequest,
   CrearDispositivoRequest,
   DispositivoResponse,
 } from '../../core/models/api.interfaces';
 import { DispositivoService } from '../../services/dispositivo';
+import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
 
 @Component({
   selector: 'app-dispositivo',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, ConfirmModal],
   templateUrl: './dispositivo.html',
   styleUrl: './dispositivo.css',
 })
@@ -23,6 +26,9 @@ export class Dispositivo implements OnInit {
   successMessage = '';
   isEditMode = false;
   editingId: number | null = null;
+  modalEliminarAbierto = false;
+  eliminando = false;
+  dispositivoPendienteEliminar: number | null = null;
 
   form: CrearDispositivoRequest = {
     nombre: '',
@@ -103,13 +109,24 @@ export class Dispositivo implements OnInit {
   }
 
   eliminarDispositivo(id: number): void {
-    const confirmado = window.confirm('¿Seguro que deseas desvincular este dispositivo?');
-    if (!confirmado) {
-      return;
-    }
+    this.dispositivoPendienteEliminar = id;
+    this.modalEliminarAbierto = true;
+  }
+
+  cancelarEliminacion(): void {
+    this.modalEliminarAbierto = false;
+    this.dispositivoPendienteEliminar = null;
+  }
+
+  confirmarEliminacion(): void {
+    if (this.dispositivoPendienteEliminar === null || this.eliminando) return;
+    const id = this.dispositivoPendienteEliminar;
+    this.eliminando = true;
 
     this.dispositivoService.delete(id).subscribe({
       next: () => {
+        this.eliminando = false;
+        this.cancelarEliminacion();
         this.successMessage = 'Dispositivo eliminado correctamente.';
         if (this.editingId === id) {
           this.resetForm();
@@ -117,6 +134,8 @@ export class Dispositivo implements OnInit {
         this.cargarDispositivos();
       },
       error: (err) => {
+        this.eliminando = false;
+        this.cancelarEliminacion();
         this.errorMessage = this.extraerError(err, 'No se pudo eliminar el dispositivo.');
       },
     });

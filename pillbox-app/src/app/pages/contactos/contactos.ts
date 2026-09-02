@@ -1,17 +1,20 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import {
   ActualizarContactoRequest,
   ContactoResponse,
   CrearContactoRequest,
 } from '../../core/models/api.interfaces';
 import { Contacto } from '../../services/contacto';
+import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
 
 @Component({
   selector: 'app-contactos',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, ConfirmModal],
   templateUrl: './contactos.html',
   styleUrl: './contactos.css',
 })
@@ -23,6 +26,9 @@ export class Contactos implements OnInit {
   successMessage = '';
   isEditMode = false;
   editingId: number | null = null;
+  modalEliminarAbierto = false;
+  eliminando = false;
+  contactoPendienteEliminar: number | null = null;
 
   form: CrearContactoRequest = {
     nombre: '',
@@ -103,13 +109,24 @@ export class Contactos implements OnInit {
   }
 
   eliminarContacto(id: number): void {
-    const confirmado = window.confirm('¿Seguro que deseas eliminar este contacto?');
-    if (!confirmado) {
-      return;
-    }
+    this.contactoPendienteEliminar = id;
+    this.modalEliminarAbierto = true;
+  }
+
+  cancelarEliminacion(): void {
+    this.modalEliminarAbierto = false;
+    this.contactoPendienteEliminar = null;
+  }
+
+  confirmarEliminacion(): void {
+    if (this.contactoPendienteEliminar === null || this.eliminando) return;
+    const id = this.contactoPendienteEliminar;
+    this.eliminando = true;
 
     this.contactoService.delete(id).subscribe({
       next: () => {
+        this.eliminando = false;
+        this.cancelarEliminacion();
         this.successMessage = 'Contacto eliminado correctamente.';
         if (this.editingId === id) {
           this.resetForm();
@@ -117,6 +134,8 @@ export class Contactos implements OnInit {
         this.cargarContactos();
       },
       error: (err) => {
+        this.eliminando = false;
+        this.cancelarEliminacion();
         this.errorMessage = this.extraerError(err, 'No se pudo eliminar el contacto.');
       },
     });
@@ -130,6 +149,16 @@ export class Contactos implements OnInit {
       correo: '',
       telefono: '',
     };
+  }
+
+  obtenerIniciales(nombre: string): string {
+    return nombre
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((parte) => parte.charAt(0).toUpperCase())
+      .join('');
   }
 
   private extraerError(error: any, fallback: string): string {

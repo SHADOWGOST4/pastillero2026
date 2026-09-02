@@ -7,7 +7,7 @@ import { ProximaTomaItem } from '../core/models/api.interfaces';
 @Injectable({
   providedIn: 'root'
 })
-export class Dashboards {
+export class Dashboard {
   private apiUrl = `${environment.apiUrl}proximos-horarios/`;
 
   constructor(private http: HttpClient) {}
