@@ -161,11 +161,11 @@
         </div>
 
         <div class="contact-actions">
-          <button type="button" class="btn btn-sm btn-outline-primary action-button" (click)="editarContacto(contacto)">
+          <button type="button" class="btn btn-sm action-button action-edit" (click)="editarContacto(contacto)">
             <span class="material-icons" aria-hidden="true">edit</span>
             Editar
           </button>
-          <button type="button" class="btn btn-sm btn-outline-danger action-button" (click)="eliminarContacto(contacto.id)">
+          <button type="button" class="btn btn-sm action-button action-delete" (click)="eliminarContacto(contacto.id)">
             <span class="material-icons" aria-hidden="true">delete_outline</span>
             Eliminar
           </button>

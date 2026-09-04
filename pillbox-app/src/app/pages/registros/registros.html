@@ -160,7 +160,7 @@
               <button
                 *ngIf="!registro.fecha_hora_real"
                 type="button"
-                class="btn btn-sm btn-success confirm-button"
+                class="btn btn-sm confirm-button"
                 (click)="confirmarRegistro(registro.id)"
               >
                 <span class="material-icons" aria-hidden="true">check</span>
@@ -170,7 +170,7 @@
                 <span class="material-icons" aria-hidden="true">check_circle</span>
                 Toma confirmada
               </span>
-              <button type="button" class="btn btn-sm btn-outline-danger action-button" (click)="eliminarRegistro(registro.id)">
+              <button type="button" class="btn btn-sm action-button action-delete" (click)="eliminarRegistro(registro.id)">
                 <span class="material-icons" aria-hidden="true">delete_outline</span>
                 Eliminar
               </button>
@@ -206,7 +206,7 @@
           <button
             *ngIf="!registro.fecha_hora_real"
             type="button"
-            class="btn btn-sm btn-success confirm-button"
+            class="btn btn-sm confirm-button"
             (click)="confirmarRegistro(registro.id)"
           >
             <span class="material-icons" aria-hidden="true">check</span>
@@ -216,7 +216,7 @@
             <span class="material-icons" aria-hidden="true">check_circle</span>
             Toma confirmada
           </span>
-          <button type="button" class="btn btn-sm btn-outline-danger action-button" (click)="eliminarRegistro(registro.id)">
+          <button type="button" class="btn btn-sm action-button action-delete" (click)="eliminarRegistro(registro.id)">
             <span class="material-icons" aria-hidden="true">delete_outline</span>
             Eliminar
           </button>

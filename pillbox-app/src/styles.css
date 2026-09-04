@@ -13,8 +13,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .page-header h1 { font-size:1.75rem; letter-spacing:-.025em; }
 .surface-card, .card, .form-card, .table-card { border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--surface); box-shadow:var(--shadow-sm); }
 .surface-card { padding:1.25rem; }
-.btn, .primary-button, .secondary-button, .btn-login { min-height:2.5rem; border-radius:var(--radius-sm); font-weight:500; transition:background-color 160ms ease,border-color 160ms ease,box-shadow 160ms ease,color 160ms ease,transform 160ms ease; }
-.btn { --bs-btn-border-radius:var(--radius-sm); --bs-btn-font-weight:500; --bs-btn-padding-x:.875rem; --bs-btn-padding-y:.4375rem; }
+.btn, .primary-button, .secondary-button, .btn-login { min-height:2.5rem; border-radius:999px; font-weight:500; transition:background-color 160ms ease,border-color 160ms ease,box-shadow 160ms ease,color 160ms ease,transform 160ms ease; }
+.btn { --bs-btn-border-radius:999px; --bs-btn-font-weight:500; --bs-btn-padding-x:.875rem; --bs-btn-padding-y:.4375rem; }
 .btn:hover, .primary-button:hover, .secondary-button:hover, .btn-login:hover { transform:translateY(-1px); }
 .primary-button, .btn-primary { border-color:var(--primary); background:var(--primary); color:#fff; }
 .primary-button:hover, .btn-primary:hover { border-color:var(--primary-hover); background:var(--primary-hover); }

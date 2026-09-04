@@ -4,7 +4,7 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from django.contrib.auth.hashers import check_password, make_password
-from .models import Usuario, Contacto, Dispositivo, Medicamento, Horario, Registro_Toma, Notificacion
+from .models import Usuario, Contacto, Dispositivo, Medicamento, Modulo, Horario, Registro_Toma, Notificacion
 
 class UsuarioSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
@@ -59,10 +59,71 @@ class DispositivoSerializer(serializers.ModelSerializer):
 class MedicamentoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medicamento
-        fields = ['id', 'nombre', 'descripcion', 'dosis', 'id_usuario']
+        fields = ['id', 'nombre', 'descripcion', 'dosis', 'stock', 'id_usuario']
         extra_kwargs = {
             'id_usuario': {'read_only': True}
         }
+
+
+class ModuloSerializer(serializers.ModelSerializer):
+    medicamento_nombre = serializers.CharField(source='id_medicamento.nombre', read_only=True, allow_null=True)
+    dispositivo_nombre = serializers.CharField(source='id_dispositivo.nombre', read_only=True)
+
+    class Meta:
+        model = Modulo
+        fields = ['id', 'id_dispositivo', 'dispositivo_nombre', 'numero_modulo', 'id_medicamento', 'medicamento_nombre']
+        # Desactivar el UniqueTogetherValidator auto-generado por DRF para que
+        # la validación personalizada en validate() controle el mensaje de error.
+        validators = []
+
+    def validate_id_dispositivo(self, value):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            if value.id_usuario_id != request.user.id:
+                raise serializers.ValidationError('El dispositivo especificado no pertenece al usuario autenticado.')
+        return value
+
+    def validate_id_medicamento(self, value):
+        if value is None:
+            return value
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            if value.id_usuario_id != request.user.id:
+                raise serializers.ValidationError('El medicamento especificado no pertenece al usuario autenticado.')
+        return value
+
+    def validate(self, attrs):
+        instance = self.instance
+
+        id_dispositivo = attrs.get('id_dispositivo', instance.id_dispositivo if instance else None)
+        numero_modulo = attrs.get('numero_modulo', instance.numero_modulo if instance else None)
+
+        if 'id_medicamento' in attrs:
+            id_medicamento = attrs.get('id_medicamento')
+        else:
+            id_medicamento = instance.id_medicamento if instance else None
+
+        # 1. Validar unicidad (id_dispositivo, numero_modulo)
+        if id_dispositivo and numero_modulo is not None:
+            qs_dup = Modulo.objects.filter(id_dispositivo=id_dispositivo, numero_modulo=numero_modulo)
+            if instance:
+                qs_dup = qs_dup.exclude(id=instance.id)
+            if qs_dup.exists():
+                raise serializers.ValidationError({
+                    'numero_modulo': f'El módulo número {numero_modulo} ya existe en este dispositivo.'
+                })
+
+        # 2. Validar OneToOne (id_medicamento no asignado a otro módulo)
+        if id_medicamento:
+            qs_med = Modulo.objects.filter(id_medicamento=id_medicamento)
+            if instance:
+                qs_med = qs_med.exclude(id=instance.id)
+            if qs_med.exists():
+                raise serializers.ValidationError({
+                    'id_medicamento': 'Este medicamento ya se encuentra asignado a otro módulo.'
+                })
+
+        return attrs
 
 
 class HorarioSerializer(serializers.ModelSerializer):

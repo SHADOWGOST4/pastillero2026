@@ -7,6 +7,13 @@
 .modal-close { width:2rem; height:2rem; margin-left:auto; border:0; border-radius:.375rem; color:var(--text-secondary); background:transparent; font-size:1.5rem; line-height:1; cursor:pointer; }.modal-close:hover { background:var(--cui-tertiary-bg); }
 .confirm-modal-body { padding:1rem 1.25rem; }.confirm-modal-body p { margin:0; color:var(--text-secondary); line-height:1.5; }
 .confirm-modal-footer { display:flex; justify-content:flex-end; gap:.65rem; padding:1rem 1.25rem; border-top:1px solid var(--cui-border-color); background:#f8f9fa; }.modal-confirm { display:inline-flex; align-items:center; gap:.4rem; }
+.modal-cancel { border:1px solid #cbd5e1; color:#475569; background:#f1f5f9; }
+.modal-cancel:hover,
+.modal-cancel:focus-visible { border-color:#94a3b8; color:#334155; background:#e2e8f0; }
 .modal-spinner { width:1rem; height:1rem; border:2px solid rgba(255,255,255,.5); border-top-color:#fff; border-radius:50%; animation:modal-spin .7s linear infinite; }
+.device-modal .modal-icon { color:#dc2626; background:#fee2e2; }
+.device-modal .modal-confirm { border-color:#dc2626; color:#fff; background:#dc2626; }
+.device-modal .modal-confirm:hover,
+.device-modal .modal-confirm:focus-visible { border-color:#b91c1c; color:#fff; background:#b91c1c; }
 @keyframes modal-enter { from { opacity:0; transform:translateY(-8px) scale(.98); } to { opacity:1; transform:none; } } @keyframes modal-spin { to { transform:rotate(360deg); } }
 @media (max-width:480px) { .confirm-modal-footer { flex-direction:column-reverse; }.confirm-modal-footer .btn { width:100%; } }

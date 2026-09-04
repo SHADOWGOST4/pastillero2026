@@ -52,10 +52,50 @@ class Medicamento(models.Model):
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(blank=True)
     dosis = models.CharField(max_length=50)
+    stock = models.PositiveIntegerField(default=0)
     id_usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='medicamentos')
 
     def __str__(self):
         return self.nombre
+
+
+class Modulo(models.Model):
+    id_dispositivo = models.ForeignKey(
+        Dispositivo,
+        on_delete=models.CASCADE,
+        related_name='modulos'
+    )
+    numero_modulo = models.PositiveIntegerField(
+        help_text="Número físico o posición del módulo dentro del pastillero"
+    )
+    id_medicamento = models.OneToOneField(
+        Medicamento,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='modulo',
+        help_text="Medicamento asignado al módulo"
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['id_dispositivo', 'numero_modulo'],
+                name='unique_modulo_por_dispositivo'
+            )
+        ]
+        ordering = ['id_dispositivo', 'numero_modulo']
+
+    def __str__(self):
+        medicamento = (
+            self.id_medicamento.nombre
+            if self.id_medicamento
+            else "Disponible"
+        )
+        return (
+            f"{self.id_dispositivo.nombre} - "
+            f"Módulo {self.numero_modulo} ({medicamento})"
+        )
 
 
 class Horario(models.Model):

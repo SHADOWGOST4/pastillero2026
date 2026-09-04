@@ -104,6 +104,24 @@ class MedicamentoViewSet(viewsets.ModelViewSet):
         serializer.save(id_usuario=self.request.user)
 
 
+class ModuloViewSet(viewsets.ModelViewSet):
+    serializer_class = ModuloSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = Modulo.objects.none()
+
+    def get_queryset(self):
+        return Modulo.objects.filter(id_dispositivo__id_usuario=self.request.user)
+
+    def perform_create(self, serializer):
+        dispositivo = serializer.validated_data.get('id_dispositivo')
+        if dispositivo.id_usuario_id != self.request.user.id:
+            raise serializers.ValidationError({'id_dispositivo': 'El dispositivo no pertenece al usuario autenticado.'})
+        medicamento = serializer.validated_data.get('id_medicamento')
+        if medicamento and medicamento.id_usuario_id != self.request.user.id:
+            raise serializers.ValidationError({'id_medicamento': 'El medicamento no pertenece al usuario autenticado.'})
+        serializer.save()
+
+
 class HorarioViewSet(viewsets.ModelViewSet):
     serializer_class = HorarioSerializer
     permission_classes = [IsAuthenticated]

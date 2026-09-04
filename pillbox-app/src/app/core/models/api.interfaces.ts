@@ -50,12 +50,14 @@ export interface CrearMedicamentoRequest {
   nombre: string;
   descripcion?: string;
   dosis: string;
+  stock: number;
 }
 
 export interface ActualizarMedicamentoRequest {
   nombre?: string;
   descripcion?: string;
   dosis?: string;
+  stock?: number;
 }
 
 export interface MedicamentoResponse {
@@ -63,6 +65,7 @@ export interface MedicamentoResponse {
   nombre: string;
   descripcion: string;
   dosis: string;
+  stock: number;
   id_usuario: number;
 }
 
@@ -153,6 +156,27 @@ export interface DispositivoResponse {
   ip_esp32: string;
   estado_conexion: boolean;
   id_usuario: number;
+}
+
+export interface CrearModuloRequest {
+  id_dispositivo: number;
+  numero_modulo: number;
+  id_medicamento: number | null;
+}
+
+export interface ActualizarModuloRequest {
+  id_dispositivo: number;
+  numero_modulo: number;
+  id_medicamento: number | null;
+}
+
+export interface ModuloResponse {
+  id: number;
+  id_dispositivo: number;
+  dispositivo_nombre: string;
+  numero_modulo: number;
+  id_medicamento: number | null;
+  medicamento_nombre: string | null;
 }
 
 export interface CrearNotificacionRequest {

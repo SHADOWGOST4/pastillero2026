@@ -156,17 +156,103 @@
         </div>
 
         <div class="device-actions">
-          <button type="button" class="btn btn-sm btn-outline-primary action-button" (click)="editarDispositivo(dispositivo)">
+          <button type="button" class="btn btn-sm action-button action-edit" (click)="editarDispositivo(dispositivo)">
             <span class="material-icons" aria-hidden="true">edit</span>
             Editar
           </button>
-          <button type="button" class="btn btn-sm btn-outline-danger action-button" (click)="eliminarDispositivo(dispositivo.id)">
+          <button type="button" class="btn btn-sm action-button action-view" (click)="seleccionarDispositivo(dispositivo.id)">
+            <span class="material-icons" aria-hidden="true">view_module</span>
+            Ver módulos
+          </button>
+          <button type="button" class="btn btn-sm action-button action-delete" (click)="eliminarDispositivo(dispositivo.id)">
             <span class="material-icons" aria-hidden="true">link_off</span>
             Desvincular
           </button>
         </div>
       </article>
     </div>
+
+    <section class="modules-panel" *ngIf="selectedDeviceId !== null">
+      <div class="section-header list-header">
+        <div>
+          <p class="section-kicker">Configuración física</p>
+          <h2>Módulos del pastillero</h2>
+        </div>
+        <span class="list-count">{{ modulosDelDispositivo.length }} configurados</span>
+      </div>
+
+      <div *ngIf="modulosLoading" class="state-message loading-state">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>Cargando módulos...</span>
+      </div>
+
+      <div *ngIf="!modulosLoading && !moduloErrorMessage && modulosDelDispositivo.length === 0" class="state-message empty-state">
+        <span class="empty-icon material-icons" aria-hidden="true">view_module</span>
+        <h3>Este dispositivo no tiene módulos</h3>
+        <p>Agrega el primer módulo para comenzar a configurar tu pastillero.</p>
+      </div>
+
+      <div *ngIf="!modulosLoading && modulosDelDispositivo.length > 0" class="modules-grid">
+        <article class="module-card" *ngFor="let modulo of modulosDelDispositivo"
+          [class.module-occupied]="modulo.id_medicamento !== null">
+          <div class="module-card-heading">
+            <strong>Módulo {{ modulo.numero_modulo }}</strong>
+            <span class="module-status">
+              {{ modulo.id_medicamento === null ? 'Disponible' : 'Ocupado' }}
+            </span>
+          </div>
+          <p class="module-medication">
+            {{ modulo.medicamento_nombre || 'Sin medicamento asignado' }}
+          </p>
+          <button *ngIf="modulo.id_medicamento === null" type="button"
+            class="btn btn-sm action-button action-assign"
+            (click)="seleccionarModuloParaAsignar(modulo)">
+            <span class="material-icons" aria-hidden="true">add_link</span>
+            Asignar
+          </button>
+          <button *ngIf="modulo.id_medicamento !== null" type="button"
+            class="btn btn-sm action-button action-unassign"
+            (click)="desasignarMedicamento(modulo)">
+            <span class="material-icons" aria-hidden="true">link_off</span>
+            Desasignar
+          </button>
+        </article>
+      </div>
+
+      <form class="module-assignment-form" *ngIf="selectedModuleId !== null" (ngSubmit)="asignarMedicamento()">
+        <label class="form-label" for="modulo-medicamento">Asignar medicamento</label>
+        <select id="modulo-medicamento" class="form-select" [(ngModel)]="selectedMedicationId"
+          name="selectedMedicationId" required>
+          <option [ngValue]="null">Selecciona un medicamento</option>
+          <option *ngFor="let medicamento of medicamentosDisponibles" [ngValue]="medicamento.id">
+            {{ medicamento.nombre }}
+          </option>
+        </select>
+        <button type="submit" class="btn action-button action-confirm">
+          <span class="material-icons" aria-hidden="true">check</span>
+          Confirmar asignación
+        </button>
+      </form>
+
+      <form class="module-create-form" (ngSubmit)="crearModulo()">
+        <label class="form-label" for="nuevo-modulo">Agregar módulo</label>
+        <input id="nuevo-modulo" class="form-control" type="number" min="1" step="1"
+          [(ngModel)]="newModuleNumber" name="newModuleNumber" placeholder="Número físico" required />
+        <button type="submit" class="btn action-button action-add">
+          <span class="material-icons" aria-hidden="true">add</span>
+          Agregar módulo
+        </button>
+      </form>
+
+      <div *ngIf="moduloErrorMessage" class="alert alert-danger feedback" role="alert">
+        <span class="material-icons" aria-hidden="true">error_outline</span>
+        <span>{{ moduloErrorMessage }}</span>
+      </div>
+      <div *ngIf="moduloSuccessMessage" class="alert alert-success feedback" role="status">
+        <span class="material-icons" aria-hidden="true">check_circle</span>
+        <span>{{ moduloSuccessMessage }}</span>
+      </div>
+    </section>
   </section>
 </div>
 
@@ -176,6 +262,8 @@
   title="Desvincular pastillero"
   message="Desvincularás este dispositivo de tu cuenta. Esta acción no se puede deshacer."
   confirmLabel="Desvincular"
+  icon="link_off"
+  variant="device"
   (closed)="cancelarEliminacion()"
   (confirmed)="confirmarEliminacion()"
 />

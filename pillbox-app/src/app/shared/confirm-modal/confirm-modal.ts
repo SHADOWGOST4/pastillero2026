@@ -15,6 +15,7 @@ export class ConfirmModal {
   @Input() confirmLabel = 'Confirmar';
   @Input() busy = false;
   @Input() icon = 'warning_amber';
+  @Input() variant: 'default' | 'device' = 'default';
   @Output() closed = new EventEmitter<void>();
   @Output() confirmed = new EventEmitter<void>();
 

@@ -33,7 +33,7 @@
       </span>
     </div>
 
-    <form #medicamentoForm="ngForm" (ngSubmit)="onSubmit()" novalidate>
+    <form #medicamentoForm="ngForm" (ngSubmit)="onSubmit(medicamentoForm)" novalidate>
       <div class="form-grid">
         <div class="field">
           <mat-form-field appearance="outline" class="full-width">
@@ -70,6 +70,28 @@
             />
             <mat-hint>Indica la cantidad prescrita.</mat-hint>
             <mat-error *ngIf="dosis.invalid && (dosis.dirty || dosis.touched)">La dosis es obligatoria.</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Stock</mat-label>
+            <input
+              matInput
+              id="stock-medicamento"
+              type="number"
+              min="0"
+              step="1"
+              pattern="^[0-9]+$"
+              [(ngModel)]="form.stock"
+              #stock="ngModel"
+              name="stock"
+              required
+            />
+            <mat-hint>Indica la cantidad disponible.</mat-hint>
+            <mat-error *ngIf="stock.invalid && (stock.dirty || stock.touched)">
+              Introduce un número entero mayor o igual a 0.
+            </mat-error>
           </mat-form-field>
         </div>
 
@@ -141,6 +163,7 @@
           <tr>
             <th>Medicamento</th>
             <th>Dosis</th>
+            <th>Stock</th>
             <th>Descripción</th>
             <th class="actions-heading">Acciones</th>
           </tr>
@@ -154,13 +177,14 @@
               </div>
             </td>
             <td><span class="dose-badge">{{ med.dosis }}</span></td>
+            <td><span class="stock-value">{{ med.stock }}</span></td>
             <td class="description-cell">{{ med.descripcion || 'Sin descripción' }}</td>
             <td class="actions-cell">
-              <button type="button" class="btn btn-sm btn-outline-primary action-button" (click)="editarMedicamento(med)">
+              <button type="button" class="btn btn-sm action-button action-edit" (click)="editarMedicamento(med)">
                 <span class="material-icons" aria-hidden="true">edit</span>
                 Editar
               </button>
-              <button type="button" class="btn btn-sm btn-outline-danger action-button" (click)="eliminarMedicamento(med.id)">
+              <button type="button" class="btn btn-sm action-button action-delete" (click)="eliminarMedicamento(med.id)">
                 <span class="material-icons" aria-hidden="true">delete_outline</span>
                 Eliminar
               </button>
@@ -179,14 +203,15 @@
           </div>
           <span class="dose-badge">{{ med.dosis }}</span>
         </div>
+        <p class="mobile-stock"><strong>Stock:</strong> {{ med.stock }}</p>
         <p *ngIf="med.descripcion" class="mobile-description">{{ med.descripcion }}</p>
         <p *ngIf="!med.descripcion" class="mobile-description muted">Sin descripción</p>
         <div class="mobile-actions">
-          <button type="button" class="btn btn-sm btn-outline-primary action-button" (click)="editarMedicamento(med)">
+          <button type="button" class="btn btn-sm action-button action-edit" (click)="editarMedicamento(med)">
             <span class="material-icons" aria-hidden="true">edit</span>
             Editar
           </button>
-          <button type="button" class="btn btn-sm btn-outline-danger action-button" (click)="eliminarMedicamento(med.id)">
+          <button type="button" class="btn btn-sm action-button action-delete" (click)="eliminarMedicamento(med.id)">
             <span class="material-icons" aria-hidden="true">delete_outline</span>
             Eliminar
           </button>

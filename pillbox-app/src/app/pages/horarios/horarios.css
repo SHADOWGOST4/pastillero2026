@@ -250,6 +250,34 @@
   gap: 0.3rem;
 }
 
+.action-edit,
+.action-delete {
+  border-color: transparent;
+  color: #fff;
+}
+
+.action-edit {
+  background: #2563eb;
+}
+
+.action-edit:hover,
+.action-edit:focus-visible {
+  border-color: #1d4ed8;
+  color: #fff;
+  background: #1d4ed8;
+}
+
+.action-delete {
+  background: #dc2626;
+}
+
+.action-delete:hover,
+.action-delete:focus-visible {
+  border-color: #b91c1c;
+  color: #fff;
+  background: #b91c1c;
+}
+
 .loading-state {
   display: flex;
   align-items: center;

@@ -168,11 +168,11 @@
               </div>
             </td>
             <td class="actions-cell">
-              <button type="button" class="btn btn-sm btn-outline-primary action-button" (click)="editarHorario(horario)">
+              <button type="button" class="btn btn-sm action-button action-edit" (click)="editarHorario(horario)">
                 <span class="material-icons" aria-hidden="true">edit</span>
                 Editar
               </button>
-              <button type="button" class="btn btn-sm btn-outline-danger action-button" (click)="eliminarHorario(horario.id)">
+              <button type="button" class="btn btn-sm action-button action-delete" (click)="eliminarHorario(horario.id)">
                 <span class="material-icons" aria-hidden="true">delete_outline</span>
                 Eliminar
               </button>
@@ -204,11 +204,11 @@
           </div>
         </div>
         <div class="mobile-actions">
-          <button type="button" class="btn btn-sm btn-outline-primary action-button" (click)="editarHorario(horario)">
+          <button type="button" class="btn btn-sm action-button action-edit" (click)="editarHorario(horario)">
             <span class="material-icons" aria-hidden="true">edit</span>
             Editar
           </button>
-          <button type="button" class="btn btn-sm btn-outline-danger action-button" (click)="eliminarHorario(horario.id)">
+          <button type="button" class="btn btn-sm action-button action-delete" (click)="eliminarHorario(horario.id)">
             <span class="material-icons" aria-hidden="true">delete_outline</span>
             Eliminar
           </button>

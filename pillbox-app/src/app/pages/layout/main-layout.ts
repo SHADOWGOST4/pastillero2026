@@ -25,7 +25,13 @@ export class MainLayout implements OnInit {
     this.actualizarBreadcrumb(this.router.url);
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe((event) => this.actualizarBreadcrumb(event.urlAfterRedirects));
+      .subscribe((event) => {
+        this.actualizarBreadcrumb(event.urlAfterRedirects);
+
+        if (window.innerWidth < 992) {
+          this.sidebarAbierto = false;
+        }
+      });
   }
 
   private actualizarBreadcrumb(url: string) {

@@ -7,8 +7,14 @@ import {
   ActualizarDispositivoRequest,
   CrearDispositivoRequest,
   DispositivoResponse,
+  ActualizarModuloRequest,
+  CrearModuloRequest,
+  MedicamentoResponse,
+  ModuloResponse,
 } from '../../core/models/api.interfaces';
 import { DispositivoService } from '../../services/dispositivo';
+import { Medicamento } from '../../services/medicamento';
+import { ModuloService } from '../../services/modulo';
 import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
 
 @Component({
@@ -29,6 +35,15 @@ export class Dispositivo implements OnInit {
   modalEliminarAbierto = false;
   eliminando = false;
   dispositivoPendienteEliminar: number | null = null;
+  modulos: ModuloResponse[] = [];
+  medicamentos: MedicamentoResponse[] = [];
+  modulosLoading = false;
+  moduloErrorMessage = '';
+  moduloSuccessMessage = '';
+  selectedDeviceId: number | null = null;
+  selectedModuleId: number | null = null;
+  selectedMedicationId: number | null = null;
+  newModuleNumber: number | null = null;
 
   form: CrearDispositivoRequest = {
     nombre: '',
@@ -36,7 +51,9 @@ export class Dispositivo implements OnInit {
     estado_conexion: false,
   };
 
-  constructor(private dispositivoService: DispositivoService) {}
+  constructor(  private dispositivoService: DispositivoService,
+  private moduloService: ModuloService,
+  private medicamentoService: Medicamento,) {}
 
   ngOnInit(): void {
     this.cargarDispositivos();
@@ -49,11 +66,146 @@ export class Dispositivo implements OnInit {
     this.dispositivoService.getAll().subscribe({
       next: (data) => {
         this.dispositivos = data;
+        if (!data.some((dispositivo) => dispositivo.id === this.selectedDeviceId)) {
+          this.selectedDeviceId = data.length > 0 ? data[0].id : null;
+          this.selectedModuleId = null;
+          this.selectedMedicationId = null;
+        }
         this.loading = false;
+        this.cargarMedicamentos();
+        this.cargarModulos();
       },
       error: (err) => {
         this.loading = false;
         this.errorMessage = this.extraerError(err, 'No se pudieron cargar los dispositivos.');
+      },
+    });
+  }
+
+  cargarMedicamentos(): void {
+    this.medicamentoService.getAll().subscribe({
+      next: (data) => {
+        this.medicamentos = data;
+      },
+      error: (err) => {
+        this.moduloErrorMessage = this.extraerError(err, 'No se pudieron cargar los medicamentos.');
+      },
+    });
+  }
+
+  cargarModulos(): void {
+    this.modulosLoading = true;
+    this.moduloErrorMessage = '';
+
+    this.moduloService.getAll().subscribe({
+      next: (data) => {
+        this.modulos = data;
+        this.modulosLoading = false;
+      },
+      error: (err) => {
+        this.modulosLoading = false;
+        this.moduloErrorMessage = this.extraerError(err, 'No se pudieron cargar los módulos.');
+      },
+    });
+  }
+
+  seleccionarDispositivo(id: number): void {
+    this.selectedDeviceId = id;
+    this.selectedModuleId = null;
+    this.selectedMedicationId = null;
+    this.moduloErrorMessage = '';
+    this.moduloSuccessMessage = '';
+  }
+
+  get modulosDelDispositivo(): ModuloResponse[] {
+    return this.modulos
+      .filter((modulo) => modulo.id_dispositivo === this.selectedDeviceId)
+      .sort((a, b) => a.numero_modulo - b.numero_modulo);
+  }
+
+  get medicamentosDisponibles(): MedicamentoResponse[] {
+    const asignados = new Set(
+      this.modulos
+        .filter((modulo) => modulo.id_medicamento !== null && modulo.id !== this.selectedModuleId)
+        .map((modulo) => modulo.id_medicamento),
+    );
+    return this.medicamentos.filter((medicamento) => !asignados.has(medicamento.id));
+  }
+
+  seleccionarModuloParaAsignar(modulo: ModuloResponse): void {
+    if (modulo.id_medicamento !== null) return;
+    this.selectedModuleId = modulo.id;
+    this.selectedMedicationId = null;
+    this.moduloErrorMessage = '';
+    this.moduloSuccessMessage = '';
+  }
+
+  asignarMedicamento(): void {
+    const modulo = this.modulos.find((item) => item.id === this.selectedModuleId);
+    if (!modulo || modulo.id_medicamento !== null || this.selectedMedicationId === null) {
+      this.moduloErrorMessage = 'Selecciona un módulo disponible y un medicamento.';
+      this.moduloSuccessMessage = '';
+      return;
+    }
+
+    this.actualizarModulo(modulo, this.selectedMedicationId, 'Medicamento asignado correctamente.');
+  }
+
+  desasignarMedicamento(modulo: ModuloResponse): void {
+    if (modulo.id_medicamento === null) return;
+    this.actualizarModulo(modulo, null, 'Medicamento desasignado correctamente.');
+  }
+
+  crearModulo(): void {
+    const moduleNumber = this.newModuleNumber;
+    if (
+      this.selectedDeviceId === null ||
+      typeof moduleNumber !== 'number' ||
+      !Number.isInteger(moduleNumber) ||
+      moduleNumber < 1
+    ) {
+      this.moduloErrorMessage = 'Indica un número de módulo entero mayor o igual a 1.';
+      this.moduloSuccessMessage = '';
+      return;
+    }
+
+    const payload: CrearModuloRequest = {
+      id_dispositivo: this.selectedDeviceId,
+      numero_modulo: moduleNumber,
+      id_medicamento: null,
+    };
+    this.moduloService.create(payload).subscribe({
+      next: () => {
+        this.newModuleNumber = null;
+        this.moduloSuccessMessage = 'Módulo creado correctamente.';
+        this.moduloErrorMessage = '';
+        this.cargarModulos();
+      },
+      error: (err) => {
+        this.moduloErrorMessage = this.extraerError(err, 'No se pudo crear el módulo.');
+        this.moduloSuccessMessage = '';
+      },
+    });
+  }
+
+  private actualizarModulo(modulo: ModuloResponse, idMedicamento: number | null, successMessage: string): void {
+    const payload: ActualizarModuloRequest = {
+      id_dispositivo: modulo.id_dispositivo,
+      numero_modulo: modulo.numero_modulo,
+      id_medicamento: idMedicamento,
+    };
+
+    this.moduloService.update(modulo.id, payload).subscribe({
+      next: () => {
+        this.selectedModuleId = null;
+        this.selectedMedicationId = null;
+        this.moduloSuccessMessage = successMessage;
+        this.moduloErrorMessage = '';
+        this.cargarModulos();
+      },
+      error: (err) => {
+        this.moduloErrorMessage = this.extraerError(err, 'No se pudo actualizar la asignación del módulo.');
+        this.moduloSuccessMessage = '';
       },
     });
   }

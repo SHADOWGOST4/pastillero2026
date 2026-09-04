@@ -28,6 +28,28 @@
   gap: 0.35rem;
 }
 
+.confirm-button {
+  border: 1px solid #16a34a;
+  border-radius: 999px;
+  color: #fff;
+  background: #16a34a;
+  box-shadow: 0 3px 8px rgba(22, 163, 74, 0.2);
+  font-weight: 600;
+}
+
+.confirm-button:hover,
+.confirm-button:focus-visible {
+  border-color: #15803d;
+  color: #fff;
+  background: #15803d;
+  box-shadow: 0 5px 12px rgba(21, 128, 61, 0.28);
+  transform: translateY(-1px);
+}
+
+.confirm-button .material-icons {
+  font-size: 1.05rem;
+}
+
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -280,6 +302,19 @@
 
 .actions-cell {
   justify-content: flex-end;
+}
+
+.action-delete {
+  border-color: transparent;
+  color: #fff;
+  background: #dc2626;
+}
+
+.action-delete:hover,
+.action-delete:focus-visible {
+  border-color: #b91c1c;
+  color: #fff;
+  background: #b91c1c;
 }
 
 .state-message {

@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from datetime import datetime, time, timedelta
-from .models import Usuario, Medicamento, Horario, Dispositivo, Contacto, Registro_Toma, Notificacion
+from .models import Usuario, Medicamento, Horario, Dispositivo, Contacto, Registro_Toma, Notificacion, Modulo
 
 
 @api_view(['GET'])
@@ -548,4 +548,479 @@ class LogicaHorariosTests(TestCase):
         response = self.client.get('/api/proximos-horarios/?limit=3')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 3)
+
+
+class MedicamentoStockTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.usuario = Usuario.objects.create(
+            nombre='Juan Perez',
+            correo='juan.perez@example.com',
+            password=make_password('Password123!'),
+            telefono='3001112233',
+            activo=True
+        )
+        self.token = str(RefreshToken.for_user(self.usuario).access_token)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.token}')
+
+        # Medicamento existente creado directamente en DB
+        self.med_existente = Medicamento.objects.create(
+            nombre='Medicamento Existente',
+            descripcion='Tratamiento previo',
+            dosis='1 pastilla',
+            id_usuario=self.usuario
+        )
+
+    def test_medicamentos_existentes_tienen_stock_por_defecto_cero(self):
+        """Los medicamentos creados previamente o sin stock explícito tienen stock=0."""
+        self.assertEqual(self.med_existente.stock, 0)
+        response = self.client.get(f'/api/medicamentos/{self.med_existente.id}/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['stock'], 0)
+
+    def test_crear_medicamento_con_stock_valido(self):
+        """POST /api/medicamentos/ acepta stock positivo y lo guarda correctamente."""
+        data = {
+            'nombre': 'Acetaminofén',
+            'dosis': '500 mg',
+            'descripcion': 'Medicamento para el dolor',
+            'stock': 30
+        }
+        response = self.client.post('/api/medicamentos/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['nombre'], 'Acetaminofén')
+        self.assertEqual(response.data['stock'], 30)
+
+        # Verificar en base de datos
+        med_db = Medicamento.objects.get(id=response.data['id'])
+        self.assertEqual(med_db.stock, 30)
+
+    def test_crear_medicamento_sin_campo_stock_asigna_cero(self):
+        """POST /api/medicamentos/ sin proveer stock asigna default 0."""
+        data = {
+            'nombre': 'Ibuprofeno',
+            'dosis': '400 mg',
+            'descripcion': 'Antiinflamatorio'
+        }
+        response = self.client.post('/api/medicamentos/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['stock'], 0)
+
+    def test_crear_medicamento_con_stock_cero(self):
+        """POST /api/medicamentos/ con stock=0 es válido."""
+        data = {
+            'nombre': 'Loratadina',
+            'dosis': '10 mg',
+            'descripcion': 'Antialérgico',
+            'stock': 0
+        }
+        response = self.client.post('/api/medicamentos/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['stock'], 0)
+
+    def test_crear_medicamento_con_stock_negativo_es_rechazado(self):
+        """POST /api/medicamentos/ con stock negativo (-1) retorna 400 Bad Request."""
+        data = {
+            'nombre': 'Omeprazol',
+            'dosis': '20 mg',
+            'descripcion': 'Protector gástrico',
+            'stock': -1
+        }
+        response = self.client.post('/api/medicamentos/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('stock', response.data)
+
+    def test_crear_medicamento_con_stock_decimal_es_rechazado(self):
+        """POST /api/medicamentos/ con stock decimal (2.5) retorna 400 Bad Request."""
+        data = {
+            'nombre': 'Omeprazol',
+            'dosis': '20 mg',
+            'descripcion': 'Protector gástrico',
+            'stock': 2.5
+        }
+        response = self.client.post('/api/medicamentos/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('stock', response.data)
+
+    def test_crear_medicamento_con_stock_texto_es_rechazado(self):
+        """POST /api/medicamentos/ con stock string ("abc") retorna 400 Bad Request."""
+        data = {
+            'nombre': 'Omeprazol',
+            'dosis': '20 mg',
+            'descripcion': 'Protector gástrico',
+            'stock': 'abc'
+        }
+        response = self.client.post('/api/medicamentos/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('stock', response.data)
+
+    def test_listar_medicamentos_incluye_campo_stock(self):
+        """GET /api/medicamentos/ incluye el campo stock en todos los elementos."""
+        Medicamento.objects.create(
+            nombre='Losartán',
+            descripcion='Presión arterial',
+            dosis='50 mg',
+            stock=45,
+            id_usuario=self.usuario
+        )
+        response = self.client.get('/api/medicamentos/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        for item in response.data:
+            self.assertIn('stock', item)
+            self.assertIsInstance(item['stock'], int)
+
+    def test_obtener_medicamento_por_id_incluye_stock(self):
+        """GET /api/medicamentos/{id}/ incluye el campo stock."""
+        med = Medicamento.objects.create(
+            nombre='Amoxicilina',
+            descripcion='Antibiótico',
+            dosis='500 mg',
+            stock=12,
+            id_usuario=self.usuario
+        )
+        response = self.client.get(f'/api/medicamentos/{med.id}/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['stock'], 12)
+
+    def test_actualizar_stock_parcial_patch(self):
+        """PATCH /api/medicamentos/{id}/ permite actualizar únicamente el campo stock."""
+        patch_data = {'stock': 25}
+        response = self.client.patch(f'/api/medicamentos/{self.med_existente.id}/', patch_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['stock'], 25)
+
+        self.med_existente.refresh_from_db()
+        self.assertEqual(self.med_existente.stock, 25)
+        # Los demás campos se mantienen intactos
+        self.assertEqual(self.med_existente.nombre, 'Medicamento Existente')
+
+    def test_actualizar_medicamento_put_con_stock(self):
+        """PUT /api/medicamentos/{id}/ actualiza correctamente con el nuevo stock."""
+        put_data = {
+            'nombre': 'Medicamento Modificado',
+            'descripcion': 'Descripción Modificada',
+            'dosis': '2 pastillas',
+            'stock': 50
+        }
+        response = self.client.put(f'/api/medicamentos/{self.med_existente.id}/', put_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['stock'], 50)
+        self.assertEqual(response.data['nombre'], 'Medicamento Modificado')
+
+        self.med_existente.refresh_from_db()
+        self.assertEqual(self.med_existente.stock, 50)
+
+    def test_actualizar_stock_negativo_patch_es_rechazado(self):
+        """PATCH /api/medicamentos/{id}/ con stock negativo es rechazado con 400 Bad Request."""
+        patch_data = {'stock': -10}
+        response = self.client.patch(f'/api/medicamentos/{self.med_existente.id}/', patch_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('stock', response.data)
+
+
+class ModuloAPITests(TestCase):
+    def setUp(self):
+        self.client_a = APIClient()
+        self.client_b = APIClient()
+        self.client_anon = APIClient()
+
+        # Usuario A
+        self.user_a = Usuario.objects.create(
+            nombre='Usuario A',
+            correo='usuario.a.mod@example.com',
+            password=make_password('PasswordA123!'),
+            telefono='3110000001',
+            activo=True
+        )
+        self.token_a = str(RefreshToken.for_user(self.user_a).access_token)
+        self.client_a.credentials(HTTP_AUTHORIZATION=f'Bearer {self.token_a}')
+
+        # Usuario B
+        self.user_b = Usuario.objects.create(
+            nombre='Usuario B',
+            correo='usuario.b.mod@example.com',
+            password=make_password('PasswordB123!'),
+            telefono='3110000002',
+            activo=True
+        )
+        self.token_b = str(RefreshToken.for_user(self.user_b).access_token)
+        self.client_b.credentials(HTTP_AUTHORIZATION=f'Bearer {self.token_b}')
+
+        # Dispositivos
+        self.disp_a = Dispositivo.objects.create(
+            nombre='Pastillero A',
+            ip_esp32='192.168.1.10',
+            estado_conexion=True,
+            id_usuario=self.user_a
+        )
+        self.disp_a_2 = Dispositivo.objects.create(
+            nombre='Pastillero A2',
+            ip_esp32='192.168.1.11',
+            estado_conexion=True,
+            id_usuario=self.user_a
+        )
+        self.disp_b = Dispositivo.objects.create(
+            nombre='Pastillero B',
+            ip_esp32='192.168.1.20',
+            estado_conexion=True,
+            id_usuario=self.user_b
+        )
+
+        # Medicamentos
+        self.med_a1 = Medicamento.objects.create(
+            nombre='Acetaminofén A1',
+            descripcion='Dolor',
+            dosis='500 mg',
+            stock=30,
+            id_usuario=self.user_a
+        )
+        self.med_a2 = Medicamento.objects.create(
+            nombre='Ibuprofeno A2',
+            descripcion='Inflamación',
+            dosis='400 mg',
+            stock=20,
+            id_usuario=self.user_a
+        )
+        self.med_b = Medicamento.objects.create(
+            nombre='Loratadina B',
+            descripcion='Alergia',
+            dosis='10 mg',
+            stock=10,
+            id_usuario=self.user_b
+        )
+
+        # Módulos iniciales
+        self.mod_a1 = Modulo.objects.create(
+            id_dispositivo=self.disp_a,
+            numero_modulo=1,
+            id_medicamento=self.med_a1
+        )
+        self.mod_b1 = Modulo.objects.create(
+            id_dispositivo=self.disp_b,
+            numero_modulo=1,
+            id_medicamento=self.med_b
+        )
+
+    # 1. Autenticación
+    def test_1_usuario_anonimo_no_puede_acceder_a_modulos(self):
+        """1. Usuario anónimo recibe 401 al intentar acceder a /api/modulos/."""
+        response = self.client_anon.get('/api/modulos/')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    # 2. Aislamiento
+    def test_2_usuario_a_puede_consultar_sus_modulos(self):
+        """2. Usuario A puede listar sus módulos propios."""
+        response = self.client_a.get('/api/modulos/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], self.mod_a1.id)
+        self.assertEqual(response.data[0]['numero_modulo'], 1)
+        self.assertEqual(response.data[0]['id_medicamento'], self.med_a1.id)
+
+    def test_3_usuario_a_no_puede_consultar_modulos_de_usuario_b(self):
+        """3. Usuario A recibe 404 al intentar obtener detalle del módulo de Usuario B."""
+        response = self.client_a.get(f'/api/modulos/{self.mod_b1.id}/')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_4_usuario_a_no_puede_modificar_modulos_de_usuario_b(self):
+        """4. Usuario A recibe 404 al intentar modificar (PUT/PATCH) módulo de Usuario B."""
+        patch_data = {'numero_modulo': 5}
+        resp_patch = self.client_a.patch(f'/api/modulos/{self.mod_b1.id}/', patch_data, format='json')
+        self.assertEqual(resp_patch.status_code, status.HTTP_404_NOT_FOUND)
+
+        put_data = {
+            'id_dispositivo': self.disp_a.id,
+            'numero_modulo': 5,
+            'id_medicamento': None
+        }
+        resp_put = self.client_a.put(f'/api/modulos/{self.mod_b1.id}/', put_data, format='json')
+        self.assertEqual(resp_put.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_5_usuario_a_no_puede_eliminar_modulos_de_usuario_b(self):
+        """5. Usuario A recibe 404 al intentar eliminar módulo de Usuario B."""
+        response = self.client_a.delete(f'/api/modulos/{self.mod_b1.id}/')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertTrue(Modulo.objects.filter(id=self.mod_b1.id).exists())
+
+    # 3. Dispositivos
+    def test_6_usuario_a_puede_crear_modulo_en_su_dispositivo(self):
+        """6. Usuario A puede crear un módulo en su dispositivo propio."""
+        data = {
+            'id_dispositivo': self.disp_a.id,
+            'numero_modulo': 2,
+            'id_medicamento': self.med_a2.id
+        }
+        response = self.client_a.post('/api/modulos/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['numero_modulo'], 2)
+        self.assertEqual(response.data['id_medicamento'], self.med_a2.id)
+
+    def test_7_usuario_a_no_puede_crear_modulo_en_dispositivo_de_b(self):
+        """7. Usuario A recibe 400 al intentar crear módulo en dispositivo de Usuario B."""
+        data = {
+            'id_dispositivo': self.disp_b.id,
+            'numero_modulo': 2,
+            'id_medicamento': None
+        }
+        response = self.client_a.post('/api/modulos/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('id_dispositivo', response.data)
+
+    # 4. Medicamentos
+    def test_8_usuario_a_puede_asignar_medicamento_propio(self):
+        """8. Usuario A puede asignar un medicamento propio al crear o actualizar módulo."""
+        data = {
+            'id_dispositivo': self.disp_a.id,
+            'numero_modulo': 3,
+            'id_medicamento': self.med_a2.id
+        }
+        response = self.client_a.post('/api/modulos/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['id_medicamento'], self.med_a2.id)
+
+    def test_9_usuario_a_no_puede_asignar_medicamento_de_b(self):
+        """9. Usuario A recibe 400 al intentar asignar un medicamento perteneciente a Usuario B."""
+        data = {
+            'id_dispositivo': self.disp_a.id,
+            'numero_modulo': 3,
+            'id_medicamento': self.med_b.id  # Medicamento de B
+        }
+        response = self.client_a.post('/api/modulos/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('id_medicamento', response.data)
+
+    # 5. Módulos vacíos
+    def test_10_crear_modulo_vacio_con_medicamento_null(self):
+        """10. Puede crearse un módulo disponible/vacío con id_medicamento=null."""
+        data = {
+            'id_dispositivo': self.disp_a.id,
+            'numero_modulo': 4,
+            'id_medicamento': None
+        }
+        response = self.client_a.post('/api/modulos/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIsNone(response.data['id_medicamento'])
+
+    def test_11_desasignar_medicamento_con_null_via_patch(self):
+        """11. Puede desasignarse un medicamento de un módulo existente enviando id_medicamento=null."""
+        patch_data = {'id_medicamento': None}
+        response = self.client_a.patch(f'/api/modulos/{self.mod_a1.id}/', patch_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data['id_medicamento'])
+
+        self.mod_a1.refresh_from_db()
+        self.assertIsNone(self.mod_a1.id_medicamento)
+
+    # 6. Unicidad de número de módulo
+    def test_12_no_se_puede_repetir_numero_modulo_en_mismo_dispositivo(self):
+        """12. Rechazar (400) creación o actualización con numero_modulo repetido en el mismo dispositivo."""
+        data = {
+            'id_dispositivo': self.disp_a.id,
+            'numero_modulo': 1,  # Ya existe mod_a1 con numero_modulo=1
+            'id_medicamento': None
+        }
+        response = self.client_a.post('/api/modulos/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('numero_modulo', response.data)
+
+    def test_13_mismo_numero_modulo_en_distinto_dispositivo_es_valido(self):
+        """13. El mismo numero_modulo puede existir sin conflicto en otro dispositivo del mismo usuario."""
+        data = {
+            'id_dispositivo': self.disp_a_2.id,
+            'numero_modulo': 1,  # Módulo 1 en el segundo pastillero
+            'id_medicamento': None
+        }
+        response = self.client_a.post('/api/modulos/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['numero_modulo'], 1)
+        self.assertEqual(response.data['id_dispositivo'], self.disp_a_2.id)
+
+    # 7. OneToOne (Medicamento no duplicado en múltiples módulos)
+    def test_14_un_medicamento_no_puede_estar_asignado_a_dos_modulos(self):
+        """14. Rechazar (400) asignación de un medicamento ya asignado a otro módulo."""
+        # med_a1 ya está asignado a mod_a1
+        data = {
+            'id_dispositivo': self.disp_a.id,
+            'numero_modulo': 2,
+            'id_medicamento': self.med_a1.id  # Ya asignado a mod_a1
+        }
+        response = self.client_a.post('/api/modulos/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('id_medicamento', response.data)
+
+    # 8. CRUD completo
+    def test_15_crud_get_list(self):
+        """15. GET /api/modulos/ lista los módulos del usuario con formato correcto."""
+        response = self.client_a.get('/api/modulos/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsInstance(response.data, list)
+        self.assertEqual(len(response.data), 1)
+        item = response.data[0]
+        self.assertIn('id', item)
+        self.assertIn('id_dispositivo', item)
+        self.assertIn('numero_modulo', item)
+        self.assertIn('id_medicamento', item)
+
+    def test_16_crud_post_create(self):
+        """16. POST /api/modulos/ crea un nuevo registro en base de datos."""
+        data = {
+            'id_dispositivo': self.disp_a.id,
+            'numero_modulo': 2,
+            'id_medicamento': self.med_a2.id
+        }
+        response = self.client_a.post('/api/modulos/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(Modulo.objects.filter(id=response.data['id']).exists())
+
+    def test_17_crud_get_detail(self):
+        """17. GET /api/modulos/{id}/ obtiene el detalle de un módulo específico."""
+        response = self.client_a.get(f'/api/modulos/{self.mod_a1.id}/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], self.mod_a1.id)
+        self.assertEqual(response.data['numero_modulo'], 1)
+        self.assertEqual(response.data['id_medicamento'], self.med_a1.id)
+
+    def test_18_crud_put_update(self):
+        """18. PUT /api/modulos/{id}/ actualiza completamente el módulo."""
+        put_data = {
+            'id_dispositivo': self.disp_a.id,
+            'numero_modulo': 3,
+            'id_medicamento': self.med_a2.id
+        }
+        response = self.client_a.put(f'/api/modulos/{self.mod_a1.id}/', put_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['numero_modulo'], 3)
+        self.assertEqual(response.data['id_medicamento'], self.med_a2.id)
+
+        self.mod_a1.refresh_from_db()
+        self.assertEqual(self.mod_a1.numero_modulo, 3)
+        self.assertEqual(self.mod_a1.id_medicamento, self.med_a2)
+
+    def test_19_crud_patch_update(self):
+        """19. PATCH /api/modulos/{id}/ actualiza campos individuales del módulo."""
+        patch_data = {'numero_modulo': 5}
+        response = self.client_a.patch(f'/api/modulos/{self.mod_a1.id}/', patch_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['numero_modulo'], 5)
+
+        self.mod_a1.refresh_from_db()
+        self.assertEqual(self.mod_a1.numero_modulo, 5)
+        # Medicamento se conserva intacto
+        self.assertEqual(self.mod_a1.id_medicamento, self.med_a1)
+
+    def test_20_crud_delete_no_elimina_medicamento_ni_dispositivo(self):
+        """20. DELETE /api/modulos/{id}/ elimina el módulo sin borrar el dispositivo ni el medicamento."""
+        med_id = self.med_a1.id
+        disp_id = self.disp_a.id
+        mod_id = self.mod_a1.id
+
+        response = self.client_a.delete(f'/api/modulos/{mod_id}/')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Módulo ya no existe
+        self.assertFalse(Modulo.objects.filter(id=mod_id).exists())
+        # Medicamento y Dispositivo siguen existiendo
+        self.assertTrue(Medicamento.objects.filter(id=med_id).exists())
+        self.assertTrue(Dispositivo.objects.filter(id=disp_id).exists())
+
 

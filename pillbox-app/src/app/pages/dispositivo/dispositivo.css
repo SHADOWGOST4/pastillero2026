@@ -27,6 +27,68 @@
   gap: 0.35rem;
 }
 
+.action-edit,
+.action-assign,
+.action-confirm,
+.action-add,
+.action-delete,
+.action-unassign,
+.action-view {
+  border-width: 1px;
+  border-style: solid;
+}
+
+.action-edit,
+.action-assign,
+.action-confirm,
+.action-add {
+  border-color: #2563eb;
+  color: #fff;
+  background: #2563eb;
+}
+
+.action-edit:hover,
+.action-edit:focus-visible,
+.action-assign:hover,
+.action-assign:focus-visible,
+.action-confirm:hover,
+.action-confirm:focus-visible,
+.action-add:hover,
+.action-add:focus-visible {
+  border-color: #1d4ed8;
+  color: #fff;
+  background: #1d4ed8;
+}
+
+.action-view {
+  border-color: #cbd5e1;
+  color: #334155;
+  background: #f8fafc;
+}
+
+.action-view:hover,
+.action-view:focus-visible {
+  border-color: #94a3b8;
+  color: #1e293b;
+  background: #e2e8f0;
+}
+
+.action-delete,
+.action-unassign {
+  border-color: #dc2626;
+  color: #fff;
+  background: #dc2626;
+}
+
+.action-delete:hover,
+.action-delete:focus-visible,
+.action-unassign:hover,
+.action-unassign:focus-visible {
+  border-color: #b91c1c;
+  color: #fff;
+  background: #b91c1c;
+}
+
 .form-card,
 .devices-section {
   width: 100%;
@@ -209,6 +271,75 @@
   gap: 1rem;
   justify-items: stretch;
   align-items: stretch;
+}
+
+.modules-panel {
+  margin-top: 1.5rem;
+  padding-top: 1.35rem;
+  border-top: 1px solid var(--border);
+}
+
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.85rem;
+}
+
+.module-card {
+  display: flex;
+  min-height: 9rem;
+  flex-direction: column;
+  padding: 1rem;
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius-md);
+  background: #eff6ff;
+}
+
+.module-card.module-occupied {
+  border-color: #bbf7d0;
+  background: var(--success-soft);
+}
+
+.module-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.module-status {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.module-medication {
+  flex: 1;
+  margin: 0.75rem 0;
+  color: var(--text-primary);
+}
+
+.module-assignment-form,
+.module-create-form {
+  display: flex;
+  align-items: end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.module-assignment-form .form-select,
+.module-create-form .form-control {
+  max-width: 22rem;
+}
+
+.module-create-form {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.module-assignment-form .form-label,
+.module-create-form .form-label {
+  margin-bottom: 0.35rem;
 }
 
 .device-card {
@@ -421,6 +552,22 @@
   }
 
   .form-actions .btn {
+    width: 100%;
+  }
+
+  .module-assignment-form,
+  .module-create-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .module-assignment-form .form-select,
+  .module-create-form .form-control {
+    max-width: none;
+  }
+
+  .module-assignment-form .btn,
+  .module-create-form .btn {
     width: 100%;
   }
 }

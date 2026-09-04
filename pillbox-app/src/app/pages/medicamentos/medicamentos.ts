@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import {
@@ -34,6 +34,7 @@ export class Medicamentos implements OnInit {
     nombre: '',
     descripcion: '',
     dosis: '',
+    stock: 0,
   };
 
   constructor(private medicamentoService: Medicamento) {}
@@ -58,11 +59,13 @@ export class Medicamentos implements OnInit {
     });
   }
 
-  onSubmit(): void {
+  onSubmit(medicamentoForm: NgForm): void {
     const payload = this.normalizarFormulario();
+    const stockValido = Number.isInteger(payload.stock) && payload.stock >= 0;
 
-    if (!payload.nombre || !payload.dosis) {
-      this.errorMessage = 'Nombre y dosis son obligatorios.';
+    if (medicamentoForm.invalid || !payload.nombre || !payload.dosis || !stockValido) {
+      medicamentoForm.form.markAllAsTouched();
+      this.errorMessage = 'Completa los campos obligatorios con valores válidos.';
       this.successMessage = '';
       return;
     }
@@ -101,6 +104,7 @@ export class Medicamentos implements OnInit {
       nombre: medicamento.nombre,
       descripcion: medicamento.descripcion ?? '',
       dosis: medicamento.dosis,
+      stock: medicamento.stock,
     };
   }
 
@@ -149,13 +153,14 @@ export class Medicamentos implements OnInit {
       nombre: this.form.nombre.trim(),
       descripcion: this.form.descripcion?.trim() ?? '',
       dosis: this.form.dosis.trim(),
+      stock: this.form.stock,
     };
   }
 
   resetForm(): void {
     this.isEditMode = false;
     this.editingId = null;
-    this.form = { nombre: '', descripcion: '', dosis: '' };
+    this.form = { nombre: '', descripcion: '', dosis: '', stock: 0 };
   }
 
   private extraerError(error: any, fallback: string): string {
