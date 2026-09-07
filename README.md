@@ -173,21 +173,3 @@ python manage.py test core
 ```
 
 Las pruebas cubren autenticación JWT, hash de contraseñas, aislamiento de recursos entre usuarios y cálculo de próximas tomas.
-
-## Próximos pasos
-
-1. Definir el modelo de asignación única entre pastillero, medicamento y horario.
-2. Actualizar el contrato API, backend y frontend para dicha asignación.
-3. Corregir la consistencia de fechas y horas en registros de toma.
-4. Integrar comunicación real con el ESP32 después de validar el modelo funcional.
-
-## Seguridad y producción
-
-Antes de publicar el proyecto en producción:
-
-- Configura una `SECRET_KEY` segura en variables de entorno.
-- Desactiva `DEBUG`.
-- Limita `ALLOWED_HOSTS` y `CORS_ALLOWED_ORIGINS` a los dominios reales.
-- Usa HTTPS.
-- No subas el archivo `.env` ni credenciales al repositorio.
-
