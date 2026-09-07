@@ -25,8 +25,6 @@ Actualmente se pueden administrar:
 - Dispositivos/pastilleros registrados.
 - Dashboard de próximas tomas.
 
-> El hardware ESP32 aún no está integrado. La siguiente fase definirá la asignación única: **un pastillero físico, un medicamento y un horario**.
-
 ## Tecnologías
 
 ### Backend
