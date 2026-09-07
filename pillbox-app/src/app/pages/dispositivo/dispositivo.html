@@ -45,7 +45,7 @@
 
         <div class="field">
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>IP del ESP32</mat-label>
+            <mat-label>IP detectada (opcional)</mat-label>
             <input
               matInput
               id="dispositivo-ip"
@@ -55,10 +55,8 @@
               name="ip_esp32"
               placeholder="Ej. 192.168.1.100"
               autocomplete="off"
-              required
             />
-            <mat-hint>Dirección IP configurada en el dispositivo.</mat-hint>
-            <mat-error *ngIf="ip.invalid && (ip.dirty || ip.touched)">La IP del dispositivo es obligatoria.</mat-error>
+            <mat-hint>La conexión real se verifica mediante el latido del ESP32.</mat-hint>
           </mat-form-field>
         </div>
 
@@ -75,7 +73,7 @@
             <span class="switch-track" aria-hidden="true"></span>
             <span>{{ form.estado_conexion ? 'Conectado' : 'Desconectado' }}</span>
           </label>
-          <small class="field-help">Indica el estado actual conocido del pastillero.</small>
+          <small class="field-help">El estado se actualiza automáticamente con el latido del ESP32.</small>
         </div>
       </div>
 
@@ -96,6 +94,12 @@
     <div *ngIf="successMessage" class="alert alert-success feedback" role="status">
       <span class="material-icons" aria-hidden="true">check_circle</span>
       <span>{{ successMessage }}</span>
+    </div>
+    <div *ngIf="credencialGenerada" class="alert alert-warning feedback" role="alert">
+      <div>
+        <strong>Guarda estos datos en <code>firmware/esp32_pillbox/secrets.h</code>.</strong>
+        <textarea class="form-control mt-2" rows="3" readonly>{{ credencialGenerada }}</textarea>
+      </div>
     </div>
   </section>
 
@@ -153,12 +157,26 @@
               ? 'El dispositivo figura conectado y disponible.'
               : 'El dispositivo figura desconectado actualmente.' }}
           </p>
+          <div class="mt-3">
+            <label class="form-label" [for]="'horario-' + dispositivo.id">Horario activo del ESP32</label>
+            <div class="d-flex gap-2">
+              <select class="form-select form-select-sm" [(ngModel)]="asignaciones[dispositivo.id]" [name]="'horario-' + dispositivo.id">
+                <option [ngValue]="undefined">Sin asignar</option>
+                <option *ngFor="let horario of horarios" [ngValue]="horario.id">{{ horario.medicamento_nombre }} · {{ horario.hora_toma }}</option>
+              </select>
+              <button type="button" class="btn btn-sm action-button action-assign" (click)="asignarHorario(dispositivo.id)">Asignar</button>
+            </div>
+          </div>
         </div>
 
         <div class="device-actions">
           <button type="button" class="btn btn-sm action-button action-edit" (click)="editarDispositivo(dispositivo)">
             <span class="material-icons" aria-hidden="true">edit</span>
             Editar
+          </button>
+          <button type="button" class="btn btn-sm action-button action-view" (click)="generarCredencial(dispositivo.id)">
+            <span class="material-icons" aria-hidden="true">key</span>
+            Credencial
           </button>
           <button type="button" class="btn btn-sm action-button action-view" (click)="seleccionarDispositivo(dispositivo.id)">
             <span class="material-icons" aria-hidden="true">view_module</span>

@@ -1,0 +1,5 @@
+api_pillbox/.env
+api_pillbox/.venv/
+pillbox-app/node_modules/
+firmware/esp32_pillbox/secrets.h
+.tools/

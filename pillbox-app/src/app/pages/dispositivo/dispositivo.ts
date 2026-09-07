@@ -11,8 +11,10 @@ import {
   CrearModuloRequest,
   MedicamentoResponse,
   ModuloResponse,
+  HorarioResponse,
 } from '../../core/models/api.interfaces';
 import { DispositivoService } from '../../services/dispositivo';
+import { Horario } from '../../services/horario';
 import { Medicamento } from '../../services/medicamento';
 import { ModuloService } from '../../services/modulo';
 import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
@@ -44,6 +46,9 @@ export class Dispositivo implements OnInit {
   selectedModuleId: number | null = null;
   selectedMedicationId: number | null = null;
   newModuleNumber: number | null = null;
+  horarios: HorarioResponse[] = [];
+  asignaciones: Record<number, number | undefined> = {};
+  credencialGenerada = '';
 
   form: CrearDispositivoRequest = {
     nombre: '',
@@ -51,12 +56,16 @@ export class Dispositivo implements OnInit {
     estado_conexion: false,
   };
 
-  constructor(  private dispositivoService: DispositivoService,
-  private moduloService: ModuloService,
-  private medicamentoService: Medicamento,) {}
+  constructor(
+    private dispositivoService: DispositivoService,
+    private moduloService: ModuloService,
+    private medicamentoService: Medicamento,
+    private horarioService: Horario,
+  ) {}
 
   ngOnInit(): void {
     this.cargarDispositivos();
+    this.horarioService.getAll().subscribe({ next: (horarios) => (this.horarios = horarios) });
   }
 
   cargarDispositivos(): void {
@@ -66,6 +75,7 @@ export class Dispositivo implements OnInit {
     this.dispositivoService.getAll().subscribe({
       next: (data) => {
         this.dispositivos = data;
+        data.forEach((dispositivo) => this.cargarAsignacion(dispositivo.id));
         if (!data.some((dispositivo) => dispositivo.id === this.selectedDeviceId)) {
           this.selectedDeviceId = data.length > 0 ? data[0].id : null;
           this.selectedModuleId = null;
@@ -211,8 +221,8 @@ export class Dispositivo implements OnInit {
   }
 
   onSubmit(): void {
-    if (!this.form.nombre.trim() || !this.form.ip_esp32.trim()) {
-      this.errorMessage = 'El nombre y la IP del dispositivo son obligatorios.';
+    if (!this.form.nombre.trim()) {
+      this.errorMessage = 'El nombre del dispositivo es obligatorio.';
       this.successMessage = '';
       return;
     }
@@ -301,6 +311,32 @@ export class Dispositivo implements OnInit {
       ip_esp32: '',
       estado_conexion: false,
     };
+  }
+
+  asignarHorario(dispositivoId: number): void {
+    const horarioId = this.asignaciones[dispositivoId];
+    if (!horarioId) return;
+    this.dispositivoService.asignarHorario(dispositivoId, horarioId).subscribe({
+      next: () => (this.successMessage = 'Horario asignado al ESP32.'),
+      error: (err) => (this.errorMessage = this.extraerError(err, 'No se pudo asignar el horario.')),
+    });
+  }
+
+  generarCredencial(dispositivoId: number): void {
+    if (!window.confirm('La credencial anterior dejará de funcionar. ¿Deseas continuar?')) return;
+    this.dispositivoService.generarCredencial(dispositivoId).subscribe({
+      next: (credencial) => {
+        this.credencialGenerada = `DEVICE_ID=${credencial.device_id}\nDEVICE_TOKEN=${credencial.device_token}`;
+        this.successMessage = 'Credencial generada. Cópiala ahora: no volverá a mostrarse.';
+      },
+      error: (err) => (this.errorMessage = this.extraerError(err, 'No se pudo generar la credencial.')),
+    });
+  }
+
+  private cargarAsignacion(dispositivoId: number): void {
+    this.dispositivoService.getAsignacion(dispositivoId).subscribe({
+      next: (asignacion) => (this.asignaciones[dispositivoId] = asignacion.id_horario),
+    });
   }
 
   private extraerError(error: any, fallback: string): string {

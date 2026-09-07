@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   ActualizarDispositivoRequest,
+  AsignacionDispositivoResponse,
+  CredencialDispositivoResponse,
   CrearDispositivoRequest,
   DispositivoResponse,
 } from '../core/models/api.interfaces';
@@ -34,5 +36,17 @@ export class DispositivoService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}${id}/`);
+  }
+
+  getAsignacion(id: number): Observable<AsignacionDispositivoResponse> {
+    return this.http.get<AsignacionDispositivoResponse>(`${this.apiUrl}${id}/asignacion/`);
+  }
+
+  asignarHorario(id: number, id_horario: number): Observable<AsignacionDispositivoResponse> {
+    return this.http.put<AsignacionDispositivoResponse>(`${this.apiUrl}${id}/asignacion/`, { id_horario });
+  }
+
+  generarCredencial(id: number): Observable<CredencialDispositivoResponse> {
+    return this.http.post<CredencialDispositivoResponse>(`${this.apiUrl}${id}/generar-credencial/`, {});
   }
 }

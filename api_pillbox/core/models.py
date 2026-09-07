@@ -1,4 +1,5 @@
 import math
+import uuid
 from django.db import models
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -40,8 +41,14 @@ class Contacto(models.Model):
 
 class Dispositivo(models.Model):
     nombre = models.CharField(max_length=100)
-    ip_esp32 = models.CharField(max_length=100)
+    # Informativa: la IP cambia y nunca se usa como identidad ni credencial.
+    ip_esp32 = models.CharField(max_length=100, blank=True)
     estado_conexion = models.BooleanField(default=False)
+    identificador = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    token_dispositivo_hash = models.CharField(max_length=255, blank=True)
+    ultimo_latido = models.DateTimeField(null=True, blank=True)
+    version_firmware = models.CharField(max_length=50, blank=True)
+    rssi = models.IntegerField(null=True, blank=True)
     id_usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='dispositivos')
 
     def __str__(self):
@@ -157,6 +164,26 @@ class Registro_Toma(models.Model):
 
     def __str__(self):
         return f"{self.id_usuario.nombre} - {self.fecha_hora_programada}"
+
+
+class AsignacionDispositivo(models.Model):
+    """MVP: un solo horario activo por ESP32; los módulos quedan preparados para escalar."""
+    dispositivo = models.OneToOneField(Dispositivo, on_delete=models.CASCADE, related_name='asignacion')
+    id_horario = models.ForeignKey(Horario, on_delete=models.CASCADE, related_name='asignaciones_dispositivo')
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.dispositivo.nombre} -> {self.id_horario}"
+
+
+class EventoDispositivo(models.Model):
+    """Eventos idempotentes para permitir reintentos seguros tras cortes de red."""
+    evento_id = models.UUIDField(unique=True)
+    dispositivo = models.ForeignKey(Dispositivo, on_delete=models.CASCADE, related_name='eventos')
+    tipo = models.CharField(max_length=40)
+    fecha_dispositivo = models.DateTimeField()
+    fecha_recibido = models.DateTimeField(auto_now_add=True)
+    id_registro = models.ForeignKey(Registro_Toma, null=True, blank=True, on_delete=models.SET_NULL, related_name='eventos_dispositivo')
 
 
 class Notificacion(models.Model):

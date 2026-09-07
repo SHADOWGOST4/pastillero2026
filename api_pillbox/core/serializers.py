@@ -4,7 +4,9 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from django.contrib.auth.hashers import check_password, make_password
-from .models import Usuario, Contacto, Dispositivo, Medicamento, Modulo, Horario, Registro_Toma, Notificacion
+from datetime import timedelta
+from django.utils import timezone
+from .models import Usuario, Contacto, Dispositivo, Medicamento, Modulo, Horario, Registro_Toma, Notificacion, AsignacionDispositivo
 
 class UsuarioSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
@@ -48,12 +50,36 @@ class ContactoSerializer(serializers.ModelSerializer):
 
 
 class DispositivoSerializer(serializers.ModelSerializer):
+    estado_conexion = serializers.SerializerMethodField()
+
     class Meta:
         model = Dispositivo
-        fields = ['id', 'nombre', 'ip_esp32', 'estado_conexion', 'id_usuario']
+        fields = ['id', 'nombre', 'ip_esp32', 'estado_conexion', 'identificador', 'ultimo_latido', 'version_firmware', 'rssi', 'id_usuario']
         extra_kwargs = {
-            'id_usuario': {'read_only': True}
+            'id_usuario': {'read_only': True},
+            'identificador': {'read_only': True},
+            'ultimo_latido': {'read_only': True},
+            'version_firmware': {'read_only': True},
+            'rssi': {'read_only': True},
         }
+
+    def get_estado_conexion(self, obj):
+        return bool(obj.ultimo_latido and obj.ultimo_latido >= timezone.now() - timedelta(seconds=90))
+
+
+class AsignacionDispositivoSerializer(serializers.ModelSerializer):
+    medicamento = serializers.CharField(source='id_horario.id_medicamento.nombre', read_only=True)
+
+    class Meta:
+        model = AsignacionDispositivo
+        fields = ['id', 'dispositivo', 'id_horario', 'medicamento', 'fecha_actualizacion']
+        extra_kwargs = {'dispositivo': {'read_only': True}, 'fecha_actualizacion': {'read_only': True}}
+
+    def validate_id_horario(self, value):
+        dispositivo = self.context.get('dispositivo')
+        if dispositivo and value.id_medicamento.id_usuario_id != dispositivo.id_usuario_id:
+            raise serializers.ValidationError('El horario no pertenece al propietario del dispositivo.')
+        return value
 
 
 class MedicamentoSerializer(serializers.ModelSerializer):

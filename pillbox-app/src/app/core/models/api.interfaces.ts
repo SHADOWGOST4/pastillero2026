@@ -155,7 +155,24 @@ export interface DispositivoResponse {
   nombre: string;
   ip_esp32: string;
   estado_conexion: boolean;
+  identificador: string;
+  ultimo_latido: string | null;
+  version_firmware: string;
+  rssi: number | null;
   id_usuario: number;
+}
+
+export interface AsignacionDispositivoResponse {
+  id: number;
+  dispositivo: number;
+  id_horario: number;
+  medicamento: string;
+  fecha_actualizacion: string;
+}
+
+export interface CredencialDispositivoResponse {
+  device_id: string;
+  device_token: string;
 }
 
 export interface CrearModuloRequest {
