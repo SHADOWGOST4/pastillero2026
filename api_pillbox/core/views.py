@@ -7,6 +7,10 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from django.contrib.auth.hashers import check_password, make_password
 from django.db import transaction
+from django.utils import timezone
+from django.contrib.auth.hashers import check_password, make_password
+from django.db import transaction
+from django.core.exceptions import ValidationError
 from .inventory import calcular_cobertura_medicamento
 from .stock import StockInsuficiente, ajustar_stock, confirmar_registro_con_stock, reponer_stock
 
@@ -367,11 +371,13 @@ def web_push_unsubscribe(request):
 def autenticar_dispositivo(request):
     identificador = request.headers.get('X-Device-Id', '')
     token = request.headers.get('X-Device-Token', '')
+    if not identificador or not token:
+        return None
     try:
         dispositivo = Dispositivo.objects.get(identificador=identificador)
-    except (Dispositivo.DoesNotExist, ValueError):
+    except (Dispositivo.DoesNotExist, ValueError, ValidationError):
         return None
-    return dispositivo if token and dispositivo.token_dispositivo_hash and check_password(token, dispositivo.token_dispositivo_hash) else None
+    return dispositivo if dispositivo.token_dispositivo_hash and check_password(token, dispositivo.token_dispositivo_hash) else None
 
 
 @api_view(['POST'])
