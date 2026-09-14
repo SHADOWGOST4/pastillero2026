@@ -82,6 +82,49 @@
             <mat-error *ngIf="frecuencia.invalid && (frecuencia.dirty || frecuencia.touched)">Indica una frecuencia válida.</mat-error>
           </mat-form-field>
         </div>
+
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Cantidad por toma</mat-label>
+            <input matInput type="number" min="1" step="1" [(ngModel)]="form.cantidad_por_toma" name="cantidad_por_toma" required />
+            <mat-hint>Unidades físicas consumidas en cada toma.</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Fecha de inicio</mat-label>
+            <input matInput type="date" [(ngModel)]="form.fecha_inicio" name="fecha_inicio" required />
+          </mat-form-field>
+        </div>
+
+        <div class="field field-wide">
+          <label class="duration-label">Duración del tratamiento</label>
+          <mat-radio-group
+            class="duration-options"
+            [ngModel]="form.tipo_duracion"
+            (ngModelChange)="cambiarTipoDuracion($event)"
+            name="tipo_duracion"
+          >
+            <mat-radio-button value="DIAS">Número de días</mat-radio-button>
+            <mat-radio-button value="FECHA">Hasta una fecha</mat-radio-button>
+            <mat-radio-button value="INDEFINIDO">Indefinido</mat-radio-button>
+          </mat-radio-group>
+        </div>
+
+        <div class="field" *ngIf="form.tipo_duracion === 'DIAS'">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Duración en días</mat-label>
+            <input matInput type="number" min="1" step="1" [(ngModel)]="form.duracion_dias" name="duracion_dias" required />
+          </mat-form-field>
+        </div>
+
+        <div class="field" *ngIf="form.tipo_duracion === 'FECHA'">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Fecha de finalización</mat-label>
+            <input matInput type="date" [(ngModel)]="form.fecha_fin" name="fecha_fin" [min]="form.fecha_inicio" required />
+          </mat-form-field>
+        </div>
       </div>
 
       <div class="form-actions">
@@ -113,7 +156,7 @@
         <p class="section-kicker">Programación actual</p>
         <h2>Horarios programados</h2>
       </div>
-      <span class="list-count" *ngIf="!loading">{{ horarios.length }} programados</span>
+      <span class="list-count" *ngIf="!loading">{{ totalHorarios }} programados</span>
     </div>
 
     <div *ngIf="loading" class="state-message loading-state">
@@ -121,7 +164,7 @@
       <span>Cargando horarios...</span>
     </div>
 
-    <div *ngIf="!loading && horarios.length === 0" class="state-message empty-state">
+    <div *ngIf="!loading && totalHorarios === 0" class="state-message empty-state">
       <span class="empty-icon material-icons" aria-hidden="true">schedule</span>
       <h3>No tienes horarios programados</h3>
       <p>Configura un horario para organizar las próximas tomas de tus medicamentos.</p>
@@ -163,14 +206,22 @@
             </td>
             <td>
               <div class="next-dose">
-                <span>Próxima toma</span>
-                <strong>{{ horario.proxima_toma | date: 'dd/MM/yyyy HH:mm' }}</strong>
+                <span>{{ horario.activo ? 'Próxima toma' : 'Horario deshabilitado' }}</span>
+                <strong *ngIf="horario.activo">{{ horario.proxima_toma | date: 'dd/MM/yyyy HH:mm' }}</strong>
               </div>
             </td>
             <td class="actions-cell">
               <button type="button" class="btn btn-sm action-button action-edit" (click)="editarHorario(horario)">
                 <span class="material-icons" aria-hidden="true">edit</span>
                 Editar
+              </button>
+              <button *ngIf="horario.activo" type="button" class="btn btn-sm action-button action-delete" (click)="deshabilitarHorario(horario.id)">
+                <span class="material-icons" aria-hidden="true">pause_circle_outline</span>
+                Deshabilitar
+              </button>
+              <button *ngIf="!horario.activo" type="button" class="btn btn-sm action-button action-edit" (click)="activarHorario(horario.id)">
+                <span class="material-icons" aria-hidden="true">play_circle_outline</span>
+                Habilitar
               </button>
               <button type="button" class="btn btn-sm action-button action-delete" (click)="eliminarHorario(horario.id)">
                 <span class="material-icons" aria-hidden="true">delete_outline</span>
@@ -189,6 +240,7 @@
             <span class="medication-icon material-icons" aria-hidden="true">medication</span>
             <strong>{{ horario.medicamento_nombre }}</strong>
           </div>
+
           <div class="schedule-time">
             <span class="material-icons" aria-hidden="true">access_time</span>
             <strong>{{ horario.hora_toma | slice:0:5 }}</strong>
@@ -199,14 +251,22 @@
             {{ horario.frecuencia === 0 ? 'Toma diaria' : 'Cada ' + horario.frecuencia + ' horas' }}
           </span>
           <div class="next-dose">
-            <span>Próxima toma</span>
-            <strong>{{ horario.proxima_toma | date: 'dd/MM/yyyy HH:mm' }}</strong>
+            <span>{{ horario.activo ? 'Próxima toma' : 'Horario deshabilitado' }}</span>
+            <strong *ngIf="horario.activo">{{ horario.proxima_toma | date: 'dd/MM/yyyy HH:mm' }}</strong>
           </div>
         </div>
         <div class="mobile-actions">
           <button type="button" class="btn btn-sm action-button action-edit" (click)="editarHorario(horario)">
             <span class="material-icons" aria-hidden="true">edit</span>
             Editar
+          </button>
+          <button *ngIf="horario.activo" type="button" class="btn btn-sm action-button action-delete" (click)="deshabilitarHorario(horario.id)">
+            <span class="material-icons" aria-hidden="true">pause_circle_outline</span>
+            Deshabilitar
+          </button>
+          <button *ngIf="!horario.activo" type="button" class="btn btn-sm action-button action-edit" (click)="activarHorario(horario.id)">
+            <span class="material-icons" aria-hidden="true">play_circle_outline</span>
+            Habilitar
           </button>
           <button type="button" class="btn btn-sm action-button action-delete" (click)="eliminarHorario(horario.id)">
             <span class="material-icons" aria-hidden="true">delete_outline</span>
@@ -215,15 +275,29 @@
         </div>
       </article>
     </div>
+
+    <nav *ngIf="!loading && totalPaginas > 1" class="pagination-controls" aria-label="Paginación de horarios">
+      <button type="button" class="btn btn-outline-secondary" (click)="paginaAnterior()" [disabled]="paginaActual === 1">
+        <span class="material-icons" aria-hidden="true">chevron_left</span>
+        Anterior
+      </button>
+      <span>Página {{ paginaActual }} de {{ totalPaginas }}</span>
+      <button type="button" class="btn btn-outline-secondary" (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">
+        Siguiente
+        <span class="material-icons" aria-hidden="true">chevron_right</span>
+      </button>
+    </nav>
   </section>
 </div>
 
 <app-confirm-modal
   [visible]="modalEliminarAbierto"
   [busy]="eliminando"
-  title="Eliminar horario"
-  message="Eliminarás este horario de toma. Esta acción no se puede deshacer."
-  confirmLabel="Eliminar horario"
+  [title]="accionModal === 'eliminar' ? 'Eliminar horario' : 'Deshabilitar horario'"
+  [message]="accionModal === 'eliminar'
+    ? 'El horario desaparecerá de la aplicación y quedará deshabilitado. Su historial se conservará.'
+    : 'El horario dejará de generar nuevas tomas, pero se conservará junto con su historial.'"
+  [confirmLabel]="accionModal === 'eliminar' ? 'Eliminar horario' : 'Deshabilitar horario'"
   (closed)="cancelarEliminacion()"
   (confirmed)="confirmarEliminacion()"
 />

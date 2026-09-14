@@ -4,9 +4,21 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from django.contrib.auth.hashers import check_password, make_password
-from datetime import timedelta
+from datetime import date, timedelta
 from django.utils import timezone
-from .models import Usuario, Contacto, Dispositivo, Medicamento, Modulo, Horario, Registro_Toma, Notificacion, AsignacionDispositivo
+from .models import (
+    Usuario,
+    Contacto,
+    Dispositivo,
+    Medicamento,
+    Modulo,
+    Horario,
+    Registro_Toma,
+    MovimientoStock,
+    Notificacion,
+    AsignacionDispositivo,
+    WebPushSubscription,
+)
 
 class UsuarioSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
@@ -87,8 +99,26 @@ class MedicamentoSerializer(serializers.ModelSerializer):
         model = Medicamento
         fields = ['id', 'nombre', 'descripcion', 'dosis', 'stock', 'id_usuario']
         extra_kwargs = {
-            'id_usuario': {'read_only': True}
+            'id_usuario': {'read_only': True},
         }
+
+class ReponerStockSerializer(serializers.Serializer):
+    cantidad = serializers.IntegerField(min_value=1)
+
+
+class AjustarStockSerializer(serializers.Serializer):
+    cantidad = serializers.IntegerField()
+    motivo = serializers.CharField(max_length=1000, allow_blank=False, trim_whitespace=True)
+
+
+class MovimientoStockSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MovimientoStock
+        fields = [
+            'id', 'medicamento', 'registro_toma', 'cantidad', 'stock_anterior',
+            'stock_nuevo', 'tipo', 'motivo', 'fecha_hora', 'usuario',
+        ]
+        read_only_fields = fields
 
 
 class ModuloSerializer(serializers.ModelSerializer):
@@ -155,11 +185,44 @@ class ModuloSerializer(serializers.ModelSerializer):
 class HorarioSerializer(serializers.ModelSerializer):
     medicamento_nombre = serializers.CharField(source='id_medicamento.nombre', read_only=True)
     frecuencia = serializers.IntegerField(min_value=0)
+    cantidad_por_toma = serializers.IntegerField(min_value=1)
     proxima_toma = serializers.ReadOnlyField()
 
     class Meta:
         model = Horario
-        fields = ['id', 'hora_toma', 'frecuencia', 'id_medicamento', 'medicamento_nombre', 'proxima_toma']
+        fields = [
+            'id', 'hora_toma', 'frecuencia', 'id_medicamento', 'medicamento_nombre',
+            'cantidad_por_toma', 'fecha_inicio', 'tipo_duracion', 'duracion_dias',
+            'fecha_fin', 'activo', 'eliminado', 'proxima_toma',
+        ]
+        read_only_fields = [
+            'activo', 'eliminado', 'proxima_toma', 'medicamento_nombre',
+        ]
+    def validate(self, attrs):
+        instance = self.instance
+        values = {
+            'cantidad_por_toma': attrs.get('cantidad_por_toma', instance.cantidad_por_toma if instance else 1),
+            'fecha_inicio': attrs.get('fecha_inicio', instance.fecha_inicio if instance else date(2000, 1, 1)),
+            'tipo_duracion': attrs.get('tipo_duracion', instance.tipo_duracion if instance else Horario.TipoDuracion.INDEFINIDO),
+            'duracion_dias': attrs.get('duracion_dias', instance.duracion_dias if instance else None),
+            'fecha_fin': attrs.get('fecha_fin', instance.fecha_fin if instance else None),
+        }
+        if values['tipo_duracion'] == Horario.TipoDuracion.DIAS:
+            if values['duracion_dias'] is None or values['duracion_dias'] < 1:
+                raise serializers.ValidationError({'duracion_dias': 'La duración debe ser un entero positivo.'})
+            if values['fecha_fin'] is not None:
+                raise serializers.ValidationError({'fecha_fin': 'No corresponde para duración por días.'})
+        elif values['tipo_duracion'] == Horario.TipoDuracion.FECHA:
+            if values['fecha_fin'] is None:
+                raise serializers.ValidationError({'fecha_fin': 'La fecha de finalización es obligatoria.'})
+            if values['fecha_inicio'] and values['fecha_fin'] < values['fecha_inicio']:
+                raise serializers.ValidationError({'fecha_fin': 'No puede ser anterior a la fecha de inicio.'})
+            if values['duracion_dias'] is not None:
+                raise serializers.ValidationError({'duracion_dias': 'No corresponde para duración por fecha.'})
+        elif values['tipo_duracion'] == Horario.TipoDuracion.INDEFINIDO:
+            if values['duracion_dias'] is not None or values['fecha_fin'] is not None:
+                raise serializers.ValidationError('Un tratamiento indefinido no debe tener fecha_fin ni duracion_dias.')
+        return attrs
 
     def validate_id_medicamento(self, value):
         request = self.context.get('request')
@@ -203,6 +266,18 @@ class NotificacionSerializer(serializers.ModelSerializer):
             if id_registro and id_registro.id_usuario_id != request.user.id:
                 raise serializers.ValidationError({'id_registro': 'El registro de toma no pertenece al usuario autenticado.'})
         return attrs
+
+
+class WebPushSubscriptionSerializer(serializers.ModelSerializer):
+    keys = serializers.SerializerMethodField()
+
+    class Meta:
+        model = WebPushSubscription
+        fields = ['id', 'endpoint', 'keys', 'active', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_keys(self, obj):
+        return {'auth': obj.auth, 'p256dh': obj.p256dh}
 
 
 class UsuarioTokenObtainPairSerializer(serializers.Serializer):
@@ -275,4 +350,3 @@ class UsuarioTokenRefreshSerializer(TokenRefreshSerializer):
                 raise AuthenticationFailed('Usuario inactivo', 'user_inactive')
 
         return data
-

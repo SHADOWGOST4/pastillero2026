@@ -17,37 +17,11 @@
   color: var(--text-secondary);
 }
 
-.refresh-button,
-.save-button,
-.empty-state .btn,
-.action-button,
-.confirm-button {
+.refresh-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-}
-
-.confirm-button {
-  border: 1px solid #16a34a;
-  border-radius: 999px;
-  color: #fff;
-  background: #16a34a;
-  box-shadow: 0 3px 8px rgba(22, 163, 74, 0.2);
-  font-weight: 600;
-}
-
-.confirm-button:hover,
-.confirm-button:focus-visible {
-  border-color: #15803d;
-  color: #fff;
-  background: #15803d;
-  box-shadow: 0 5px 12px rgba(21, 128, 61, 0.28);
-  transform: translateY(-1px);
-}
-
-.confirm-button .material-icons {
-  font-size: 1.05rem;
 }
 
 .summary-grid {
@@ -110,7 +84,6 @@
   font-size: 1.25rem;
 }
 
-.form-card,
 .list-section {
   display: block;
   width: 100%;
@@ -141,58 +114,7 @@
   font-size: 1.25rem;
 }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem 1.25rem;
-}
-
-.field {
-  min-width: 0;
-}
-
-.form-label {
-  display: block;
-  margin-bottom: 0.45rem;
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
-.form-label span {
-  color: var(--danger);
-}
-
-.field-help,
-.field-error {
-  display: block;
-  margin-top: 0.35rem;
-  font-size: 0.78rem;
-}
-
-.field-help {
-  color: var(--text-secondary);
-}
-
-.field-error {
-  color: var(--danger);
-}
-
-.form-control.ng-invalid.ng-dirty,
-.form-control.ng-invalid.ng-touched,
-.form-select.ng-invalid.ng-dirty,
-.form-select.ng-invalid.ng-touched {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.65rem;
-  margin-top: 1.2rem;
-}
-
-.feedback {
+.feedback-card {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -220,6 +142,22 @@
   font-size: 0.78rem;
 }
 
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+
+.pagination-controls .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
 .table-wrapper {
   width: 100%;
   max-width: 100%;
@@ -236,10 +174,6 @@
 
 .history-table {
   min-width: 900px;
-}
-
-.actions-heading {
-  text-align: right;
 }
 
 .medication-name {
@@ -271,8 +205,7 @@
   font-weight: 700;
 }
 
-.status-badge .material-icons,
-.confirmed-label .material-icons {
+.status-badge .material-icons {
   font-size: 1rem;
 }
 
@@ -289,32 +222,6 @@
 .muted,
 .date-details dt {
   color: var(--text-secondary);
-}
-
-.confirmed-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  color: var(--success);
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.actions-cell {
-  justify-content: flex-end;
-}
-
-.action-delete {
-  border-color: transparent;
-  color: #fff;
-  background: #dc2626;
-}
-
-.action-delete:hover,
-.action-delete:focus-visible {
-  border-color: #b91c1c;
-  color: #fff;
-  background: #b91c1c;
 }
 
 .state-message {
@@ -377,7 +284,6 @@
   }
 
   .page-header,
-  .form-card,
   .list-section {
     padding: 1rem;
   }
@@ -386,17 +292,16 @@
     width: 100%;
   }
 
-  .summary-grid,
-  .form-grid {
+  .pagination-controls {
+    flex-wrap: wrap;
+  }
+
+  .pagination-controls .btn {
+    flex: 1 1 8rem;
+  }
+
+  .summary-grid {
     grid-template-columns: 1fr;
-  }
-
-  .form-actions {
-    flex-direction: column-reverse;
-  }
-
-  .form-actions .btn {
-    width: 100%;
   }
 
   .list-header {
@@ -424,8 +329,7 @@
     box-shadow: var(--shadow-sm);
   }
 
-  .mobile-card-heading,
-  .mobile-actions {
+  .mobile-card-heading {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -455,14 +359,6 @@
     font-weight: 600;
     text-align: right;
   }
-
-  .mobile-actions {
-    align-items: center;
-  }
-
-  .mobile-actions .btn {
-    flex: 1;
-  }
 }
 
 @media (max-width: 375px) {
@@ -483,8 +379,4 @@
     text-align: left;
   }
 
-  .mobile-actions {
-    align-items: stretch;
-    flex-direction: column;
-  }
 }

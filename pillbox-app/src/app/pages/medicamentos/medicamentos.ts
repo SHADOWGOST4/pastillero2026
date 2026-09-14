@@ -3,9 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { forkJoin } from 'rxjs';
 import {
-  ActualizarMedicamentoRequest,
+  AjustarStockRequest,
   CrearMedicamentoRequest,
+  MedicamentoCoberturaResponse,
   MedicamentoResponse,
 } from '../../core/models/api.interfaces';
 import { Medicamento } from '../../services/medicamento';
@@ -20,12 +22,22 @@ import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
 })
 export class Medicamentos implements OnInit {
   medicamentos: MedicamentoResponse[] = [];
+  coberturaPorMedicamento: Record<number, MedicamentoCoberturaResponse> = {};
+  totalMedicamentos = 0;
+  paginaActual = 1;
+  totalPaginas = 1;
+  private pageSize = 10;
   loading = false;
   submitting = false;
   isEditMode = false;
   editingId: number | null = null;
   errorMessage = '';
   successMessage = '';
+  stockOperationId: number | null = null;
+  stockOperationType: 'reponer' | 'ajustar' | null = null;
+  stockOperationAmount = 0;
+  stockOperationReason = '';
+  stockOperationBusy = false;
   modalEliminarAbierto = false;
   eliminando = false;
   medicamentoPendienteEliminar: number | null = null;
@@ -43,13 +55,24 @@ export class Medicamentos implements OnInit {
     this.cargarMedicamentos();
   }
 
-  cargarMedicamentos(): void {
+  cargarMedicamentos(pagina = this.paginaActual): void {
     this.loading = true;
     this.errorMessage = '';
 
-    this.medicamentoService.getAll().subscribe({
+    this.medicamentoService.getPage(pagina).subscribe({
       next: (data) => {
-        this.medicamentos = data;
+        if (data.results.length === 0 && data.count > 0 && pagina > 1) {
+          this.cargarMedicamentos(pagina - 1);
+          return;
+        }
+        this.medicamentos = data.results;
+        this.totalMedicamentos = data.count;
+        this.paginaActual = pagina;
+        if (data.page_size || (data.next && data.results.length > 0)) {
+          this.pageSize = data.page_size ?? data.results.length;
+        }
+        this.totalPaginas = Math.max(1, Math.ceil(data.count / this.pageSize));
+        this.cargarCoberturaMedicamentos();
         this.loading = false;
       },
       error: (err) => {
@@ -57,6 +80,18 @@ export class Medicamentos implements OnInit {
         this.errorMessage = this.extraerError(err, 'No se pudieron cargar los medicamentos.');
       },
     });
+  }
+
+  paginaAnterior(): void {
+    if (this.paginaActual > 1) {
+      this.cargarMedicamentos(this.paginaActual - 1);
+    }
+  }
+
+  paginaSiguiente(): void {
+    if (this.paginaActual < this.totalPaginas) {
+      this.cargarMedicamentos(this.paginaActual + 1);
+    }
   }
 
   onSubmit(medicamentoForm: NgForm): void {
@@ -76,7 +111,11 @@ export class Medicamentos implements OnInit {
 
     const request$ =
       this.isEditMode && this.editingId !== null
-        ? this.medicamentoService.update(this.editingId, payload)
+        ? this.medicamentoService.update(this.editingId, {
+            nombre: payload.nombre,
+            descripcion: payload.descripcion,
+            dosis: payload.dosis,
+          })
         : this.medicamentoService.create(payload);
 
     request$.subscribe({
@@ -86,7 +125,7 @@ export class Medicamentos implements OnInit {
           ? 'Medicamento actualizado correctamente.'
           : 'Medicamento creado correctamente.';
         this.resetForm();
-        this.cargarMedicamentos();
+        this.cargarMedicamentos(this.paginaActual);
       },
       error: (err) => {
         this.submitting = false;
@@ -135,7 +174,7 @@ export class Medicamentos implements OnInit {
         this.eliminando = false;
         this.cancelarEliminacion();
         this.successMessage = 'Medicamento eliminado correctamente.';
-        this.cargarMedicamentos();
+        this.cargarMedicamentos(this.paginaActual);
         if (this.editingId === id) {
           this.resetForm();
         }
@@ -148,13 +187,123 @@ export class Medicamentos implements OnInit {
     });
   }
 
-  private normalizarFormulario(): CrearMedicamentoRequest & ActualizarMedicamentoRequest {
-    return {
+  abrirOperacionStock(
+    medicamento: MedicamentoResponse,
+    tipo: 'reponer' | 'ajustar',
+  ): void {
+    this.stockOperationId = medicamento.id;
+    this.stockOperationType = tipo;
+    this.stockOperationAmount = tipo === 'reponer' ? 1 : 0;
+    this.stockOperationReason = '';
+    this.errorMessage = '';
+    this.successMessage = '';
+  }
+
+  cancelarOperacionStock(): void {
+    this.stockOperationId = null;
+    this.stockOperationType = null;
+    this.stockOperationAmount = 0;
+    this.stockOperationReason = '';
+  }
+
+  guardarOperacionStock(): void {
+    if (this.stockOperationId === null || this.stockOperationType === null || this.stockOperationBusy) {
+      return;
+    }
+
+    const cantidad = Number(this.stockOperationAmount);
+    if (!Number.isInteger(cantidad) || (this.stockOperationType === 'reponer' ? cantidad < 1 : cantidad === 0)) {
+      this.errorMessage = this.stockOperationType === 'reponer'
+        ? 'La reposición debe ser un entero positivo.'
+        : 'El ajuste debe ser un entero distinto de cero.';
+      return;
+    }
+    if (this.stockOperationType === 'ajustar' && !this.stockOperationReason.trim()) {
+      this.errorMessage = 'Indica el motivo del ajuste.';
+      return;
+    }
+
+    this.stockOperationBusy = true;
+    const request$ = this.stockOperationType === 'reponer'
+      ? this.medicamentoService.reponer(this.stockOperationId, { cantidad })
+      : this.medicamentoService.ajustarStock(this.stockOperationId, {
+          cantidad,
+          motivo: this.stockOperationReason.trim(),
+        } satisfies AjustarStockRequest);
+
+    request$.subscribe({
+      next: () => {
+        this.stockOperationBusy = false;
+        this.successMessage = this.stockOperationType === 'reponer'
+          ? 'Reposición registrada correctamente.'
+          : 'Ajuste registrado correctamente.';
+        this.cancelarOperacionStock();
+        this.cargarMedicamentos(this.paginaActual);
+      },
+      error: (err) => {
+        this.stockOperationBusy = false;
+        this.errorMessage = this.extraerError(err, 'No se pudo actualizar el inventario.');
+      },
+    });
+  }
+
+  private normalizarFormulario(): CrearMedicamentoRequest {
+    const payload: CrearMedicamentoRequest = {
       nombre: this.form.nombre.trim(),
       descripcion: this.form.descripcion?.trim() ?? '',
       dosis: this.form.dosis.trim(),
       stock: this.form.stock,
     };
+    return payload;
+  }
+
+  private cargarCoberturaMedicamentos(): void {
+    if (!this.medicamentos.length) {
+      this.coberturaPorMedicamento = {};
+      return;
+    }
+
+    forkJoin(this.medicamentos.map((med) => this.medicamentoService.getCobertura(med.id))).subscribe({
+      next: (respuestas) => {
+        this.coberturaPorMedicamento = {};
+        respuestas.forEach((respuesta) => {
+          this.coberturaPorMedicamento[respuesta.id_medicamento] = respuesta;
+        });
+      },
+      error: () => {
+        this.coberturaPorMedicamento = {};
+      },
+    });
+  }
+
+  getEstadoStockLabel(id: number): string {
+    const cobertura = this.coberturaPorMedicamento[id];
+    if (!cobertura) {
+      return 'NORMAL';
+    }
+    return cobertura.estado_tratamiento ?? cobertura.estado_stock ?? 'NORMAL';
+  }
+
+  getCoberturaTexto(id: number): string {
+    const cobertura = this.coberturaPorMedicamento[id];
+    if (!cobertura) {
+      return 'Sin datos';
+    }
+    if (cobertura.estado_tratamiento === 'INSUFICIENTE_TRATAMIENTO') {
+      return `Faltan ${cobertura.faltantes} unidades`;
+    }
+    if (cobertura.estado_stock === 'AGOTADO') {
+      return 'Agotado';
+    }
+    if (cobertura.dias_cobertura == null) {
+      return 'Sin cobertura prevista';
+    }
+    return `Cobertura: ${Math.max(0, Math.round(Number(cobertura.dias_cobertura)))} días`;
+  }
+
+  getEstadoStockClass(id: number): string {
+    const estado = this.getEstadoStockLabel(id);
+    return `stock-status-${estado.toLowerCase()}`;
   }
 
   resetForm(): void {

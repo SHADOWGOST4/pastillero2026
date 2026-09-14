@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
   ActualizarHorarioRequest,
   CrearHorarioRequest,
   HorarioResponse,
+  PaginatedResponse,
 } from '../core/models/api.interfaces';
 
 @Injectable({
@@ -16,8 +18,26 @@ export class Horario {
 
   constructor(private http: HttpClient) {}
 
+  getPage(page = 1): Observable<PaginatedResponse<HorarioResponse>> {
+    return this.http.get<PaginatedResponse<HorarioResponse>>(this.apiUrl, {
+      params: { page },
+    });
+  }
+
   getAll(): Observable<HorarioResponse[]> {
-    return this.http.get<HorarioResponse[]>(this.apiUrl);
+    return this.getAllPages(this.apiUrl, []);
+  }
+
+  private getAllPages(url: string, accumulated: HorarioResponse[]): Observable<HorarioResponse[]> {
+    return this.http.get<PaginatedResponse<HorarioResponse> | HorarioResponse[]>(url).pipe(
+      switchMap((page) => {
+        if (Array.isArray(page)) {
+          return of([...accumulated, ...page]);
+        }
+        const items = [...accumulated, ...page.results];
+        return page.next ? this.getAllPages(page.next, items) : of(items);
+      }),
+    );
   }
 
   getByUsuario(_id_usuario: number): Observable<HorarioResponse[]> {
@@ -38,5 +58,13 @@ export class Horario {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}${id}/`);
+  }
+
+  activar(id: number): Observable<HorarioResponse> {
+    return this.http.post<HorarioResponse>(`${this.apiUrl}${id}/activar/`, {});
+  }
+
+  deshabilitar(id: number): Observable<HorarioResponse> {
+    return this.http.post<HorarioResponse>(`${this.apiUrl}${id}/deshabilitar/`, {});
   }
 }

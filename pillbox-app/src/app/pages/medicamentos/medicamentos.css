@@ -8,6 +8,19 @@
   padding: 0.5rem 0 2rem;
 }
 
+.action-stock,
+.action-adjust {
+  color: #fff;
+}
+
+.action-stock {
+  background: #15803d;
+}
+
+.action-adjust {
+  background: #7c3aed;
+}
+
 .page-header h1 {
   font-size: clamp(1.75rem, 3vw, 2.35rem);
 }
@@ -62,6 +75,22 @@
 .list-count {
   color: var(--text-secondary);
   font-size: 0.78rem;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+
+.pagination-controls .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .summary-label {
@@ -186,6 +215,51 @@ textarea.form-control {
   margin-bottom: 0.75rem;
 }
 
+.stock-operation-card {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.6fr) minmax(0, 1.4fr);
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius-md);
+  background: #eff6ff;
+}
+
+.stock-operation-card h3 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.stock-operation-form {
+  display: flex;
+  align-items: end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.stock-operation-form label {
+  display: grid;
+  gap: 0.25rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.stock-operation-form input {
+  min-height: 2.35rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.stock-operation-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .list-count {
   padding: 0.35rem 0.65rem;
   border-radius: 999px;
@@ -218,8 +292,60 @@ textarea.form-control {
   font-weight: 600;
 }
 
+.stock-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
 .stock-value {
   font-weight: 600;
+}
+
+.stock-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.stock-status-normal {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.stock-status-bajo {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.stock-status-critico {
+  background: #ffedd5;
+  color: #9a5b00;
+}
+
+.stock-status-agotado {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.stock-status-insuficiente_tratamiento {
+  background: #fce7f3;
+  color: #9d174d;
+}
+
+.stock-detail,
+.mobile-stock-detail,
+.mobile-stock-status {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--text-secondary);
+  font-size: 0.76rem;
 }
 
 .mobile-stock {
@@ -330,6 +456,10 @@ textarea.form-control {
     width: 100%;
   }
 
+  .stock-operation-card {
+    grid-template-columns: 1fr;
+  }
+
   .summary-card {
     width: 100%;
   }
@@ -360,6 +490,14 @@ textarea.form-control {
     max-width: 100%;
     gap: 0.75rem;
     justify-items: stretch;
+  }
+
+  .pagination-controls {
+    flex-wrap: wrap;
+  }
+
+  .pagination-controls .btn {
+    flex: 1 1 8rem;
   }
 
   .mobile-medication-card {

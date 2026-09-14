@@ -1,40 +1,27 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import {
-  CrearRegistroTomaRequest,
-  HorarioResponse,
-  RegistroTomaResponse,
-} from '../../core/models/api.interfaces';
+import { HorarioResponse, RegistroTomaResponse } from '../../core/models/api.interfaces';
 import { Horario } from '../../services/horario';
 import { RegistroToma } from '../../services/registro-toma';
-import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
 
 @Component({
   selector: 'app-registros',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, ConfirmModal],
+  imports: [CommonModule],
   templateUrl: './registros.html',
   styleUrl: './registros.css',
 })
-export class Registros implements OnInit {
+export class Registros implements OnDestroy, OnInit {
   registros: RegistroTomaResponse[] = [];
   horarios: HorarioResponse[] = [];
+  totalRegistros = 0;
+  paginaActual = 1;
+  totalPaginas = 1;
+  private pageSize = 10;
   loading = false;
-  submitting = false;
   errorMessage = '';
-  successMessage = '';
-  modalEliminarAbierto = false;
-  eliminando = false;
-  registroPendienteEliminar: number | null = null;
-
-  form = {
-    id_horario: 0,
-    fecha_hora_programada: '',
-  };
+  private readonly destroyed$ = new Subject<void>();
 
   constructor(
     private registroService: RegistroToma,
@@ -44,6 +31,14 @@ export class Registros implements OnInit {
   ngOnInit(): void {
     this.cargarHorarios();
     this.cargarRegistros();
+    this.registroService.registroActualizado$
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe(() => this.cargarRegistros());
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed$.next();
+    this.destroyed$.complete();
   }
 
   cargarHorarios(): void {
@@ -52,18 +47,28 @@ export class Registros implements OnInit {
         this.horarios = data;
       },
       error: () => {
-        this.errorMessage = 'No se pudieron cargar los horarios disponibles para crear registros.';
+        this.errorMessage = 'No se pudieron cargar los datos de los medicamentos.';
       },
     });
   }
 
-  cargarRegistros(): void {
+  cargarRegistros(pagina = this.paginaActual): void {
     this.loading = true;
     this.errorMessage = '';
 
-    this.registroService.getAll().subscribe({
+    this.registroService.getPage(pagina).subscribe({
       next: (data) => {
-        this.registros = data;
+        if (data.results.length === 0 && data.count > 0 && pagina > 1) {
+          this.cargarRegistros(pagina - 1);
+          return;
+        }
+        this.registros = data.results;
+        this.totalRegistros = data.count;
+        this.paginaActual = pagina;
+        if (data.page_size || (data.next && data.results.length > 0)) {
+          this.pageSize = data.page_size ?? data.results.length;
+        }
+        this.totalPaginas = Math.max(1, Math.ceil(data.count / this.pageSize));
         this.loading = false;
       },
       error: (err) => {
@@ -73,86 +78,16 @@ export class Registros implements OnInit {
     });
   }
 
-  onSubmit(): void {
-    if (!this.form.id_horario || !this.form.fecha_hora_programada) {
-      this.errorMessage = 'Debes seleccionar un horario y una fecha/hora programada.';
-      this.successMessage = '';
-      return;
+  paginaAnterior(): void {
+    if (this.paginaActual > 1) {
+      this.cargarRegistros(this.paginaActual - 1);
     }
-
-    const payload: CrearRegistroTomaRequest = {
-      id_horario: Number(this.form.id_horario),
-      fecha_hora_programada: this.toISOString(this.form.fecha_hora_programada),
-      fecha_hora_real: null,
-    };
-
-    this.submitting = true;
-    this.errorMessage = '';
-    this.successMessage = '';
-
-    this.registroService.create(payload).subscribe({
-      next: () => {
-        this.submitting = false;
-        this.successMessage = 'Registro de toma creado correctamente.';
-        this.resetForm();
-        this.cargarRegistros();
-      },
-      error: (err) => {
-        this.submitting = false;
-        this.errorMessage = this.extraerError(err, 'No se pudo crear el registro de toma.');
-      },
-    });
   }
 
-  confirmarRegistro(id: number): void {
-    const momento = new Date().toISOString();
-
-    this.registroService.confirm(id, { fecha_hora_real: momento }).subscribe({
-      next: () => {
-        this.successMessage = 'Toma confirmada correctamente.';
-        this.cargarRegistros();
-      },
-      error: (err) => {
-        this.errorMessage = this.extraerError(err, 'No se pudo confirmar la toma.');
-      },
-    });
-  }
-
-  eliminarRegistro(id: number): void {
-    this.registroPendienteEliminar = id;
-    this.modalEliminarAbierto = true;
-  }
-
-  cancelarEliminacion(): void {
-    this.modalEliminarAbierto = false;
-    this.registroPendienteEliminar = null;
-  }
-
-  confirmarEliminacion(): void {
-    if (this.registroPendienteEliminar === null || this.eliminando) return;
-    const id = this.registroPendienteEliminar;
-    this.eliminando = true;
-
-    this.registroService.delete(id).subscribe({
-      next: () => {
-        this.eliminando = false;
-        this.cancelarEliminacion();
-        this.successMessage = 'Registro eliminado correctamente.';
-        this.cargarRegistros();
-      },
-      error: (err) => {
-        this.eliminando = false;
-        this.cancelarEliminacion();
-        this.errorMessage = this.extraerError(err, 'No se pudo eliminar el registro.');
-      },
-    });
-  }
-
-  resetForm(): void {
-    this.form = {
-      id_horario: 0,
-      fecha_hora_programada: '',
-    };
+  paginaSiguiente(): void {
+    if (this.paginaActual < this.totalPaginas) {
+      this.cargarRegistros(this.paginaActual + 1);
+    }
   }
 
   get tomasRealizadas(): number {
@@ -166,15 +101,6 @@ export class Registros implements OnInit {
   obtenerNombreMedicamento(idHorario: number): string {
     const horario = this.horarios.find((item) => item.id === idHorario);
     return horario?.medicamento_nombre || `Horario #${idHorario}`;
-  }
-
-  private toISOString(value: string): string {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-      return value;
-    }
-
-    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString();
   }
 
   private extraerError(error: any, fallback: string): string {

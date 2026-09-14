@@ -32,6 +32,21 @@
    * `400 Bad Request`: Error de validación de datos o llaves foráneas inválidas.
    * `401 Unauthorized`: Token ausente, inválido, expirado o credenciales incorrectas.
    * `404 Not Found`: El recurso no existe o no pertenece al usuario autenticado.
+   * `409 Conflict`: La operación no puede ejecutarse por el estado actual del
+     recurso o porque existe un conflicto con una operación protegida.
+
+   Los horarios usan dos operaciones distintas:
+
+   * `POST /api/horarios/{id}/deshabilitar/` pausa el tratamiento marcando
+     `activo` como `false`. El horario permanece visible y puede reactivarse.
+   * `DELETE /api/horarios/{id}/` aplica eliminación lógica marcando `activo` y
+     `eliminado` como `false` y `true`, respectivamente. El horario desaparece
+     de los listados del frontend y no puede reactivarse desde la aplicación,
+     pero sus tomas y movimientos de inventario se conservan.
+
+   Los horarios deshabilitados o eliminados no generan próximas tomas ni aparecen
+   en `GET /api/proximos-horarios/`. Un horario pausado se reactiva con
+   `POST /api/horarios/{id}/activar/`.
 
 ---
 
@@ -41,6 +56,7 @@
 * **`frecuencia = 0` o `frecuencia >= 24`**: Representa **una sola toma recurrente diaria** fijada a la hora especificada en `hora_toma`.
 * **`0 < frecuencia < 24`** *(ej. 4, 6, 8, 12 horas)*: Representa **tomas periódicas intradía** recurrentes cada $N$ horas a lo largo del ciclo de 24 horas, teniendo como hora ancla la `hora_toma`.
   * *Ejemplo:* `hora_toma = "22:00:00"` y `frecuencia = 6` define las tomas diarias a las **04:00, 10:00, 16:00 y 22:00**.
+* Un `Horario` también define `cantidad_por_toma`, `fecha_inicio`, `tipo_duracion` (`DIAS`, `FECHA` o `INDEFINIDO`), `duracion_dias` y `fecha_fin`. La cantidad debe ser un entero positivo. `DIAS` requiere duración; `FECHA` requiere una fecha final igual o posterior al inicio; `INDEFINIDO` no utiliza campos de finalización.
 
 ### 2.2 Concepto y Ciclo de Vida de `Registro_Toma`
 El modelo representa el historial y cumplimiento de cada toma individual:
@@ -50,9 +66,10 @@ El modelo representa el historial y cumplimiento de cada toma individual:
   * **Toma Pendiente / Programada:** Registro donde `fecha_hora_real === null` (o no definido).
   * **Toma Realizada / Confirmada:** Registro donde `fecha_hora_real` contiene un timestamp ISO-8601 válido.
   * **Toma Omitida / Vencida:** Actualmente el esquema no almacena una columna de estado textual; una toma se considera omitida en el frontend cuando `fecha_hora_real === null` y la hora actual supera la `fecha_hora_programada` más el margen de tolerancia definido.
-* **Flujo de Creación y Confirmación desde Angular:**
-  1. Angular (o el backend) registra la toma con `POST /api/registros/` indicando `fecha_hora_programada` e `id_horario`.
-  2. Cuando el usuario pulsa "Confirmar Toma", Angular envía `PATCH /api/registros/{id}/` con `{"fecha_hora_real": "<ISO-TIMESTAMP>"}`.
+* **Flujo de Creación y Confirmación:**
+  1. Las tomas se generan automáticamente a partir de los eventos y horarios gestionados por el backend o el dispositivo.
+  2. La aplicación consulta `GET /api/registros/` para mostrar el historial; no crea, confirma ni elimina registros desde esta pantalla.
+  3. La confirmación se registra cuando el usuario responde a la alerta o utiliza el botón físico del dispositivo.
 
 ### 2.3 Notificaciones
 * Representa el registro de alertas enviadas a los contactos de emergencia (`Contacto`) ante eventos de tomas (`Registro_Toma`).
@@ -65,6 +82,26 @@ El modelo representa el historial y cumplimiento de cada toma individual:
 ---
 
 ## 3. Catálogo Detallado de Endpoints
+
+### 3.0 Paginación de colecciones
+
+Los listados de medicamentos, horarios y registros usan paginación server-side.
+El tamaño por defecto es `10` y puede configurarse con la variable de entorno
+`PAGE_SIZE`. La respuesta de una colección tiene esta forma:
+
+```json
+{
+  "count": 25,
+  "next": "http://localhost:8000/api/medicamentos/?page=2",
+  "previous": null,
+  "results": [],
+  "page_size": 10
+}
+```
+
+El frontend debe usar `next` para recuperar la colección completa cuando
+necesite alimentar un selector o un proceso global, y `page` para las vistas
+con controles de navegación.
 
 ### 3.1 Autenticación
 
@@ -178,12 +215,13 @@ Devuelve la lista ordenada cronológicamente de las próximas tomas del usuario 
 
 | Operación | Método | URL | Request Body | Response Status | Response Type |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Listar** | `GET` | `/api/medicamentos/` | N/A | `200 OK` | `MedicamentoResponse[]` |
+| **Listar** | `GET` | `/api/medicamentos/` | N/A | `200 OK` | `PaginatedResponse<MedicamentoResponse>` |
 | **Crear** | `POST` | `/api/medicamentos/` | `CrearMedicamentoRequest` | `201 Created` | `MedicamentoResponse` |
 | **Consultar** | `GET` | `/api/medicamentos/{id}/` | N/A | `200 OK` | `MedicamentoResponse` |
 | **Actualizar (Total)** | `PUT` | `/api/medicamentos/{id}/` | `CrearMedicamentoRequest` | `200 OK` | `MedicamentoResponse` |
 | **Actualizar (Parcial)**| `PATCH` | `/api/medicamentos/{id}/` | `ActualizarMedicamentoRequest` | `200 OK` | `MedicamentoResponse` |
 | **Eliminar** | `DELETE` | `/api/medicamentos/{id}/` | N/A | `204 No Content` | Cuerpo vacío |
+| **Consultar cobertura** | `GET` | `/api/medicamentos/{id}/cobertura/` | N/A | `200 OK` | `MedicamentoCoberturaResponse` |
 
 * **Ejemplo Request (`CrearMedicamentoRequest`):**
   ```json
@@ -194,13 +232,29 @@ Devuelve la lista ordenada cronológicamente de las próximas tomas del usuario 
   }
   ```
 
+La cobertura consolida todos los horarios activos del medicamento. No modifica `stock` ni crea registros de toma. Incluye `consumo_diario`, `dias_cobertura`, `fecha_agotamiento_estimada`, `estado_stock`, `stock_suficiente_tratamiento`, `estado_tratamiento`, unidades restantes de tratamientos finitos y `faltantes`.
+
+La clasificación de stock se calcula en backend con los umbrales `STOCK_CRITICAL_DAYS = 2` y `STOCK_LOW_DAYS = 7`, devolviendo `NORMAL`, `BAJO`, `CRITICO` o `AGOTADO`. Cuando un tratamiento finito no alcanza el stock requerido se devuelve `estado_tratamiento: "INSUFICIENTE_TRATAMIENTO"` sin ocultar la alerta de cobertura.
+
+Al confirmar un `Registro_Toma` mediante `PATCH /api/registros/{id}/` con `fecha_hora_real`, el backend descuenta atómicamente `Horario.cantidad_por_toma` y crea un movimiento de tipo `TOMA_CONFIRMADA`. Si no hay unidades suficientes responde `409` con `detail`, `stock_actual` y `cantidad_requerida`; la toma permanece pendiente.
+
+El stock inicial puede enviarse al crear un medicamento. Después de creado, cualquier cambio de stock queda auditado como `AJUSTE_INVENTARIO`; también se recomienda usar las acciones explícitas `reponer` y `ajustar-stock`.
+
+| Operación | Método | URL | Request Body | Response |
+| :--- | :--- | :--- | :--- | :--- |
+| **Reponer stock** | `POST` | `/api/medicamentos/{id}/reponer/` | `{ "cantidad": 30 }` | `MovimientoStockResponse` |
+| **Ajustar stock** | `POST` | `/api/medicamentos/{id}/ajustar-stock/` | `{ "cantidad": -3, "motivo": "Diferencia de conteo físico" }` | `MovimientoStockResponse` |
+| **Historial de movimientos** | `GET` | `/api/movimientos-stock/?page=1&page_size=10&medicamento=1&tipo=REPOSICION_MANUAL` | N/A | `PaginatedResponse<MovimientoStockResponse>` |
+
+El historial se ordena por `fecha_hora` descendente y cada usuario solo puede consultar movimientos de sus propios medicamentos.
+
 ---
 
 ### 3.4 Horarios
 
 | Operación | Método | URL | Request Body | Response Status | Response Type |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Listar** | `GET` | `/api/horarios/` | N/A | `200 OK` | `HorarioResponse[]` |
+| **Listar** | `GET` | `/api/horarios/` | N/A | `200 OK` | `PaginatedResponse<HorarioResponse>` |
 | **Crear** | `POST` | `/api/horarios/` | `CrearHorarioRequest` | `201 Created` | `HorarioResponse` |
 | **Consultar** | `GET` | `/api/horarios/{id}/` | N/A | `200 OK` | `HorarioResponse` |
 | **Actualizar** | `PUT`/`PATCH` | `/api/horarios/{id}/` | `ActualizarHorarioRequest` | `200 OK` | `HorarioResponse` |
@@ -222,23 +276,25 @@ Devuelve la lista ordenada cronológicamente de las próximas tomas del usuario 
 
 | Operación | Método | URL | Request Body | Response Status | Response Type |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Listar Historial** | `GET` | `/api/registros/` | N/A | `200 OK` | `RegistroTomaResponse[]` |
-| **Crear Registro** | `POST` | `/api/registros/` | `CrearRegistroTomaRequest` | `201 Created` | `RegistroTomaResponse` |
-| **Confirmar Toma** | `PATCH` | `/api/registros/{id}/` | `ConfirmarRegistroTomaRequest` | `200 OK` | `RegistroTomaResponse` |
-| **Eliminar** | `DELETE` | `/api/registros/{id}/` | N/A | `204 No Content` | Cuerpo vacío |
+| **Listar Historial** | `GET` | `/api/registros/` | N/A | `200 OK` | `PaginatedResponse<RegistroTomaResponse>` |
+| **Confirmar toma (canal real)** | `POST` | `/api/iot/tomas/confirmar/` | `IoTConfirmarTomaRequest` | `200/201 OK` | `IoTConfirmarTomaResponse` |
+| **Crear/Confirmar/Eliminar manuales** | `POST`/`PATCH`/`DELETE` | `/api/registros/` | Legacy / compatibilidad | No usar desde frontend | Legacy |
 
-* **Ejemplo Request Crear (`CrearRegistroTomaRequest`):**
+> El módulo Registros del frontend solo utiliza `GET /api/registros/` para consultar historial. La confirmación real debe realizarse desde el evento de la alerta o desde el dispositivo físico, enviando `POST /api/iot/tomas/confirmar/` con `evento_id` y `fecha_hora_real`.
+
+* **Ejemplo Request Confirmar (`IoTConfirmarTomaRequest`):**
   ```json
   {
-    "fecha_hora_programada": "2026-08-31T08:00:00-05:00",
-    "id_horario": 1,
-    "fecha_hora_real": null
+    "evento_id": "9f5eb0d0-2d5d-4d5d-9a5a-0d4d1b0d4db1",
+    "fecha_hora_real": "2026-08-31T08:03:45-05:00"
   }
   ```
-* **Ejemplo Request Confirmar (`ConfirmarRegistroTomaRequest`):**
+* **Ejemplo Response (`IoTConfirmarTomaResponse`):**
   ```json
   {
-    "fecha_hora_real": "2026-08-31T08:03:45-05:00"
+    "ok": true,
+    "duplicado": false,
+    "registro_id": 7
   }
   ```
 
@@ -431,14 +487,16 @@ export interface ProximaTomaItem {
 // 4. REGISTROS DE TOMA
 // ============================================================================
 
-export interface CrearRegistroTomaRequest {
-  fecha_hora_programada: string; // Formato ISO-8601
-  fecha_hora_real?: string | null; // Opcional, Formato ISO-8601
-  id_horario: number;
+export interface IoTConfirmarTomaRequest {
+  evento_id: string; // UUIDv4 generado por la app/dispositivo
+  fecha_hora_real: string; // ISO-8601 con el momento exacto de confirmación
 }
 
-export interface ConfirmarRegistroTomaRequest {
-  fecha_hora_real: string; // Formato ISO-8601 con el momento de confirmación
+export interface IoTConfirmarTomaResponse {
+  ok: boolean;
+  duplicado: boolean;
+  registro_id: number | null;
+  detail?: string;
 }
 
 export interface RegistroTomaResponse {

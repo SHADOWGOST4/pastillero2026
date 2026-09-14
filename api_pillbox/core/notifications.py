@@ -1,0 +1,131 @@
+import base64
+import json
+import logging
+import uuid
+from datetime import timedelta
+
+from cryptography.hazmat.primitives import serialization
+from django.conf import settings
+from django.utils import timezone
+from pywebpush import webpush
+
+from .models import Registro_Toma, WebPushNotificationLog, WebPushSubscription
+
+logger = logging.getLogger(__name__)
+
+
+def get_vapid_config():
+    public_key = getattr(settings, 'WEBPUSH_PUBLIC_KEY', '').strip()
+    private_key = getattr(settings, 'WEBPUSH_PRIVATE_KEY', '').strip()
+    subject = getattr(settings, 'WEBPUSH_SUBJECT', 'mailto:admin@pillbox.local').strip()
+
+    if not public_key or not private_key:
+        return None
+
+    if 'BEGIN PRIVATE KEY' in private_key:
+        key_obj = serialization.load_pem_private_key(private_key.encode('utf-8'), password=None)
+        private_key = base64.urlsafe_b64encode(
+            key_obj.private_numbers().private_value.to_bytes(32, byteorder='big')
+        ).rstrip(b'=').decode('ascii')
+
+    return {
+        'public_key': public_key,
+        'private_key': private_key,
+        'subject': subject,
+    }
+
+
+def build_push_payload(registro, evento_id):
+    medicamento = registro.id_horario.id_medicamento.nombre
+    hora_local = timezone.localtime(registro.fecha_hora_programada).strftime('%H:%M')
+    return {
+        'title': 'Hora de tomar tu medicamento',
+        'body': f'{medicamento} · {hora_local}',
+        'tag': f'pillbox-toma-{registro.id}',
+        'icon': '/favicon.ico',
+        'data': {
+            'evento_id': str(evento_id),
+            'registro_id': registro.id,
+            'targetUrl': '/dashboard',
+        },
+    }
+
+
+def send_push_to_subscription(subscription, payload, vapid_config):
+    subscription_info = {
+        'endpoint': subscription.endpoint,
+        'keys': {
+            'auth': subscription.auth,
+            'p256dh': subscription.p256dh,
+        },
+    }
+
+    webpush(
+        subscription_info=subscription_info,
+        data=json.dumps(payload).encode('utf-8'),
+        vapid_private_key=vapid_config['private_key'],
+        vapid_claims={'sub': vapid_config['subject']},
+    )
+
+
+def send_web_push_for_registro(registro):
+    if WebPushNotificationLog.objects.filter(registro=registro).exists():
+        logger.info('[WEB PUSH] registro=%s ya tiene log previo; no se reenvia.', registro.id)
+        return False
+
+    vapid_config = get_vapid_config()
+    if vapid_config is None:
+        logger.error('[WEB PUSH] faltan claves VAPID en la configuración del backend.')
+        return False
+
+    evento_id = uuid.uuid4()
+    log = WebPushNotificationLog.objects.create(registro=registro, evento_id=evento_id, status='queued')
+    payload = build_push_payload(registro, evento_id)
+
+    subscriptions = WebPushSubscription.objects.filter(usuario=registro.id_usuario, active=True)
+    if not subscriptions.exists():
+        log.status = 'skipped'
+        log.save(update_fields=['status'])
+        logger.warning('[WEB PUSH] usuario=%s sin subscriptions activas para registro=%s', registro.id_usuario_id, registro.id)
+        return False
+
+    sent = False
+    for subscription in subscriptions:
+        logger.info('[WEB PUSH] usuario=%s endpoint=%s enviando...', registro.id_usuario_id, subscription.endpoint)
+        try:
+            send_push_to_subscription(subscription, payload, vapid_config)
+            sent = True
+            logger.info('[WEB PUSH] usuario=%s endpoint=%s enviado OK evento_id=%s', registro.id_usuario_id, subscription.endpoint, evento_id)
+        except Exception as exc:
+            subscription.active = False
+            subscription.save(update_fields=['active'])
+            log.error = str(exc)
+            log.status = 'error'
+            log.save(update_fields=['status', 'error'])
+            logger.exception('[WEB PUSH] fallo envío usuario=%s endpoint=%s evento_id=%s', registro.id_usuario_id, subscription.endpoint, evento_id)
+
+    if sent:
+        log.status = 'sent'
+        log.error = ''
+        log.save(update_fields=['status', 'error'])
+        return True
+
+    return False
+
+
+def enviar_notificaciones_pendientes():
+    now = timezone.now()
+    logger.info('[SCHEDULER] ciclo iniciado now=%s', now.isoformat())
+    registros = Registro_Toma.objects.filter(
+        fecha_hora_programada__lte=now,
+        fecha_hora_real__isnull=True,
+    ).select_related('id_horario__id_medicamento', 'id_usuario')
+    logger.info('[SCHEDULER] tomas_encontradas=%s', registros.count())
+
+    for registro in registros:
+        logger.info('[SCHEDULER] revisando registro=%s programada=%s', registro.id, registro.fecha_hora_programada.isoformat())
+        if registro.fecha_hora_programada + timedelta(minutes=10) < now:
+            logger.info('[SCHEDULER] registro=%s fuera de ventana de notificación', registro.id)
+            continue
+        logger.info('[SCHEDULER] enviando push para evento_id=%s registro=%s', registro.id, registro.id)
+        send_web_push_for_registro(registro)

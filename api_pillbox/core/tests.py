@@ -283,19 +283,19 @@ class AislamientoRecursosTests(TestCase):
         """Test 1: Usuario A autenticado sólo lista medicamentos propios."""
         response = self.client_a.get('/api/medicamentos/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        nombres = [item['nombre'] for item in response.data]
+        nombres = [item['nombre'] for item in response.data['results']]
         self.assertIn('Paracetamol A', nombres)
         self.assertNotIn('Ibuprofeno B', nombres)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data['results']), 1)
 
     def test_2_usuario_b_solo_ve_sus_medicamentos(self):
         """Test 2: Usuario B autenticado sólo lista medicamentos propios."""
         response = self.client_b.get('/api/medicamentos/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        nombres = [item['nombre'] for item in response.data]
+        nombres = [item['nombre'] for item in response.data['results']]
         self.assertIn('Ibuprofeno B', nombres)
         self.assertNotIn('Paracetamol A', nombres)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data['results']), 1)
 
     def test_3_usuario_b_intenta_obtener_medicamento_de_a(self):
         """Test 3: Usuario B intenta consultar medicamento de A por ID -> 404 Not Found."""
@@ -665,7 +665,7 @@ class MedicamentoStockTests(TestCase):
         )
         response = self.client.get('/api/medicamentos/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        for item in response.data:
+        for item in response.data['results']:
             self.assertIn('stock', item)
             self.assertIsInstance(item['stock'], int)
 
@@ -1022,5 +1022,4 @@ class ModuloAPITests(TestCase):
         # Medicamento y Dispositivo siguen existiendo
         self.assertTrue(Medicamento.objects.filter(id=med_id).exists())
         self.assertTrue(Dispositivo.objects.filter(id=disp_id).exists())
-
 

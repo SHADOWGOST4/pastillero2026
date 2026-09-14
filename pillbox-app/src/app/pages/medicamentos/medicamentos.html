@@ -17,7 +17,7 @@
     </div>
     <div>
       <span class="summary-label">Medicamentos registrados</span>
-      <strong class="summary-value">{{ medicamentos.length }}</strong>
+      <strong class="summary-value">{{ totalMedicamentos }}</strong>
     </div>
   </section>
 
@@ -139,7 +139,45 @@
         <p class="section-kicker">Tu tratamiento</p>
         <h2>Lista de medicamentos</h2>
       </div>
-      <span class="list-count" *ngIf="!loading">{{ medicamentos.length }} registrados</span>
+      <span class="list-count" *ngIf="!loading">{{ totalMedicamentos }} registrados</span>
+    </div>
+
+    <div *ngIf="stockOperationType" class="stock-operation-card">
+      <div>
+        <p class="section-kicker">Inventario auditable</p>
+        <h3>{{ stockOperationType === 'reponer' ? 'Registrar reposición' : 'Registrar ajuste' }}</h3>
+      </div>
+      <form (ngSubmit)="guardarOperacionStock()" class="stock-operation-form">
+        <label>
+          Cantidad
+          <input
+            type="number"
+            [min]="stockOperationType === 'reponer' ? 1 : null"
+            [step]="1"
+            [(ngModel)]="stockOperationAmount"
+            name="stockOperationAmount"
+            required
+          />
+        </label>
+        <label *ngIf="stockOperationType === 'ajustar'">
+          Motivo
+          <input
+            type="text"
+            [(ngModel)]="stockOperationReason"
+            name="stockOperationReason"
+            maxlength="1000"
+            required
+          />
+        </label>
+        <div class="stock-operation-actions">
+          <button type="button" class="btn btn-outline-secondary" (click)="cancelarOperacionStock()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="stockOperationBusy">
+            {{ stockOperationBusy ? 'Guardando...' : 'Guardar movimiento' }}
+          </button>
+        </div>
+      </form>
     </div>
 
     <div *ngIf="loading" class="state-message loading-state">
@@ -147,7 +185,7 @@
       <span>Cargando medicamentos...</span>
     </div>
 
-    <div *ngIf="!loading && medicamentos.length === 0" class="state-message empty-state">
+    <div *ngIf="!loading && totalMedicamentos === 0" class="state-message empty-state">
       <span class="empty-icon material-icons" aria-hidden="true">medication</span>
       <h3>No tienes medicamentos registrados</h3>
       <p>Agrega tu primer medicamento para comenzar a organizar tus tomas.</p>
@@ -177,7 +215,15 @@
               </div>
             </td>
             <td><span class="dose-badge">{{ med.dosis }}</span></td>
-            <td><span class="stock-value">{{ med.stock }}</span></td>
+            <td>
+              <div class="stock-cell">
+                <span class="stock-value">{{ med.stock }}</span>
+                <span class="stock-status" [ngClass]="getEstadoStockClass(med.id)">
+                  {{ getEstadoStockLabel(med.id) }}
+                </span>
+              </div>
+              <small class="stock-detail">{{ getCoberturaTexto(med.id) }}</small>
+            </td>
             <td class="description-cell">{{ med.descripcion || 'Sin descripción' }}</td>
             <td class="actions-cell">
               <button type="button" class="btn btn-sm action-button action-edit" (click)="editarMedicamento(med)">
@@ -188,11 +234,29 @@
                 <span class="material-icons" aria-hidden="true">delete_outline</span>
                 Eliminar
               </button>
+              <button type="button" class="btn btn-sm action-button action-stock" (click)="abrirOperacionStock(med, 'reponer')">
+                Reponer
+              </button>
+              <button type="button" class="btn btn-sm action-button action-adjust" (click)="abrirOperacionStock(med, 'ajustar')">
+                Ajustar
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
+
+    <nav *ngIf="!loading && totalPaginas > 1" class="pagination-controls" aria-label="Paginación de medicamentos">
+      <button type="button" class="btn btn-outline-secondary" (click)="paginaAnterior()" [disabled]="paginaActual === 1">
+        <span class="material-icons" aria-hidden="true">chevron_left</span>
+        Anterior
+      </button>
+      <span>Página {{ paginaActual }} de {{ totalPaginas }}</span>
+      <button type="button" class="btn btn-outline-secondary" (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">
+        Siguiente
+        <span class="material-icons" aria-hidden="true">chevron_right</span>
+      </button>
+    </nav>
 
     <div *ngIf="!loading && medicamentos.length > 0" class="mobile-medication-list">
       <article class="mobile-medication-card" *ngFor="let med of medicamentos">
@@ -204,6 +268,10 @@
           <span class="dose-badge">{{ med.dosis }}</span>
         </div>
         <p class="mobile-stock"><strong>Stock:</strong> {{ med.stock }}</p>
+        <p class="mobile-stock-status">
+          <strong>Estado:</strong> {{ getEstadoStockLabel(med.id) }}
+        </p>
+        <p class="mobile-stock-detail">{{ getCoberturaTexto(med.id) }}</p>
         <p *ngIf="med.descripcion" class="mobile-description">{{ med.descripcion }}</p>
         <p *ngIf="!med.descripcion" class="mobile-description muted">Sin descripción</p>
         <div class="mobile-actions">
@@ -214,6 +282,12 @@
           <button type="button" class="btn btn-sm action-button action-delete" (click)="eliminarMedicamento(med.id)">
             <span class="material-icons" aria-hidden="true">delete_outline</span>
             Eliminar
+          </button>
+          <button type="button" class="btn btn-sm action-button action-stock" (click)="abrirOperacionStock(med, 'reponer')">
+            Reponer
+          </button>
+          <button type="button" class="btn btn-sm action-button action-adjust" (click)="abrirOperacionStock(med, 'ajustar')">
+            Ajustar
           </button>
         </div>
       </article>

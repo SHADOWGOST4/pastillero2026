@@ -44,6 +44,39 @@
     </div>
   </section>
 
+  <section class="alerts-section" *ngIf="!hasError">
+    <div class="section-header">
+      <div>
+        <p class="section-kicker">Alertas de medicamentos</p>
+        <h2>Estado del stock</h2>
+      </div>
+      <span class="list-count" *ngIf="alertasStock.length > 0">{{ alertasStock.length }} pendientes</span>
+    </div>
+
+    <div class="alerts-list" *ngIf="alertasStock.length > 0; else sinAlertas">
+      <article class="alert-card" *ngFor="let alerta of alertasStock" [ngClass]="{
+        'alert-agotado': alerta.estado_stock === 'AGOTADO',
+        'alert-critico': alerta.estado_stock === 'CRITICO',
+        'alert-bajo': alerta.estado_stock === 'BAJO',
+        'alert-insuficiente': alerta.estado_tratamiento === 'INSUFICIENTE_TRATAMIENTO'
+      }">
+        <div class="alert-header">
+          <span class="material-icons" aria-hidden="true">warning</span>
+          <strong>{{ alerta.medicamento }}</strong>
+          <span class="alert-badge">{{ alerta.estado_stock }}</span>
+        </div>
+        <p>{{ descripcionAlerta(alerta) }}</p>
+      </article>
+    </div>
+
+    <ng-template #sinAlertas>
+      <div class="empty-state-small">
+        <span class="material-icons" aria-hidden="true">check_circle</span>
+        <p>No hay alertas de stock en este momento.</p>
+      </div>
+    </ng-template>
+  </section>
+
   <section class="upcoming-section" *ngIf="!hasError">
     <div class="section-header">
       <div>

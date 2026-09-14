@@ -31,9 +31,16 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-)+fs*3-gr&4a8p%l5s-xh1o!8l
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').strip().lower() in ('true', '1', 't', 'yes')
 
-ALLOWED_HOSTS_ENV = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver, https://localhost,*')
+# Tamaño de página para los listados paginados. Puede ajustarse por entorno
+# sin cambiar el código (por defecto, diez elementos).
+PAGE_SIZE = int(os.getenv('PAGE_SIZE', '10'))
+
+ALLOWED_HOSTS_ENV = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver, https://localhost, http://localhost')
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_ENV.split(',') if host.strip()]
 
+WEBPUSH_PUBLIC_KEY = os.getenv('WEBPUSH_PUBLIC_KEY', '')
+WEBPUSH_PRIVATE_KEY = os.getenv('WEBPUSH_PRIVATE_KEY', '')
+WEBPUSH_SUBJECT = os.getenv('WEBPUSH_SUBJECT', 'mailto:admin@pillbox.local')
 
 # Application definition
 
@@ -87,11 +94,11 @@ WSGI_APPLICATION = 'api_pillbox.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'pillbox_db'),
-        'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', '0000'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
     }
 }
 
@@ -172,4 +179,3 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
-

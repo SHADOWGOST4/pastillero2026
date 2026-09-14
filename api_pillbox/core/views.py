@@ -7,11 +7,28 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from django.contrib.auth.hashers import check_password, make_password
 from django.db import transaction
+from .inventory import calcular_cobertura_medicamento
+from .stock import StockInsuficiente, ajustar_stock, confirmar_registro_con_stock, reponer_stock
 
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.views import TokenViewBase
+from django.conf import settings
 from .models import *
 from .serializers import *
+
+
+class ResourcePagination(PageNumberPagination):
+    """Paginación común para colecciones grandes del cliente web."""
+
+    page_size = settings.PAGE_SIZE
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+    def get_paginated_response(self, data):
+        response = super().get_paginated_response(data)
+        response.data['page_size'] = self.page.paginator.per_page
+        return response
 
 
 
@@ -121,13 +138,87 @@ class DispositivoViewSet(viewsets.ModelViewSet):
 class MedicamentoViewSet(viewsets.ModelViewSet):
     serializer_class = MedicamentoSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = ResourcePagination
     queryset = Medicamento.objects.none()
 
     def get_queryset(self):
-        return Medicamento.objects.filter(id_usuario=self.request.user)
+        return Medicamento.objects.filter(id_usuario=self.request.user).order_by('id')
 
     def perform_create(self, serializer):
         serializer.save(id_usuario=self.request.user)
+
+    def perform_update(self, serializer):
+        stock_requested = 'stock' in serializer.validated_data
+        with transaction.atomic():
+            medicamento = Medicamento.objects.select_for_update().get(
+                id=serializer.instance.id,
+                id_usuario=self.request.user,
+            )
+            stock_anterior = medicamento.stock
+            serializer.instance = medicamento
+            serializer.save()
+            if stock_requested and medicamento.stock != stock_anterior:
+                MovimientoStock.objects.create(
+                    medicamento=medicamento,
+                    cantidad=medicamento.stock - stock_anterior,
+                    stock_anterior=stock_anterior,
+                    stock_nuevo=medicamento.stock,
+                    tipo=MovimientoStock.Tipo.AJUSTE_INVENTARIO,
+                    motivo='Corrección administrativa',
+                    usuario=self.request.user,
+                )
+
+    @action(detail=True, methods=['get'], url_path='cobertura')
+    def cobertura(self, request, pk=None):
+        medicamento = self.get_object()
+        return Response(calcular_cobertura_medicamento(medicamento))
+
+    @action(detail=True, methods=['post'], url_path='reponer')
+    def reponer(self, request, pk=None):
+        medicamento = self.get_object()
+        serializer = ReponerStockSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        movimiento = reponer_stock(
+            medicamento.id,
+            request.user,
+            serializer.validated_data['cantidad'],
+        )
+        return Response(MovimientoStockSerializer(movimiento).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='ajustar-stock')
+    def ajustar_stock(self, request, pk=None):
+        medicamento = self.get_object()
+        serializer = AjustarStockSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            movimiento = ajustar_stock(
+                medicamento.id,
+                request.user,
+                serializer.validated_data['cantidad'],
+                serializer.validated_data['motivo'],
+            )
+        except StockInsuficiente as exc:
+            return Response(exc.detail, status=exc.status_code)
+        return Response(MovimientoStockSerializer(movimiento).data, status=status.HTTP_201_CREATED)
+
+
+class MovimientoStockViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = MovimientoStockSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = ResourcePagination
+    queryset = MovimientoStock.objects.none()
+
+    def get_queryset(self):
+        queryset = MovimientoStock.objects.filter(
+            usuario=self.request.user,
+        ).select_related('medicamento', 'registro_toma').order_by('-fecha_hora', '-id')
+        medicamento = self.request.query_params.get('medicamento')
+        tipo = self.request.query_params.get('tipo')
+        if medicamento:
+            queryset = queryset.filter(medicamento_id=medicamento)
+        if tipo:
+            queryset = queryset.filter(tipo=tipo)
+        return queryset
 
 
 class ModuloViewSet(viewsets.ModelViewSet):
@@ -151,10 +242,14 @@ class ModuloViewSet(viewsets.ModelViewSet):
 class HorarioViewSet(viewsets.ModelViewSet):
     serializer_class = HorarioSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = ResourcePagination
     queryset = Horario.objects.none()
 
     def get_queryset(self):
-        return Horario.objects.filter(id_medicamento__id_usuario=self.request.user)
+        return Horario.objects.filter(
+            id_medicamento__id_usuario=self.request.user,
+            eliminado=False,
+        ).order_by('id')
 
     def perform_create(self, serializer):
         medicamento = serializer.validated_data.get('id_medicamento')
@@ -162,20 +257,60 @@ class HorarioViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError({'id_medicamento': 'El medicamento no pertenece al usuario autenticado.'})
         serializer.save()
 
+    @action(detail=True, methods=['post'], url_path='activar')
+    def activar(self, request, pk=None):
+        horario = self.get_object()
+        if horario.activo:
+            return Response(HorarioSerializer(horario, context={'request': request}).data)
+        horario.activo = True
+        horario.save(update_fields=['activo'])
+        return Response(HorarioSerializer(horario, context={'request': request}).data)
+
+    @action(detail=True, methods=['post'], url_path='deshabilitar')
+    def deshabilitar(self, request, pk=None):
+        horario = self.get_object()
+        if horario.activo:
+            horario.activo = False
+            horario.save(update_fields=['activo'])
+        return Response(HorarioSerializer(horario, context={'request': request}).data)
+
+    def destroy(self, request, *args, **kwargs):
+        horario = self.get_object()
+        horario.activo = False
+        horario.eliminado = True
+        horario.save(update_fields=['activo', 'eliminado'])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class RegistroTomaViewSet(viewsets.ModelViewSet):
     serializer_class = RegistroTomaSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = ResourcePagination
     queryset = Registro_Toma.objects.none()
 
     def get_queryset(self):
-        return Registro_Toma.objects.filter(id_usuario=self.request.user)
+        return Registro_Toma.objects.filter(id_usuario=self.request.user).order_by(
+            '-fecha_hora_programada',
+            '-id',
+        )
 
     def perform_create(self, serializer):
         horario = serializer.validated_data.get('id_horario')
         if horario.id_medicamento.id_usuario_id != self.request.user.id:
             raise serializers.ValidationError({'id_horario': 'El horario no pertenece al usuario autenticado.'})
         serializer.save(id_usuario=self.request.user)
+
+    def perform_update(self, serializer):
+        fecha_hora_real = serializer.validated_data.get('fecha_hora_real')
+        if fecha_hora_real is None or serializer.instance.fecha_hora_real is not None:
+            serializer.save()
+            return
+        registro = confirmar_registro_con_stock(
+            serializer.instance.id,
+            self.request.user,
+            fecha_hora_real,
+        )
+        serializer.instance = registro
 
 
 class NotificacionViewSet(viewsets.ModelViewSet):
@@ -192,6 +327,41 @@ class NotificacionViewSet(viewsets.ModelViewSet):
         if contacto.id_usuario_id != self.request.user.id or registro.id_usuario_id != self.request.user.id:
             raise serializers.ValidationError('El contacto o registro no pertenece al usuario autenticado.')
         serializer.save()
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def web_push_subscribe(request):
+    endpoint = request.data.get('endpoint')
+    keys = request.data.get('keys') or {}
+    p256dh = keys.get('p256dh')
+    auth = keys.get('auth')
+    if not endpoint or not p256dh or not auth:
+        return Response({'detail': 'endpoint, keys.p256dh y keys.auth son obligatorios.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    sub, created = WebPushSubscription.objects.update_or_create(
+        usuario=request.user,
+        endpoint=endpoint,
+        defaults={
+            'p256dh': p256dh,
+            'auth': auth,
+            'active': True,
+            'browser': 'web',
+            'user_agent': request.META.get('HTTP_USER_AGENT', ''),
+        },
+    )
+    return Response({'ok': True, 'created': created, 'subscription_id': sub.id}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def web_push_unsubscribe(request):
+    endpoint = request.data.get('endpoint')
+    if not endpoint:
+        return Response({'detail': 'endpoint es obligatorio.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    deleted, _ = WebPushSubscription.objects.filter(usuario=request.user, endpoint=endpoint).delete()
+    return Response({'ok': True, 'deleted': deleted > 0}, status=status.HTTP_200_OK)
 
 
 def autenticar_dispositivo(request):
@@ -232,6 +402,8 @@ def iot_configuracion(request):
     if not asignacion:
         return Response({'activo': False, 'timezone': 'America/Bogota'})
     horario = asignacion.id_horario
+    if not horario.activo or horario.eliminado:
+        return Response({'activo': False, 'timezone': 'America/Bogota'})
     return Response({'activo': True, 'version': asignacion.fecha_actualizacion.isoformat(), 'timezone': 'America/Bogota', 'horario': {
         'id': horario.id, 'hora_toma': horario.hora_toma.strftime('%H:%M:%S'), 'frecuencia': horario.frecuencia,
         'medicamento': horario.id_medicamento.nombre,
@@ -247,6 +419,8 @@ def iot_confirmar_toma(request):
     asignacion = getattr(dispositivo, 'asignacion', None)
     if not asignacion:
         return Response({'detail': 'El dispositivo no tiene un horario asignado.'}, status=status.HTTP_409_CONFLICT)
+    if not asignacion.id_horario.activo or asignacion.id_horario.eliminado:
+        return Response({'detail': 'El horario asignado está deshabilitado.'}, status=status.HTTP_409_CONFLICT)
     try:
         import uuid
         evento_id = uuid.UUID(str(request.data['evento_id']))
@@ -256,17 +430,36 @@ def iot_confirmar_toma(request):
     except (KeyError, TypeError, ValueError):
         return Response({'detail': 'evento_id UUID y fecha_hora_real ISO-8601 son obligatorios.'}, status=status.HTTP_400_BAD_REQUEST)
     with transaction.atomic():
-        evento, creado = EventoDispositivo.objects.get_or_create(evento_id=evento_id, defaults={
-            'dispositivo': dispositivo, 'tipo': 'toma_confirmada', 'fecha_dispositivo': fecha_real,
-        })
-        if not creado:
+        evento = EventoDispositivo.objects.filter(evento_id=evento_id).first()
+        if evento:
             if evento.dispositivo_id != dispositivo.id:
                 return Response({'detail': 'evento_id ya pertenece a otro dispositivo.'}, status=status.HTTP_409_CONFLICT)
             return Response({'ok': True, 'duplicado': True, 'registro_id': evento.id_registro_id})
-        registro = Registro_Toma.objects.create(fecha_hora_programada=fecha_real, fecha_hora_real=fecha_real,
-            id_horario=asignacion.id_horario, id_usuario=dispositivo.id_usuario)
-        evento.id_registro = registro
-        evento.save(update_fields=['id_registro'])
+
+        registro = Registro_Toma.objects.select_for_update().filter(
+            id_horario=asignacion.id_horario,
+            id_usuario=dispositivo.id_usuario,
+            fecha_hora_real__isnull=True,
+            fecha_hora_programada__lte=fecha_real,
+        ).order_by('-fecha_hora_programada').first()
+        if not registro:
+            return Response(
+                {'detail': 'No existe una toma programada pendiente para confirmar.'},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        registro = confirmar_registro_con_stock(
+            registro.id,
+            dispositivo.id_usuario,
+            fecha_real,
+        )
+        evento = EventoDispositivo.objects.create(
+            evento_id=evento_id,
+            dispositivo=dispositivo,
+            tipo='toma_confirmada',
+            fecha_dispositivo=fecha_real,
+            id_registro=registro,
+        )
     return Response({'ok': True, 'duplicado': False, 'registro_id': registro.id}, status=status.HTTP_201_CREATED)
 
 
@@ -279,7 +472,9 @@ def proximos_horarios(request):
     Utiliza select_related para evitar N+1 queries.
     """
     horarios = Horario.objects.filter(
-        id_medicamento__id_usuario=request.user
+        id_medicamento__id_usuario=request.user,
+        activo=True,
+        eliminado=False,
     ).select_related('id_medicamento')
 
     lista_horarios = []
@@ -293,6 +488,11 @@ def proximos_horarios(request):
                 'dosis': h.id_medicamento.dosis,
                 'hora_toma': h.hora_toma.strftime('%H:%M'),
                 'frecuencia': h.frecuencia,
+                'cantidad_por_toma': h.cantidad_por_toma,
+                'fecha_inicio': h.fecha_inicio,
+                'tipo_duracion': h.tipo_duracion,
+                'duracion_dias': h.duracion_dias,
+                'fecha_fin': h.fecha_fin,
                 'proxima_toma': timezone.localtime(prox).isoformat(),
                 '_prox_dt': prox,
             })

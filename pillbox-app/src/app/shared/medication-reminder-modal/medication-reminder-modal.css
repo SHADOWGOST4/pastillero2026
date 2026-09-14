@@ -1,0 +1,21 @@
+.reminder-backdrop { position: fixed; inset: 0; z-index: 1100; display: grid; place-items: center; padding: 1rem; background: rgba(15, 23, 42, .64); }
+.reminder-modal { width: min(100%, 460px); overflow: hidden; border: 1px solid #bfdbfe; border-radius: .75rem; background: #fff; box-shadow: 0 22px 60px rgba(15, 23, 42, .3); animation: reminder-enter .18s ease-out; }
+.reminder-header { display: flex; align-items: flex-start; gap: .8rem; padding: 1.35rem 1.35rem 1rem; border-bottom: 1px solid #dbeafe; background: #eff6ff; }
+.reminder-icon { display: grid; place-items: center; flex: 0 0 auto; width: 2.7rem; height: 2.7rem; border-radius: 50%; color: #1d4ed8; background: #dbeafe; }
+.reminder-overline { margin: 0 0 .2rem; color: #1d4ed8; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.reminder-header h2 { margin: 0; color: #172033; font-size: 1.2rem; }
+.reminder-close { margin-left: auto; border: 0; color: #64748b; background: transparent; font-size: 1.5rem; cursor: pointer; }
+.reminder-body { padding: 1.25rem 1.35rem; }
+.reminder-body h3 { margin: 0 0 .85rem; color: #172033; font-size: 1.35rem; }
+.reminder-body p { margin: .45rem 0; color: #475569; }
+.reminder-message { margin-top: 1rem !important; color: #1e3a8a !important; font-weight: 600; }
+.reminder-footer { display: flex; justify-content: flex-end; gap: .65rem; padding: 1rem 1.35rem; border-top: 1px solid #e2e8f0; background: #f8fafc; }
+.reminder-postpone { border: 1px solid #cbd5e1; color: #475569; background: #f1f5f9; }
+@keyframes reminder-enter { from { opacity: 0; transform: translateY(-10px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (max-width: 480px) { .reminder-footer { flex-direction: column-reverse; } .reminder-footer .btn { width: 100%; } }
+.reminder-error {
+  width: 100%;
+  margin: 0 0 0.75rem;
+  color: #b42318;
+  font-weight: 600;
+}

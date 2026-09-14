@@ -1,0 +1,35 @@
+<ng-container *ngIf="reminderService.currentReminder() as reminder">
+  <div class="reminder-backdrop" role="presentation" (click)="cerrar()">
+    <section
+      class="reminder-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="medication-reminder-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="reminder-header">
+        <span class="material-icons reminder-icon" aria-hidden="true">medication</span>
+        <div>
+          <p class="reminder-overline">Alerta de medicación</p>
+          <h2 id="medication-reminder-title">Hora de tomar el medicamento</h2>
+        </div>
+        <button type="button" class="reminder-close" (click)="cerrar()" [disabled]="busy" aria-label="Posponer">×</button>
+      </header>
+
+      <div class="reminder-body">
+        <h3>{{ reminder.medicamento?.nombre || reminder.horario.medicamento_nombre }}</h3>
+        <p><strong>Dosis:</strong> {{ reminder.medicamento?.dosis || 'Según indicación médica' }}</p>
+        <p><strong>Hora programada:</strong> {{ reminder.registro.fecha_hora_programada | date: 'short' }}</p>
+        <p class="reminder-message">Es momento de tomar tu medicamento.</p>
+      </div>
+
+      <footer class="reminder-footer">
+        <p *ngIf="errorMessage" class="reminder-error" role="alert">{{ errorMessage }}</p>
+        <button type="button" class="btn reminder-postpone" (click)="cerrar()" [disabled]="busy">Posponer</button>
+        <button type="button" class="btn btn-primary" (click)="confirmar()" [disabled]="busy">
+          {{ busy ? 'Registrando...' : 'Confirmar toma' }}
+        </button>
+      </footer>
+    </section>
+  </div>
+</ng-container>

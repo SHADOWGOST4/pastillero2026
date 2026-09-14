@@ -1,9 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { Dashboard as DashboardService } from '../../services/dashboard';
 import { Auth } from '../../services/auth';
-import { ProximaTomaItem } from '../../core/models/api.interfaces';
+import { Medicamento } from '../../services/medicamento';
+import {
+  MedicamentoCoberturaResponse,
+  ProximaTomaItem,
+} from '../../core/models/api.interfaces';
 
 interface ModuleCard {
   label: string;
@@ -22,6 +27,7 @@ interface ModuleCard {
 })
 export class Dashboard implements OnInit {
   proximosHorarios: ProximaTomaItem[] = [];
+  alertasStock: MedicamentoCoberturaResponse[] = [];
   usuario: any;
   isLoading = false;
   hasError = false;
@@ -31,6 +37,7 @@ export class Dashboard implements OnInit {
 
   constructor(
     private dashboardService: DashboardService,
+    private medicamentoService: Medicamento,
     private auth: Auth,
     private router: Router,
     private datePipe: DatePipe
@@ -39,6 +46,7 @@ export class Dashboard implements OnInit {
   ngOnInit() {
     this.usuario = this.auth.obtenerUsuario();
     this.cargarProximosHorarios();
+    this.cargarAlertasStock();
   }
 
   cargarProximosHorarios() {
@@ -63,6 +71,63 @@ export class Dashboard implements OnInit {
         this.errorMessage = err?.message || 'No se pudieron cargar las próximas tomas.';
       }
     });
+  }
+
+  cargarAlertasStock(): void {
+    this.medicamentoService.getPage(1).subscribe({
+      next: (page) => {
+        const medicamentos = page?.results ?? [];
+        if (!medicamentos.length) {
+          this.alertasStock = [];
+          return;
+        }
+
+        forkJoin(medicamentos.map((med) => this.medicamentoService.getCobertura(med.id))).subscribe({
+          next: (respuestas) => {
+            this.alertasStock = respuestas
+              .filter((respuesta) => this.debeMostrarseEnAlerta(respuesta))
+              .sort((a, b) => this.prioridadAlerta(a) - this.prioridadAlerta(b));
+          },
+          error: () => {
+            this.alertasStock = [];
+          }
+        });
+      },
+      error: () => {
+        this.alertasStock = [];
+      }
+    });
+  }
+
+  debeMostrarseEnAlerta(respuesta: MedicamentoCoberturaResponse): boolean {
+    const estado = respuesta.estado_stock;
+    const insuficiente = respuesta.estado_tratamiento === 'INSUFICIENTE_TRATAMIENTO';
+    return estado === 'AGOTADO' || insuficiente || estado === 'CRITICO' || estado === 'BAJO';
+  }
+
+  prioridadAlerta(respuesta: MedicamentoCoberturaResponse): number {
+    if (respuesta.estado_stock === 'AGOTADO') return 1;
+    if (respuesta.estado_tratamiento === 'INSUFICIENTE_TRATAMIENTO') return 2;
+    if (respuesta.estado_stock === 'CRITICO') return 3;
+    if (respuesta.estado_stock === 'BAJO') return 4;
+    return 99;
+  }
+
+  descripcionAlerta(respuesta: MedicamentoCoberturaResponse): string {
+    if (respuesta.estado_stock === 'AGOTADO') {
+      return 'Agotado.';
+    }
+
+    if (respuesta.estado_tratamiento === 'INSUFICIENTE_TRATAMIENTO') {
+      return `Faltan ${respuesta.faltantes} unidades para completar el tratamiento.`;
+    }
+
+    if (respuesta.estado_stock === 'CRITICO' || respuesta.estado_stock === 'BAJO') {
+      const dias = respuesta.dias_cobertura == null ? 0 : Math.max(0, Math.round(Number(respuesta.dias_cobertura)));
+      return `Quedan aproximadamente ${dias} días.`;
+    }
+
+    return 'Revisa el estado del stock.';
   }
 
   construirModuleCards(items: ProximaTomaItem[]): ModuleCard[] {

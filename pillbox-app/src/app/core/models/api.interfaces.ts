@@ -57,7 +57,6 @@ export interface ActualizarMedicamentoRequest {
   nombre?: string;
   descripcion?: string;
   dosis?: string;
-  stock?: number;
 }
 
 export interface MedicamentoResponse {
@@ -69,17 +68,84 @@ export interface MedicamentoResponse {
   id_usuario: number;
 }
 
+export interface MedicamentoCoberturaTratamiento {
+  id_horario: number;
+  tipo_duracion: TipoDuracion;
+  cantidad_por_toma: number;
+  consumo_diario: number;
+  unidades_necesarias_restantes: number | null;
+  activo: boolean;
+}
+
+export type EstadoStock = 'NORMAL' | 'BAJO' | 'CRITICO' | 'AGOTADO' | 'INSUFICIENTE_TRATAMIENTO';
+
+export interface MedicamentoCoberturaResponse {
+  id_medicamento: number;
+  medicamento: string;
+  stock_actual: number;
+  consumo_diario: number;
+  dias_cobertura: number | null;
+  fecha_agotamiento_estimada: string | null;
+  estado_stock: Exclude<EstadoStock, 'INSUFICIENTE_TRATAMIENTO'>;
+  stock_suficiente_tratamiento: boolean;
+  stock_suficiente: boolean;
+  unidades_necesarias: number;
+  faltantes: number;
+  estado_tratamiento: EstadoStock | null;
+  tratamientos: MedicamentoCoberturaTratamiento[];
+}
+
+export type TipoMovimientoStock =
+  | 'TOMA_CONFIRMADA'
+  | 'REPOSICION_MANUAL'
+  | 'AJUSTE_INVENTARIO';
+
+export interface MovimientoStockResponse {
+  id: number;
+  medicamento: number;
+  registro_toma: number | null;
+  cantidad: number;
+  stock_anterior: number;
+  stock_nuevo: number;
+  tipo: TipoMovimientoStock;
+  motivo: string;
+  fecha_hora: string;
+  usuario: number;
+}
+
+export interface ReponerStockRequest {
+  cantidad: number;
+}
+
+export interface AjustarStockRequest {
+  cantidad: number;
+  motivo: string;
+}
+
 export interface CrearHorarioRequest {
   hora_toma: string;
   frecuencia: number;
   id_medicamento: number;
+  cantidad_por_toma: number;
+  fecha_inicio: string;
+  tipo_duracion: TipoDuracion;
+  duracion_dias?: number | null;
+  fecha_fin?: string | null;
 }
 
 export interface ActualizarHorarioRequest {
   hora_toma?: string;
   frecuencia?: number;
   id_medicamento?: number;
+  cantidad_por_toma?: number;
+  fecha_inicio?: string;
+  tipo_duracion?: TipoDuracion;
+  duracion_dias?: number | null;
+  fecha_fin?: string | null;
+  activo?: boolean;
 }
+
+export type TipoDuracion = 'DIAS' | 'FECHA' | 'INDEFINIDO';
 
 export interface HorarioResponse {
   id: number;
@@ -87,7 +153,14 @@ export interface HorarioResponse {
   frecuencia: number;
   id_medicamento: number;
   medicamento_nombre: string;
-  proxima_toma: string;
+  proxima_toma: string | null;
+  cantidad_por_toma: number;
+  fecha_inicio: string;
+  tipo_duracion: TipoDuracion;
+  duracion_dias: number | null;
+  fecha_fin: string | null;
+  activo: boolean;
+  eliminado: boolean;
 }
 
 export interface ProximaTomaItem {
@@ -97,17 +170,8 @@ export interface ProximaTomaItem {
   dosis: string;
   hora_toma: string;
   frecuencia: number;
+  cantidad_por_toma: number;
   proxima_toma: string;
-}
-
-export interface CrearRegistroTomaRequest {
-  fecha_hora_programada: string;
-  fecha_hora_real?: string | null;
-  id_horario: number;
-}
-
-export interface ConfirmarRegistroTomaRequest {
-  fecha_hora_real: string;
 }
 
 export interface RegistroTomaResponse {
@@ -116,6 +180,23 @@ export interface RegistroTomaResponse {
   fecha_hora_real: string | null;
   id_horario: number;
   id_usuario: number;
+}
+
+export interface CrearRegistroTomaRequest {
+  fecha_hora_programada: string;
+  id_horario: number;
+}
+
+export interface IoTConfirmarTomaRequest {
+  evento_id: string;
+  fecha_hora_real: string;
+}
+
+export interface IoTConfirmarTomaResponse {
+  ok: boolean;
+  duplicado: boolean;
+  registro_id: number | null;
+  detail?: string;
 }
 
 export interface CrearContactoRequest {
@@ -214,4 +295,12 @@ export interface ApiErrorResponse {
   detail?: string;
   code?: string;
   [campo: string]: any;
+}
+
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+  page_size?: number;
 }

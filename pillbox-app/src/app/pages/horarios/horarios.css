@@ -171,6 +171,22 @@
   font-size: 0.78rem;
 }
 
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+
+.pagination-controls .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
 .table-wrapper {
   width: 100%;
   max-width: 100%;
@@ -357,6 +373,14 @@
 
   .form-actions .btn {
     width: 100%;
+  }
+
+  .pagination-controls {
+    flex-wrap: wrap;
+  }
+
+  .pagination-controls .btn {
+    flex: 1 1 8rem;
   }
 
   .table-wrapper {
