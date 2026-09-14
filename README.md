@@ -17,10 +17,9 @@ Las funcionalidades de gestión y autenticación están implementadas y se integ
 Actualmente se pueden administrar:
 
 - Usuarios y registro de cuenta.
-- Inicio de sesión, renovación de token y cierre de sesión.
 - Medicamentos.
 - Horarios de toma.
-- Registros de toma y confirmación manual.
+- Registros de toma.
 - Contactos de emergencia.
 - Dispositivos/pastilleros registrados.
 - Dashboard de próximas tomas.
@@ -159,8 +158,6 @@ Usuario
  ├── Contactos de emergencia
  └── Dispositivos registrados
 ```
-
-Los recursos privados se filtran por el usuario autenticado. Un usuario no puede consultar ni modificar recursos pertenecientes a otra cuenta.
 
 ## Pruebas del backend
 
