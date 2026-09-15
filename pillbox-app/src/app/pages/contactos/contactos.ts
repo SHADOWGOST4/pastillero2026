@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -25,6 +25,7 @@ export class Contactos implements OnInit {
   errorMessage = '';
   successMessage = '';
   isEditMode = false;
+  modalFormularioAbierto = false;
   editingId: number | null = null;
   modalEliminarAbierto = false;
   eliminando = false;
@@ -37,6 +38,13 @@ export class Contactos implements OnInit {
   };
 
   constructor(private contactoService: Contacto) {}
+
+  @HostListener('document:keydown.escape')
+  cerrarModalConEscape(): void {
+    if (this.modalFormularioAbierto && !this.submitting) {
+      this.resetForm();
+    }
+  }
 
   ngOnInit(): void {
     this.cargarContactos();
@@ -86,6 +94,7 @@ export class Contactos implements OnInit {
         this.successMessage = this.isEditMode
           ? 'Contacto actualizado correctamente.'
           : 'Contacto creado correctamente.';
+        this.modalFormularioAbierto = false;
         this.resetForm();
         this.cargarContactos();
       },
@@ -98,6 +107,7 @@ export class Contactos implements OnInit {
 
   editarContacto(contacto: ContactoResponse): void {
     this.isEditMode = true;
+    this.modalFormularioAbierto = true;
     this.editingId = contacto.id;
     this.form = {
       nombre: contacto.nombre,
@@ -142,6 +152,7 @@ export class Contactos implements OnInit {
   }
 
   resetForm(): void {
+    this.modalFormularioAbierto = false;
     this.isEditMode = false;
     this.editingId = null;
     this.form = {
@@ -149,6 +160,13 @@ export class Contactos implements OnInit {
       correo: '',
       telefono: '',
     };
+  }
+
+  abrirFormularioNuevo(): void {
+    this.resetForm();
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.modalFormularioAbierto = true;
   }
 
   obtenerIniciales(nombre: string): string {

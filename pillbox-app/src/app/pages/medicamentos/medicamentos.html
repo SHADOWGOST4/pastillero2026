@@ -5,7 +5,7 @@
       <h1>Medicamentos</h1>
       <p class="page-intro">Gestiona tus medicamentos y mantén organizada tu medicación.</p>
     </div>
-    <button type="button" class="btn btn-primary add-button" (click)="resetForm()">
+    <button type="button" class="btn btn-primary add-button" (click)="abrirFormularioNuevo()">
       <span class="material-icons" aria-hidden="true">add</span>
       Agregar medicamento
     </button>
@@ -21,117 +21,10 @@
     </div>
   </section>
 
-  <section class="form-card" [class.form-card-editing]="isEditMode">
-    <div class="section-header">
-      <div>
-        <p class="section-kicker">{{ isEditMode ? 'Actualizar información' : 'Nuevo registro' }}</p>
-        <h2>{{ isEditMode ? 'Editar medicamento' : 'Agregar medicamento' }}</h2>
-      </div>
-      <span class="edit-indicator" *ngIf="isEditMode">
-        <span class="material-icons" aria-hidden="true">edit</span>
-        Editando
-      </span>
-    </div>
-
-    <form #medicamentoForm="ngForm" (ngSubmit)="onSubmit(medicamentoForm)" novalidate>
-      <div class="form-grid">
-        <div class="field">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Nombre</mat-label>
-            <input
-              matInput
-              id="nombre-medicamento"
-              type="text"
-              [(ngModel)]="form.nombre"
-              #nombre="ngModel"
-              name="nombre"
-              placeholder="Ej. Amoxicilina"
-              autocomplete="off"
-              required
-            />
-            <mat-hint>Escribe el nombre del medicamento.</mat-hint>
-            <mat-error *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)">El nombre es obligatorio.</mat-error>
-          </mat-form-field>
-        </div>
-
-        <div class="field">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Dosis</mat-label>
-            <input
-              matInput
-              id="dosis-medicamento"
-              type="text"
-              [(ngModel)]="form.dosis"
-              #dosis="ngModel"
-              name="dosis"
-              placeholder="Ej. 500 mg"
-              autocomplete="off"
-              required
-            />
-            <mat-hint>Indica la cantidad prescrita.</mat-hint>
-            <mat-error *ngIf="dosis.invalid && (dosis.dirty || dosis.touched)">La dosis es obligatoria.</mat-error>
-          </mat-form-field>
-        </div>
-
-        <div class="field">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Stock</mat-label>
-            <input
-              matInput
-              id="stock-medicamento"
-              type="number"
-              min="0"
-              step="1"
-              pattern="^[0-9]+$"
-              [(ngModel)]="form.stock"
-              #stock="ngModel"
-              name="stock"
-              required
-            />
-            <mat-hint>Indica la cantidad disponible.</mat-hint>
-            <mat-error *ngIf="stock.invalid && (stock.dirty || stock.touched)">
-              Introduce un número entero mayor o igual a 0.
-            </mat-error>
-          </mat-form-field>
-        </div>
-
-        <div class="field field-wide">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Descripción</mat-label>
-            <textarea
-              matInput
-              id="descripcion-medicamento"
-              [(ngModel)]="form.descripcion"
-              name="descripcion"
-              rows="2"
-              placeholder="Añade una indicación u observación (opcional)"
-            ></textarea>
-            <mat-hint>Información adicional para identificarlo mejor.</mat-hint>
-          </mat-form-field>
-        </div>
-      </div>
-
-      <div class="form-actions">
-        <button type="button" *ngIf="isEditMode" class="btn btn-outline-secondary" (click)="cancelEdit()">
-          Cancelar
-        </button>
-        <button type="submit" class="btn btn-primary save-button" [disabled]="submitting">
-          <span class="material-icons" aria-hidden="true" *ngIf="!submitting">save</span>
-          <span class="loading-dot" aria-hidden="true" *ngIf="submitting"></span>
-          {{ submitting ? 'Guardando...' : 'Guardar medicamento' }}
-        </button>
-      </div>
-    </form>
-
-    <div *ngIf="errorMessage" class="alert alert-danger feedback" role="alert">
-      <span class="material-icons" aria-hidden="true">error_outline</span>
-      <span>{{ errorMessage }}</span>
-    </div>
-    <div *ngIf="successMessage" class="alert alert-success feedback" role="status">
-      <span class="material-icons" aria-hidden="true">check_circle</span>
-      <span>{{ successMessage }}</span>
-    </div>
-  </section>
+  <div *ngIf="successMessage" class="alert alert-success feedback page-feedback" role="status">
+    <span class="material-icons" aria-hidden="true">check_circle</span>
+    <span>{{ successMessage }}</span>
+  </div>
 
   <section class="list-section">
     <div class="section-header list-header">
@@ -189,7 +82,7 @@
       <span class="empty-icon material-icons" aria-hidden="true">medication</span>
       <h3>No tienes medicamentos registrados</h3>
       <p>Agrega tu primer medicamento para comenzar a organizar tus tomas.</p>
-      <button type="button" class="btn btn-primary" (click)="resetForm()">
+      <button type="button" class="btn btn-primary" (click)="abrirFormularioNuevo()">
         <span class="material-icons" aria-hidden="true">add</span>
         Agregar medicamento
       </button>
@@ -291,6 +184,88 @@
           </button>
         </div>
       </article>
+    </div>
+  </section>
+</div>
+
+<div *ngIf="modalFormularioAbierto" class="medication-modal-backdrop" (click)="!submitting && cancelEdit()">
+  <section
+    class="medication-modal"
+    [class.form-card-editing]="isEditMode"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="medication-modal-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="medication-modal-header">
+      <div>
+        <p class="section-kicker">{{ isEditMode ? 'Actualizar información' : 'Nuevo registro' }}</p>
+        <h2 id="medication-modal-title">{{ isEditMode ? 'Editar medicamento' : 'Agregar medicamento' }}</h2>
+      </div>
+      <button type="button" class="modal-close" (click)="cancelEdit()" [disabled]="submitting" aria-label="Cerrar">
+        ×
+      </button>
+    </header>
+
+    <form #medicamentoForm="ngForm" (ngSubmit)="onSubmit(medicamentoForm)" novalidate>
+      <div class="form-grid">
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nombre</mat-label>
+            <input matInput id="nombre-medicamento" type="text" [(ngModel)]="form.nombre" #nombre="ngModel"
+              name="nombre" placeholder="Ej. Amoxicilina" autocomplete="off" required />
+            <mat-hint>Escribe el nombre del medicamento.</mat-hint>
+            <mat-error *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)">El nombre es obligatorio.</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Dosis</mat-label>
+            <input matInput id="dosis-medicamento" type="text" [(ngModel)]="form.dosis" #dosis="ngModel"
+              name="dosis" placeholder="Ej. 500 mg" autocomplete="off" required />
+            <mat-hint>Indica la cantidad prescrita.</mat-hint>
+            <mat-error *ngIf="dosis.invalid && (dosis.dirty || dosis.touched)">La dosis es obligatoria.</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Stock</mat-label>
+            <input matInput id="stock-medicamento" type="number" min="0" step="1" pattern="^[0-9]+$"
+              [(ngModel)]="form.stock" #stock="ngModel" name="stock" required />
+            <mat-hint>Indica la cantidad disponible.</mat-hint>
+            <mat-error *ngIf="stock.invalid && (stock.dirty || stock.touched)">
+              Introduce un número entero mayor o igual a 0.
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="field field-wide">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Descripción</mat-label>
+            <textarea matInput id="descripcion-medicamento" [(ngModel)]="form.descripcion" name="descripcion"
+              rows="2" placeholder="Añade una indicación u observación (opcional)"></textarea>
+            <mat-hint>Información adicional para identificarlo mejor.</mat-hint>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline-secondary" (click)="cancelEdit()" [disabled]="submitting">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary save-button" [disabled]="submitting">
+          <span class="material-icons" aria-hidden="true" *ngIf="!submitting">save</span>
+          <span class="loading-dot" aria-hidden="true" *ngIf="submitting"></span>
+          {{ submitting ? 'Guardando...' : 'Guardar medicamento' }}
+        </button>
+      </div>
+    </form>
+
+    <div *ngIf="errorMessage" class="alert alert-danger feedback" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      <span>{{ errorMessage }}</span>
     </div>
   </section>
 </div>

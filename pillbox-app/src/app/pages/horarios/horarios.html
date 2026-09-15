@@ -5,150 +5,16 @@
       <h1>Horarios de toma</h1>
       <p class="page-intro">Programa cuándo debes tomar cada medicamento.</p>
     </div>
-    <button type="button" class="btn btn-primary add-button" (click)="resetForm()">
+    <button type="button" class="btn btn-primary add-button" (click)="abrirFormularioNuevo()">
       <span class="material-icons" aria-hidden="true">add</span>
       Nuevo horario
     </button>
   </header>
 
-  <section class="form-card" [class.form-card-editing]="isEditMode">
-    <div class="section-header">
-      <div>
-        <p class="section-kicker">{{ isEditMode ? 'Actualizar programación' : 'Nueva programación' }}</p>
-        <h2>{{ isEditMode ? 'Editar horario' : 'Agregar nuevo horario' }}</h2>
-      </div>
-      <span class="edit-indicator" *ngIf="isEditMode">
-        <span class="material-icons" aria-hidden="true">edit</span>
-        Editando
-      </span>
-    </div>
-
-    <form #horarioForm="ngForm" (ngSubmit)="onSubmit()" novalidate>
-      <div class="form-grid">
-        <div class="field">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Medicamento</mat-label>
-            <mat-select
-              id="horario-medicamento"
-              [(ngModel)]="form.id_medicamento"
-              #medicamento="ngModel"
-              name="id_medicamento"
-              required
-            >
-              <mat-option [value]="0">Selecciona un medicamento</mat-option>
-              <mat-option *ngFor="let medicamento of medicamentos" [value]="medicamento.id">
-                {{ medicamento.nombre }}
-              </mat-option>
-            </mat-select>
-            <mat-hint>Selecciona el medicamento que deseas programar.</mat-hint>
-            <mat-error *ngIf="medicamento.invalid && (medicamento.dirty || medicamento.touched)">Debes seleccionar un medicamento.</mat-error>
-          </mat-form-field>
-        </div>
-
-        <div class="field">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Hora de toma</mat-label>
-            <input
-              matInput
-              id="horario-hora"
-              type="time"
-              [(ngModel)]="form.hora_toma"
-              #hora="ngModel"
-              name="hora_toma"
-              required
-            />
-            <mat-hint>Hora inicial para calcular las próximas tomas.</mat-hint>
-            <mat-error *ngIf="hora.invalid && (hora.dirty || hora.touched)">Debes indicar una hora.</mat-error>
-          </mat-form-field>
-        </div>
-
-        <div class="field">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Frecuencia (horas)</mat-label>
-            <input
-              matInput
-              id="horario-frecuencia"
-              type="number"
-              [(ngModel)]="form.frecuencia"
-              #frecuencia="ngModel"
-              name="frecuencia"
-              min="0"
-              step="1"
-              placeholder="Ej. 8"
-              required
-            />
-            <span matSuffix>h</span>
-            <mat-hint>Usa 0 para una toma diaria a la hora indicada.</mat-hint>
-            <mat-error *ngIf="frecuencia.invalid && (frecuencia.dirty || frecuencia.touched)">Indica una frecuencia válida.</mat-error>
-          </mat-form-field>
-        </div>
-
-        <div class="field">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Cantidad por toma</mat-label>
-            <input matInput type="number" min="1" step="1" [(ngModel)]="form.cantidad_por_toma" name="cantidad_por_toma" required />
-            <mat-hint>Unidades físicas consumidas en cada toma.</mat-hint>
-          </mat-form-field>
-        </div>
-
-        <div class="field">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Fecha de inicio</mat-label>
-            <input matInput type="date" [(ngModel)]="form.fecha_inicio" name="fecha_inicio" required />
-          </mat-form-field>
-        </div>
-
-        <div class="field field-wide">
-          <label class="duration-label">Duración del tratamiento</label>
-          <mat-radio-group
-            class="duration-options"
-            [ngModel]="form.tipo_duracion"
-            (ngModelChange)="cambiarTipoDuracion($event)"
-            name="tipo_duracion"
-          >
-            <mat-radio-button value="DIAS">Número de días</mat-radio-button>
-            <mat-radio-button value="FECHA">Hasta una fecha</mat-radio-button>
-            <mat-radio-button value="INDEFINIDO">Indefinido</mat-radio-button>
-          </mat-radio-group>
-        </div>
-
-        <div class="field" *ngIf="form.tipo_duracion === 'DIAS'">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Duración en días</mat-label>
-            <input matInput type="number" min="1" step="1" [(ngModel)]="form.duracion_dias" name="duracion_dias" required />
-          </mat-form-field>
-        </div>
-
-        <div class="field" *ngIf="form.tipo_duracion === 'FECHA'">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Fecha de finalización</mat-label>
-            <input matInput type="date" [(ngModel)]="form.fecha_fin" name="fecha_fin" [min]="form.fecha_inicio" required />
-          </mat-form-field>
-        </div>
-      </div>
-
-      <div class="form-actions">
-        <button type="button" *ngIf="isEditMode" class="btn btn-outline-secondary" (click)="resetForm()">
-          Cancelar
-        </button>
-        <button type="submit" class="btn btn-primary save-button" [disabled]="submitting">
-          <span class="material-icons" aria-hidden="true" *ngIf="!submitting">save</span>
-          <span class="loading-dot" aria-hidden="true" *ngIf="submitting"></span>
-          {{ submitting ? 'Guardando...' : 'Guardar horario' }}
-        </button>
-      </div>
-    </form>
-
-    <div *ngIf="errorMessage" class="alert alert-danger feedback" role="alert">
-      <span class="material-icons" aria-hidden="true">error_outline</span>
-      <span>{{ errorMessage }}</span>
-      <button type="button" class="retry-button" *ngIf="!horarios.length" (click)="cargarHorarios()">Reintentar</button>
-    </div>
-    <div *ngIf="successMessage" class="alert alert-success feedback" role="status">
-      <span class="material-icons" aria-hidden="true">check_circle</span>
-      <span>{{ successMessage }}</span>
-    </div>
-  </section>
+  <div *ngIf="successMessage" class="alert alert-success feedback page-feedback" role="status">
+    <span class="material-icons" aria-hidden="true">check_circle</span>
+    <span>{{ successMessage }}</span>
+  </div>
 
   <section class="list-section">
     <div class="section-header list-header">
@@ -168,7 +34,7 @@
       <span class="empty-icon material-icons" aria-hidden="true">schedule</span>
       <h3>No tienes horarios programados</h3>
       <p>Configura un horario para organizar las próximas tomas de tus medicamentos.</p>
-      <button type="button" class="btn btn-primary" (click)="resetForm()">
+      <button type="button" class="btn btn-primary" (click)="abrirFormularioNuevo()">
         <span class="material-icons" aria-hidden="true">add</span>
         Crear horario
       </button>
@@ -287,6 +153,128 @@
         <span class="material-icons" aria-hidden="true">chevron_right</span>
       </button>
     </nav>
+  </section>
+</div>
+
+<div *ngIf="modalFormularioAbierto" class="schedule-modal-backdrop" (click)="!submitting && resetForm()">
+  <section
+    class="schedule-modal"
+    [class.form-card-editing]="isEditMode"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="schedule-modal-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="schedule-modal-header">
+      <div>
+        <p class="section-kicker">{{ isEditMode ? 'Actualizar programación' : 'Nueva programación' }}</p>
+        <h2 id="schedule-modal-title">{{ isEditMode ? 'Editar horario' : 'Agregar nuevo horario' }}</h2>
+      </div>
+      <button type="button" class="modal-close" (click)="resetForm()" [disabled]="submitting" aria-label="Cerrar">×</button>
+    </header>
+
+    <form #horarioForm="ngForm" (ngSubmit)="onSubmit()" novalidate>
+      <div class="form-grid">
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Medicamento</mat-label>
+            <mat-select id="horario-medicamento" [(ngModel)]="form.id_medicamento" #medicamento="ngModel"
+              name="id_medicamento" required>
+              <mat-option [value]="0">Selecciona un medicamento</mat-option>
+              <mat-option *ngFor="let medicamento of medicamentos" [value]="medicamento.id">
+                {{ medicamento.nombre }}
+              </mat-option>
+            </mat-select>
+            <mat-hint>Selecciona el medicamento que deseas programar.</mat-hint>
+            <mat-error *ngIf="medicamento.invalid && (medicamento.dirty || medicamento.touched)">
+              Debes seleccionar un medicamento.
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Hora de toma</mat-label>
+            <input matInput id="horario-hora" type="time" [(ngModel)]="form.hora_toma" #hora="ngModel"
+              name="hora_toma" required />
+            <mat-hint>Hora inicial para calcular las próximas tomas.</mat-hint>
+            <mat-error *ngIf="hora.invalid && (hora.dirty || hora.touched)">Debes indicar una hora.</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Frecuencia (horas)</mat-label>
+            <input matInput id="horario-frecuencia" type="number" [(ngModel)]="form.frecuencia" #frecuencia="ngModel"
+              name="frecuencia" min="0" step="1" placeholder="Ej. 8" required />
+            <span matSuffix>h</span>
+            <mat-hint>Usa 0 para una toma diaria a la hora indicada.</mat-hint>
+            <mat-error *ngIf="frecuencia.invalid && (frecuencia.dirty || frecuencia.touched)">
+              Indica una frecuencia válida.
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Cantidad por toma</mat-label>
+            <input matInput type="number" min="1" step="1" [(ngModel)]="form.cantidad_por_toma"
+              name="cantidad_por_toma" required />
+            <mat-hint>Unidades físicas consumidas en cada toma.</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div class="field">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Fecha de inicio</mat-label>
+            <input matInput type="date" [(ngModel)]="form.fecha_inicio" name="fecha_inicio" required />
+          </mat-form-field>
+        </div>
+
+        <div class="field field-wide">
+          <label class="duration-label">Duración del tratamiento</label>
+          <mat-radio-group class="duration-options" [ngModel]="form.tipo_duracion"
+            (ngModelChange)="cambiarTipoDuracion($event)" name="tipo_duracion">
+            <mat-radio-button value="DIAS">Número de días</mat-radio-button>
+            <mat-radio-button value="FECHA">Hasta una fecha</mat-radio-button>
+            <mat-radio-button value="INDEFINIDO">Indefinido</mat-radio-button>
+          </mat-radio-group>
+        </div>
+
+        <div class="field" *ngIf="form.tipo_duracion === 'DIAS'">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Duración en días</mat-label>
+            <input matInput type="number" min="1" step="1" [(ngModel)]="form.duracion_dias"
+              name="duracion_dias" required />
+          </mat-form-field>
+        </div>
+
+        <div class="field" *ngIf="form.tipo_duracion === 'FECHA'">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Fecha de finalización</mat-label>
+            <input matInput type="date" [(ngModel)]="form.fecha_fin" name="fecha_fin"
+              [min]="form.fecha_inicio" required />
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline-secondary" (click)="resetForm()" [disabled]="submitting">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary save-button" [disabled]="submitting">
+          <span class="material-icons" aria-hidden="true" *ngIf="!submitting">save</span>
+          <span class="loading-dot" aria-hidden="true" *ngIf="submitting"></span>
+          {{ submitting ? 'Guardando...' : 'Guardar horario' }}
+        </button>
+      </div>
+    </form>
+
+    <div *ngIf="errorMessage" class="alert alert-danger feedback" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      <span>{{ errorMessage }}</span>
+      <button type="button" class="retry-button" *ngIf="!horarios.length" (click)="cargarHorarios()">Reintentar</button>
+    </div>
   </section>
 </div>
 

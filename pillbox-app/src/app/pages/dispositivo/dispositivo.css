@@ -21,10 +21,12 @@
 .save-button,
 .empty-state .btn,
 .action-button {
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
+  white-space: nowrap;
 }
 
 .action-edit,
@@ -371,6 +373,7 @@
 }
 
 .device-card-top {
+  min-width: 0;
   justify-content: space-between;
   gap: 0.75rem;
 }
@@ -414,6 +417,7 @@
 }
 
 .device-heading {
+  min-width: 0;
   margin: 1.1rem 0;
 }
 
@@ -433,6 +437,7 @@
 }
 
 .device-details {
+  min-width: 0;
   padding: 0.9rem;
   border: 1px solid rgba(148, 163, 184, 0.25);
   border-radius: var(--radius-sm);
@@ -468,12 +473,15 @@
 
 .device-actions {
   display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 1rem;
 }
 
 .device-actions .btn {
-  flex: 1;
+  flex: 1 1 calc(50% - 0.25rem);
+  min-width: 0;
 }
 
 .state-message {
@@ -580,5 +588,9 @@
 
   .device-actions {
     flex-direction: column;
+  }
+
+  .device-actions .btn {
+    flex-basis: 100%;
   }
 }

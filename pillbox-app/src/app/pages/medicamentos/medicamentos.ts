@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -30,6 +30,7 @@ export class Medicamentos implements OnInit {
   loading = false;
   submitting = false;
   isEditMode = false;
+  modalFormularioAbierto = false;
   editingId: number | null = null;
   errorMessage = '';
   successMessage = '';
@@ -50,6 +51,13 @@ export class Medicamentos implements OnInit {
   };
 
   constructor(private medicamentoService: Medicamento) {}
+
+  @HostListener('document:keydown.escape')
+  cerrarModalConEscape(): void {
+    if (this.modalFormularioAbierto && !this.submitting) {
+      this.cancelEdit();
+    }
+  }
 
   ngOnInit(): void {
     this.cargarMedicamentos();
@@ -124,6 +132,7 @@ export class Medicamentos implements OnInit {
         this.successMessage = this.isEditMode
           ? 'Medicamento actualizado correctamente.'
           : 'Medicamento creado correctamente.';
+        this.modalFormularioAbierto = false;
         this.resetForm();
         this.cargarMedicamentos(this.paginaActual);
       },
@@ -136,6 +145,7 @@ export class Medicamentos implements OnInit {
 
   editarMedicamento(medicamento: MedicamentoResponse): void {
     this.isEditMode = true;
+    this.modalFormularioAbierto = true;
     this.editingId = medicamento.id;
     this.errorMessage = '';
     this.successMessage = '';
@@ -148,7 +158,15 @@ export class Medicamentos implements OnInit {
   }
 
   cancelEdit(): void {
+    this.modalFormularioAbierto = false;
     this.resetForm();
+  }
+
+  abrirFormularioNuevo(): void {
+    this.resetForm();
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.modalFormularioAbierto = true;
   }
 
   eliminarMedicamento(id: number): void {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
@@ -37,6 +37,7 @@ export class Horarios implements OnInit {
   errorMessage = '';
   successMessage = '';
   isEditMode = false;
+  modalFormularioAbierto = false;
   editingId: number | null = null;
   modalEliminarAbierto = false;
   eliminando = false;
@@ -58,6 +59,13 @@ export class Horarios implements OnInit {
     private horarioService: Horario,
     private medicamentoService: Medicamento,
   ) {}
+
+  @HostListener('document:keydown.escape')
+  cerrarModalConEscape(): void {
+    if (this.modalFormularioAbierto && !this.submitting) {
+      this.resetForm();
+    }
+  }
 
   ngOnInit(): void {
     this.cargarMedicamentos();
@@ -169,6 +177,7 @@ export class Horarios implements OnInit {
         this.successMessage = this.isEditMode
           ? 'Horario actualizado correctamente.'
           : 'Horario creado correctamente.';
+        this.modalFormularioAbierto = false;
         this.resetForm();
         this.cargarHorarios(this.paginaActual);
       },
@@ -181,6 +190,7 @@ export class Horarios implements OnInit {
 
   editarHorario(horario: HorarioResponse): void {
     this.isEditMode = true;
+    this.modalFormularioAbierto = true;
     this.editingId = horario.id;
     this.form = {
       id_medicamento: horario.id_medicamento,
@@ -265,6 +275,7 @@ export class Horarios implements OnInit {
   }
 
   resetForm(): void {
+    this.modalFormularioAbierto = false;
     this.isEditMode = false;
     this.editingId = null;
     this.form = {
@@ -277,6 +288,13 @@ export class Horarios implements OnInit {
       duracion_dias: null,
       fecha_fin: null,
     };
+  }
+
+  abrirFormularioNuevo(): void {
+    this.resetForm();
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.modalFormularioAbierto = true;
   }
 
   private normalizarFormulario(): CrearHorarioRequest & ActualizarHorarioRequest {
