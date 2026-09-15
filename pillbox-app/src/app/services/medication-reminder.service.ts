@@ -10,7 +10,7 @@ import { Medicamento } from './medicamento';
 import { RegistroToma } from './registro-toma';
 
 export const MEDICATION_TOLERANCE_MINUTES = 15;
-const CHECK_INTERVAL_MS = 30_000;
+const CHECK_INTERVAL_MS = 10_000;
 
 export interface MedicationReminder {
   registro: RegistroTomaResponse;
@@ -73,12 +73,26 @@ export class MedicationReminderService {
   }
 
   private async checkNow(): Promise<void> {
-    if (this.checking || this.currentReminder()) {
+    if (this.checking) {
       return;
     }
 
     this.checking = true;
     try {
+      const reminderVisible = this.currentReminder();
+      if (reminderVisible) {
+        // Si el ESP32 confirmó primero, el registro ya cambió en el servidor.
+        // Cerramos este modal sin volver a enviar una confirmación.
+        const registroActual = await firstValueFrom(
+          this.registroService.getById(reminderVisible.registro.id),
+        );
+        if (registroActual.fecha_hora_real) {
+          this.registroService.notificarActualizacion();
+          this.clearReminder();
+        }
+        return;
+      }
+
       const [horarios, medicamentos, registros] = await Promise.all([
         firstValueFrom(this.horarioService.getAll()),
         firstValueFrom(this.medicamentoService.getAll()),
