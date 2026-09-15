@@ -9,7 +9,7 @@
 #include "secrets.h"
 
 constexpr uint8_t LED_PIN = 18, BUTTON_PIN = 27, BUZZER_PIN = 23;
-constexpr unsigned long HEARTBEAT_MS = 30000, CONFIG_MS = 60000;
+constexpr unsigned long HEARTBEAT_MS = 30000, CONFIG_MS = 15000;
 constexpr unsigned long ALARM_STATUS_MS = 5000;
 WiFiClientSecure tls;
 bool alarma = false, configurado = false;
@@ -18,12 +18,27 @@ unsigned long ultimoHeartbeat = 0, ultimaConfig = 0;
 unsigned long ultimoEstadoAlarma = 0;
 long ultimaClaveRevisada = -1, ultimaConfirmada = -1, claveAlarma = -1;
 String firmaConfiguracion = "";
+String tomaConfirmadaProgramada = "";
 
 void setAlarma(bool activa) {
   alarma = activa;
   digitalWrite(LED_PIN, activa ? HIGH : LOW);
   digitalWrite(BUZZER_PIN, activa ? HIGH : LOW); // buzzer activo; para pasivo usa LEDC.
   Serial.printf("[ALARMA] %s | [LED] GPIO18=%s\n", activa ? "ACTIVA" : "APAGADA", activa ? "HIGH (debe encender)" : "LOW (debe apagar)");
+}
+
+void apagarAlarmaSiLaConfirmoLaWeb() {
+  if (!alarma || claveAlarma < 0 || tomaConfirmadaProgramada.length() < 16) return;
+  time_t instanteAlarma = (time_t)claveAlarma * 60;
+  struct tm horaAlarma;
+  localtime_r(&instanteAlarma, &horaAlarma);
+  char programada[17];
+  strftime(programada, sizeof(programada), "%Y-%m-%dT%H:%M", &horaAlarma);
+  if (tomaConfirmadaProgramada.substring(0, 16) == programada) {
+    Serial.println("[SINCRONIZACION] La toma fue confirmada desde la app; se apaga la alarma.");
+    ultimaConfirmada = claveAlarma;
+    setAlarma(false);
+  }
 }
 
 bool conectarWifi() {
@@ -49,6 +64,17 @@ void headers(HTTPClient &http) {
   http.addHeader("X-Tunnel-Skip-AntiPhishing-Page", "true");
 }
 
+void diagnosticarConexion(const char *operacion, int codigo) {
+  if (codigo >= 0) return;
+  char detalleTls[160] = {0};
+  int errorTls = tls.lastError(detalleTls, sizeof(detalleTls));
+  time_t epoch; time(&epoch);
+  Serial.printf("[API] %s fallo HTTP %d: %s\n", operacion, codigo,
+    HTTPClient::errorToString(codigo).c_str());
+  Serial.printf("[TLS] lastError=%d: %s | epoch=%ld\n", errorTls, detalleTls, (long)epoch);
+  Serial.println("[TLS] Verifica API_BASE_URL, ROOT_CA y que la hora NTP no sea 0.");
+}
+
 void heartbeat() {
   HTTPClient http;
   if (!abrir(http, "/heartbeat/")) { Serial.println("[API] No se pudo abrir heartbeat."); return; }
@@ -59,6 +85,7 @@ void heartbeat() {
   String json; serializeJson(body, json);
   int codigo = http.POST(json);
   Serial.printf("[API] Heartbeat HTTP %d\n", codigo);
+  diagnosticarConexion("Heartbeat", codigo);
   http.end();
 }
 
@@ -68,10 +95,12 @@ void obtenerConfiguracion() {
   headers(http);
   int codigo = http.GET();
   Serial.printf("[API] Configuracion HTTP %d\n", codigo);
+  diagnosticarConexion("Configuracion", codigo);
   if (codigo == HTTP_CODE_OK) {
     JsonDocument doc;
     if (!deserializeJson(doc, http.getString()) && doc["activo"].as<bool>()) {
       String nuevaVersion = doc["version"] | "";
+      tomaConfirmadaProgramada = doc["ultima_toma_confirmada_programada"] | "";
       const char *hora = doc["horario"]["hora_toma"] | "";
       int h, m, s;
       if (sscanf(hora, "%d:%d:%d", &h, &m, &s) >= 2) {
@@ -87,6 +116,7 @@ void obtenerConfiguracion() {
         }
         horaToma = h; minutoToma = m; frecuencia = nuevaFrecuencia; configurado = true;
         Serial.printf("[CONFIG] Horario %02d:%02d, frecuencia %d h\n", horaToma, minutoToma, frecuencia);
+        apagarAlarmaSiLaConfirmoLaWeb();
       }
     } else { configurado = false; setAlarma(false); Serial.println("[CONFIG] Sin horario activo."); }
   } else {
@@ -112,6 +142,7 @@ void confirmar() {
   String json; serializeJson(body, json);
   int codigo = http.POST(json);
   Serial.printf("[API] Confirmacion HTTP %d: %s\n", codigo, http.getString().c_str());
+  diagnosticarConexion("Confirmacion", codigo);
   if (codigo == HTTP_CODE_OK || codigo == HTTP_CODE_CREATED) { ultimaConfirmada = claveAlarma; setAlarma(false); }
   http.end();
 }
@@ -144,6 +175,15 @@ void setup() {
   Serial.begin(115200); WiFi.mode(WIFI_STA); tls.setCACert(ROOT_CA); conectarWifi();
   Serial.println("\n[INICIO] Pastillero ESP32 MVP iniciado.");
   configTime(-5*3600, 0, "pool.ntp.org", "time.nist.gov");
+  Serial.println("[NTP] Sincronizando hora antes de conectar por HTTPS...");
+  struct tm horaNtp;
+  if (getLocalTime(&horaNtp, 15000)) {
+    char fechaNtp[32];
+    strftime(fechaNtp, sizeof(fechaNtp), "%Y-%m-%d %H:%M:%S", &horaNtp);
+    Serial.printf("[NTP] Hora sincronizada: %s\n", fechaNtp);
+  } else {
+    Serial.println("[NTP] No se pudo sincronizar; HTTPS puede rechazar el certificado.");
+  }
   ultimoHeartbeat = millis() - HEARTBEAT_MS; ultimaConfig = millis() - CONFIG_MS;
 }
 

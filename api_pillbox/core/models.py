@@ -207,6 +207,14 @@ class Registro_Toma(models.Model):
     id_horario = models.ForeignKey(Horario, on_delete=models.CASCADE, related_name='registros')
     id_usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='registros')
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['id_usuario', 'id_horario', 'fecha_hora_programada'],
+                name='registro_toma_unico_por_horario_instante',
+            )
+        ]
+
     def __str__(self):
         return f"{self.id_usuario.nombre} - {self.fecha_hora_programada}"
 

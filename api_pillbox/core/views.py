@@ -6,7 +6,7 @@ from rest_framework import status
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.contrib.auth.hashers import check_password, make_password
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.contrib.auth.hashers import check_password, make_password
 from django.db import transaction
@@ -304,6 +304,33 @@ class RegistroTomaViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError({'id_horario': 'El horario no pertenece al usuario autenticado.'})
         serializer.save(id_usuario=self.request.user)
 
+    def create(self, request, *args, **kwargs):
+        """Crea una ocurrencia solo una vez, incluso si dos clientes la detectan a la vez."""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        horario = serializer.validated_data['id_horario']
+        if horario.id_medicamento.id_usuario_id != request.user.id:
+            raise serializers.ValidationError({'id_horario': 'El horario no pertenece al usuario autenticado.'})
+
+        try:
+            with transaction.atomic():
+                registro, creado = Registro_Toma.objects.get_or_create(
+                    id_usuario=request.user,
+                    id_horario=horario,
+                    fecha_hora_programada=serializer.validated_data['fecha_hora_programada'],
+                )
+        except IntegrityError:
+            # La restricción única resuelve carreras entre pestañas o clientes.
+            registro = Registro_Toma.objects.get(
+                id_usuario=request.user,
+                id_horario=horario,
+                fecha_hora_programada=serializer.validated_data['fecha_hora_programada'],
+            )
+            creado = False
+
+        respuesta = self.get_serializer(registro)
+        return Response(respuesta.data, status=status.HTTP_201_CREATED if creado else status.HTTP_200_OK)
+
     def perform_update(self, serializer):
         fecha_hora_real = serializer.validated_data.get('fecha_hora_real')
         if fecha_hora_real is None or serializer.instance.fecha_hora_real is not None:
@@ -410,7 +437,19 @@ def iot_configuracion(request):
     horario = asignacion.id_horario
     if not horario.activo or horario.eliminado:
         return Response({'activo': False, 'timezone': 'America/Bogota'})
-    return Response({'activo': True, 'version': asignacion.fecha_actualizacion.isoformat(), 'timezone': 'America/Bogota', 'horario': {
+    ultima_confirmada = Registro_Toma.objects.filter(
+        id_horario=horario,
+        id_usuario=dispositivo.id_usuario,
+        fecha_hora_real__isnull=False,
+    ).order_by('-fecha_hora_programada').first()
+    # El ESP32 compara este instante con la alarma que tiene activa. Si la web
+    # confirmó esa misma toma, apaga LED/buzzer sin generar otro registro.
+    toma_confirmada_programada = (
+        timezone.localtime(ultima_confirmada.fecha_hora_programada).strftime('%Y-%m-%dT%H:%M')
+        if ultima_confirmada else None
+    )
+    return Response({'activo': True, 'version': asignacion.fecha_actualizacion.isoformat(), 'timezone': 'America/Bogota',
+                     'ultima_toma_confirmada_programada': toma_confirmada_programada, 'horario': {
         'id': horario.id, 'hora_toma': horario.hora_toma.strftime('%H:%M:%S'), 'frecuencia': horario.frecuencia,
         'medicamento': horario.id_medicamento.nombre,
     }})
