@@ -13,15 +13,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .page-header h1 { font-size:1.75rem; letter-spacing:-.025em; }
 .surface-card, .card, .form-card, .table-card { border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--surface); box-shadow:var(--shadow-sm); }
 .surface-card { padding:1.25rem; }
-.btn, .primary-button, .secondary-button, .btn-login { min-height:2.5rem; border-radius:999px; font-weight:500; transition:background-color 160ms ease,border-color 160ms ease,box-shadow 160ms ease,color 160ms ease,transform 160ms ease; }
+.btn, .primary-button, .secondary-button, .btn-login { min-height:2.5rem; padding:.4375rem .875rem; border:1px solid transparent; border-radius:999px; font-weight:500; appearance:none; -webkit-appearance:none; background-image:none; box-shadow:none; transition:background-color 160ms ease,border-color 160ms ease,color 160ms ease; }
 .btn { --bs-btn-border-radius:999px; --bs-btn-font-weight:500; --bs-btn-padding-x:.875rem; --bs-btn-padding-y:.4375rem; }
-.btn:hover, .primary-button:hover, .secondary-button:hover, .btn-login:hover { transform:translateY(-1px); }
+.btn:hover, .btn:focus, .btn:active, .primary-button:hover, .secondary-button:hover, .btn-login:hover { box-shadow:none; }
 .primary-button, .btn-primary { border-color:var(--primary); background:var(--primary); color:#fff; }
 .primary-button:hover, .btn-primary:hover { border-color:var(--primary-hover); background:var(--primary-hover); }
 .secondary-button, .btn-secondary { border:1px solid #d6d1f6; background:var(--primary-soft); color:var(--primary-hover); }
 .btn-success { border-color:var(--success); background:var(--success); }
 .btn-danger, .btn-outline-danger:hover { border-color:var(--danger); }
 .btn-outline-primary { color:var(--primary); }
+.btn-outline-secondary { border-color:var(--border); background:transparent; color:var(--text-secondary); }
+.btn-outline-secondary:hover, .btn-outline-secondary:focus-visible { border-color:var(--text-secondary); background:var(--cui-tertiary-bg); color:var(--text-primary); }
 .form-label { color:var(--text-primary); font-weight:600; }
 .form-control, .form-select, input, select, textarea { border-color:var(--border); border-radius:var(--radius-sm); color:var(--text-primary); background-color:var(--surface); }
 .form-control, .form-select { min-height:2.375rem; }
