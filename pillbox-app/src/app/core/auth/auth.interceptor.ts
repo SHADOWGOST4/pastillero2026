@@ -1,9 +1,12 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, switchMap, throwError } from 'rxjs';
+import { Observable, catchError, finalize, shareReplay, switchMap, throwError } from 'rxjs';
 import { Auth } from '../../services/auth';
 
-let isRefreshing = false;
+// Refresh compartido entre peticiones 401 concurrentes: si dos llamadas del
+// dashboard expiran a la vez, la segunda se engancha a la misma llamada de
+// refresh en curso (éxito o error) en vez de cerrar sesión de inmediato.
+let refreshTokenObservable: Observable<string> | null = null;
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(Auth);
@@ -22,6 +25,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       })
     : req;
 
+  const withToken = (accessToken: string) =>
+    next(req.clone({ setHeaders: { Authorization: `Bearer ${accessToken}` } }));
+
   return next(request).pipe(
     catchError((error: HttpErrorResponse) => {
       const isUnauthorized = error.status === 401;
@@ -31,25 +37,18 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      if (isRefreshing) {
-        auth.cerrarSesion();
-        return throwError(() => error);
+      if (!refreshTokenObservable) {
+        refreshTokenObservable = auth.refreshAccessToken().pipe(
+          finalize(() => {
+            refreshTokenObservable = null;
+          }),
+          shareReplay(1)
+        );
       }
 
-      isRefreshing = true;
-
-      return auth.refreshAccessToken().pipe(
-        switchMap((newAccessToken) => {
-          isRefreshing = false;
-          const retryRequest = req.clone({
-            setHeaders: {
-              Authorization: `Bearer ${newAccessToken}`
-            }
-          });
-          return next(retryRequest);
-        }),
+      return refreshTokenObservable.pipe(
+        switchMap((newAccessToken) => withToken(newAccessToken)),
         catchError((refreshError) => {
-          isRefreshing = false;
           auth.cerrarSesion();
           return throwError(() => refreshError);
         })

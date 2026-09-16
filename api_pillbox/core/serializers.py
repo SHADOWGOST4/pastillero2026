@@ -23,9 +23,9 @@ from .models import (
 class UsuarioSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,
-        required=True,
+        required=False,
         style={'input_type': 'password'},
-        help_text='Contraseña en texto plano para creación o actualización (se almacenará con hash seguro)'
+        help_text='Contraseña en texto plano. Obligatoria al crear el usuario; opcional al actualizar (si se omite, se conserva la actual).'
     )
 
     class Meta:
@@ -41,7 +41,9 @@ class UsuarioSerializer(serializers.ModelSerializer):
         return value.lower().strip()
 
     def create(self, validated_data):
-        password = validated_data.pop('password')
+        password = validated_data.pop('password', None)
+        if not password:
+            raise serializers.ValidationError({'password': 'Este campo es obligatorio al crear un usuario.'})
         validated_data['password'] = make_password(password)
         return super().create(validated_data)
 
