@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,17 +27,34 @@ load_dotenv(BASE_DIR / '.env')
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-)+fs*3-gr&4a8p%l5s-xh1o!8l(mi1_p11^6r=(4w2lgr*4!rt')
+# No hay valor por defecto: si SECRET_KEY no está en el entorno, la app no
+# arranca en lugar de quedar firmando JWTs con una clave conocida y pública.
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    raise ImproperlyConfigured(
+        "La variable de entorno SECRET_KEY es obligatoria. "
+        "Genera una clave nueva (por ejemplo con `python -c \"from django.core.management.utils "
+        "import get_random_secret_key; print(get_random_secret_key())\"`) y colócala en tu .env."
+    )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True').strip().lower() in ('true', '1', 't', 'yes')
+DEBUG = os.getenv('DEBUG', 'False').strip().lower() in ('true', '1', 't', 'yes')
 
 # Tamaño de página para los listados paginados. Puede ajustarse por entorno
 # sin cambiar el código (por defecto, diez elementos).
 PAGE_SIZE = int(os.getenv('PAGE_SIZE', '10'))
 
-ALLOWED_HOSTS_ENV = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver, https://localhost, http://localhost')
+ALLOWED_HOSTS_ENV = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver')
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_ENV.split(',') if host.strip()]
+
+# Con DEBUG=False, un '*' en ALLOWED_HOSTS desactiva por completo la
+# validación del header Host. Se exige una lista explícita de hosts para
+# cualquier entorno que no sea el servidor de desarrollo local.
+if not DEBUG and '*' in ALLOWED_HOSTS:
+    raise ImproperlyConfigured(
+        "ALLOWED_HOSTS no puede ser '*' cuando DEBUG=False. "
+        "Configura los hosts explícitos (dominio, túnel, etc.) en la variable de entorno ALLOWED_HOSTS."
+    )
 
 WEBPUSH_PUBLIC_KEY = os.getenv('WEBPUSH_PUBLIC_KEY', '')
 WEBPUSH_PRIVATE_KEY = os.getenv('WEBPUSH_PRIVATE_KEY', '')

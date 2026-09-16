@@ -3,10 +3,6 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { Capacitor } from '@capacitor/core';
 import { environment } from '../../environments/environment';
-import {
-  IoTConfirmarTomaRequest,
-  IoTConfirmarTomaResponse,
-} from '../core/models/api.interfaces';
 
 export interface MedicationNotificationPayload {
   id?: number | string;
@@ -241,16 +237,5 @@ export class NotificationService {
 
   showMedicationAlert(payload: MedicationNotificationPayload): Promise<void> {
     return this.getProvider().show(payload);
-  }
-
-  confirmMedication(eventId: string, dateTime?: string): Promise<IoTConfirmarTomaResponse> {
-    const payload: IoTConfirmarTomaRequest = {
-      evento_id: eventId,
-      fecha_hora_real: dateTime ?? new Date().toISOString(),
-    };
-
-    return firstValueFrom(
-      this.http.post<IoTConfirmarTomaResponse>(`${environment.apiUrl}iot/tomas/confirmar/`, payload),
-    );
   }
 }

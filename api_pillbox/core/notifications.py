@@ -6,6 +6,7 @@ from datetime import timedelta
 
 from cryptography.hazmat.primitives import serialization
 from django.conf import settings
+from django.db import IntegrityError
 from django.utils import timezone
 from pywebpush import webpush
 
@@ -69,17 +70,23 @@ def send_push_to_subscription(subscription, payload, vapid_config):
 
 
 def send_web_push_for_registro(registro):
-    if WebPushNotificationLog.objects.filter(registro=registro).exists():
-        logger.info('[WEB PUSH] registro=%s ya tiene log previo; no se reenvia.', registro.id)
-        return False
-
     vapid_config = get_vapid_config()
     if vapid_config is None:
         logger.error('[WEB PUSH] faltan claves VAPID en la configuración del backend.')
         return False
 
     evento_id = uuid.uuid4()
-    log = WebPushNotificationLog.objects.create(registro=registro, evento_id=evento_id, status='queued')
+    # `registro` es OneToOneField en WebPushNotificationLog: este create() es la
+    # operación que reclama el envío de forma atómica a nivel de base de datos.
+    # Si dos procesos (p. ej. varios workers de gunicorn con el scheduler en
+    # memoria activo) llegan aquí para el mismo registro, solo uno logra crear
+    # la fila y el otro recibe IntegrityError, evitando el push duplicado.
+    try:
+        log = WebPushNotificationLog.objects.create(registro=registro, evento_id=evento_id, status='queued')
+    except IntegrityError:
+        logger.info('[WEB PUSH] registro=%s ya tiene log previo; no se reenvia.', registro.id)
+        return False
+
     payload = build_push_payload(registro, evento_id)
 
     subscriptions = WebPushSubscription.objects.filter(usuario=registro.id_usuario, active=True)
