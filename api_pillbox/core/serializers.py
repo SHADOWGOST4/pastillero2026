@@ -42,6 +42,11 @@ class UsuarioSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('El correo es obligatorio.')
         return value.lower().strip()
 
+    def validate_telefono(self, value):
+        if not value.isdigit():
+            raise serializers.ValidationError('El teléfono solo debe contener números.')
+        return value
+
     def create(self, validated_data):
         password = validated_data.pop('password', None)
         if not password:
