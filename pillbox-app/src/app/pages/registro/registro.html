@@ -31,7 +31,9 @@
       <div class="form-group">
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Teléfono</mat-label>
-          <input matInput id="telefono" [(ngModel)]="nuevoUsuario.telefono" placeholder="Número de teléfono" type="text">
+          <input matInput id="telefono" [(ngModel)]="nuevoUsuario.telefono" placeholder="Número de teléfono"
+            type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="15" (keypress)="soloNumeros($event)"
+            (paste)="bloquearPegadoNoNumerico($event)">
         </mat-form-field>
       </div>
 

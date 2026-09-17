@@ -21,6 +21,19 @@ export class Registro {
 
   constructor(private auth: Auth, private router: Router) {}
 
+  soloNumeros(event: KeyboardEvent) {
+    if (!/[0-9]/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  bloquearPegadoNoNumerico(event: ClipboardEvent) {
+    const texto = event.clipboardData?.getData('text') ?? '';
+    if (!/^[0-9]*$/.test(texto)) {
+      event.preventDefault();
+    }
+  }
+
   registrar() {
     this.error = '';
     this.auth.registrar(this.nuevoUsuario).subscribe({
