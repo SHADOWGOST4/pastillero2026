@@ -19,10 +19,10 @@ export class RegistroToma {
 
   constructor(private http: HttpClient) {}
 
-  getPage(page = 1): Observable<PaginatedResponse<RegistroTomaResponse>> {
-    return this.http.get<PaginatedResponse<RegistroTomaResponse>>(this.apiUrl, {
-      params: { page },
-    });
+  getPage(page = 1, titular?: number): Observable<PaginatedResponse<RegistroTomaResponse>> {
+    const params: Record<string, number> = { page };
+    if (titular) params['titular'] = titular;
+    return this.http.get<PaginatedResponse<RegistroTomaResponse>>(this.apiUrl, { params });
   }
 
   getAll(): Observable<RegistroTomaResponse[]> {

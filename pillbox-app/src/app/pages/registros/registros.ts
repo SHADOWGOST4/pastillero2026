@@ -1,9 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { HorarioResponse, RegistroTomaResponse } from '../../core/models/api.interfaces';
+import { HorarioResponse, RegistroTomaResponse, UsuarioResumenResponse } from '../../core/models/api.interfaces';
 import { Horario } from '../../services/horario';
 import { RegistroToma } from '../../services/registro-toma';
+import { CuentaActiva } from '../../services/cuenta-activa';
 
 @Component({
   selector: 'app-registros',
@@ -21,16 +22,23 @@ export class Registros implements OnDestroy, OnInit {
   private pageSize = 10;
   loading = false;
   errorMessage = '';
+  cuentaActiva: UsuarioResumenResponse | null = null;
   private readonly destroyed$ = new Subject<void>();
 
   constructor(
     private registroService: RegistroToma,
     private horarioService: Horario,
+    private cuentaActivaService: CuentaActiva,
   ) {}
 
   ngOnInit(): void {
-    this.cargarHorarios();
-    this.cargarRegistros();
+    this.cuentaActivaService.cuentaActiva$
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe((cuenta) => {
+        this.cuentaActiva = cuenta;
+        this.cargarHorarios();
+        this.cargarRegistros(1);
+      });
     this.registroService.registroActualizado$
       .pipe(takeUntil(this.destroyed$))
       .subscribe(() => this.cargarRegistros());
@@ -42,7 +50,7 @@ export class Registros implements OnDestroy, OnInit {
   }
 
   cargarHorarios(): void {
-    this.horarioService.getAll().subscribe({
+    this.horarioService.getAll(this.cuentaActiva?.id).subscribe({
       next: (data) => {
         this.horarios = data;
       },
@@ -56,7 +64,7 @@ export class Registros implements OnDestroy, OnInit {
     this.loading = true;
     this.errorMessage = '';
 
-    this.registroService.getPage(pagina).subscribe({
+    this.registroService.getPage(pagina, this.cuentaActiva?.id).subscribe({
       next: (data) => {
         if (data.results.length === 0 && data.count > 0 && pagina > 1) {
           this.cargarRegistros(pagina - 1);

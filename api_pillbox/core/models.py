@@ -327,3 +327,36 @@ class WebPushNotificationLog(models.Model):
 
     def __str__(self):
         return f"WebPushLog({self.registro_id}, {self.evento_id})"
+
+
+class VinculacionMonitor(models.Model):
+    """Permite que un usuario (monitor) vea, en solo lectura, ciertos datos
+    de otro usuario (titular) que lo invitó y aceptó explícitamente."""
+
+    class Estado(models.TextChoices):
+        PENDIENTE = 'PENDIENTE', 'Pendiente'
+        ACEPTADA = 'ACEPTADA', 'Aceptada'
+        RECHAZADA = 'RECHAZADA', 'Rechazada'
+
+    titular = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='monitores')
+    monitor = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='titulares')
+    estado = models.CharField(max_length=10, choices=Estado.choices, default=Estado.PENDIENTE)
+    puede_ver_medicamentos = models.BooleanField(default=True)
+    puede_ver_horarios = models.BooleanField(default=True)
+    puede_ver_registros = models.BooleanField(default=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_respuesta = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['titular', 'monitor'], name='unique_vinculacion_titular_monitor')
+        ]
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if self.titular_id == self.monitor_id:
+            raise ValidationError('No puedes vincularte a ti mismo.')
+
+    def __str__(self):
+        return f"{self.monitor.nombre} monitorea a {self.titular.nombre} ({self.estado})"

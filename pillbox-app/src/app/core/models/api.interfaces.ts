@@ -291,6 +291,36 @@ export interface NotificacionResponse {
   id_contacto: number;
 }
 
+export interface UsuarioResumenResponse {
+  id: number;
+  nombre: string;
+  correo: string;
+}
+
+export type EstadoVinculacion = 'PENDIENTE' | 'ACEPTADA' | 'RECHAZADA';
+
+export interface CrearVinculacionRequest {
+  correo_monitor: string;
+}
+
+export interface ActualizarVinculacionRequest {
+  puede_ver_medicamentos?: boolean;
+  puede_ver_horarios?: boolean;
+  puede_ver_registros?: boolean;
+}
+
+export interface VinculacionResponse {
+  id: number;
+  titular: UsuarioResumenResponse;
+  monitor: UsuarioResumenResponse;
+  estado: EstadoVinculacion;
+  puede_ver_medicamentos: boolean;
+  puede_ver_horarios: boolean;
+  puede_ver_registros: boolean;
+  fecha_creacion: string;
+  fecha_respuesta: string | null;
+}
+
 export interface ApiErrorResponse {
   detail?: string;
   code?: string;

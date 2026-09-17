@@ -4,15 +4,18 @@ from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenViewBase
 
+from . import vinculaciones
 from .inventory import calcular_cobertura_medicamento
 from .models import (
     Contacto,
@@ -25,6 +28,7 @@ from .models import (
     Notificacion,
     Registro_Toma,
     Usuario,
+    VinculacionMonitor,
     WebPushSubscription,
 )
 from .serializers import (
@@ -42,8 +46,21 @@ from .serializers import (
     UsuarioSerializer,
     UsuarioTokenObtainPairSerializer,
     UsuarioTokenRefreshSerializer,
+    VinculacionMonitorSerializer,
 )
 from .stock import StockInsuficiente, ajustar_stock, confirmar_registro_con_stock, reponer_stock
+
+
+def _titular_id_desde_request(request):
+    """Lee y valida el parámetro `?titular=` (id del titular a consultar).
+    Devuelve None si no viene en la petición."""
+    titular_id = request.query_params.get('titular')
+    if not titular_id:
+        return None
+    try:
+        return int(titular_id)
+    except ValueError:
+        raise PermissionDenied('Parámetro titular inválido.')
 
 
 class ResourcePagination(PageNumberPagination):
@@ -170,6 +187,13 @@ class MedicamentoViewSet(viewsets.ModelViewSet):
     queryset = Medicamento.objects.none()
 
     def get_queryset(self):
+        titular_id = _titular_id_desde_request(self.request)
+        if titular_id is not None and self.request.method in SAFE_METHODS:
+            if titular_id != self.request.user.id and not vinculaciones.tiene_permiso(
+                self.request.user, titular_id, 'puede_ver_medicamentos'
+            ):
+                raise PermissionDenied('No tienes acceso a los medicamentos de este usuario.')
+            return Medicamento.objects.filter(id_usuario_id=titular_id).order_by('id')
         return Medicamento.objects.filter(id_usuario=self.request.user).order_by('id')
 
     def perform_create(self, serializer):
@@ -274,6 +298,16 @@ class HorarioViewSet(viewsets.ModelViewSet):
     queryset = Horario.objects.none()
 
     def get_queryset(self):
+        titular_id = _titular_id_desde_request(self.request)
+        if titular_id is not None and self.request.method in SAFE_METHODS:
+            if titular_id != self.request.user.id and not vinculaciones.tiene_permiso(
+                self.request.user, titular_id, 'puede_ver_horarios'
+            ):
+                raise PermissionDenied('No tienes acceso a los horarios de este usuario.')
+            return Horario.objects.filter(
+                id_medicamento__id_usuario_id=titular_id,
+                eliminado=False,
+            ).order_by('id')
         return Horario.objects.filter(
             id_medicamento__id_usuario=self.request.user,
             eliminado=False,
@@ -317,6 +351,16 @@ class RegistroTomaViewSet(viewsets.ModelViewSet):
     queryset = Registro_Toma.objects.none()
 
     def get_queryset(self):
+        titular_id = _titular_id_desde_request(self.request)
+        if titular_id is not None and self.request.method in SAFE_METHODS:
+            if titular_id != self.request.user.id and not vinculaciones.tiene_permiso(
+                self.request.user, titular_id, 'puede_ver_registros'
+            ):
+                raise PermissionDenied('No tienes acceso al historial de tomas de este usuario.')
+            return Registro_Toma.objects.filter(id_usuario_id=titular_id).order_by(
+                '-fecha_hora_programada',
+                '-id',
+            )
         return Registro_Toma.objects.filter(id_usuario=self.request.user).order_by(
             '-fecha_hora_programada',
             '-id',
@@ -382,6 +426,68 @@ class NotificacionViewSet(viewsets.ModelViewSet):
         if contacto.id_usuario_id != self.request.user.id or registro.id_usuario_id != self.request.user.id:
             raise serializers.ValidationError('El contacto o registro no pertenece al usuario autenticado.')
         serializer.save()
+
+
+class VinculacionMonitorViewSet(viewsets.ModelViewSet):
+    """Invitaciones para que un usuario (monitor) vea en solo lectura los
+    datos de otro (titular). Cualquiera de las dos partes puede desvincular;
+    solo el titular edita los permisos; el estado solo cambia vía
+    aceptar/rechazar, nunca por PATCH directo."""
+
+    serializer_class = VinculacionMonitorSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = VinculacionMonitor.objects.none()
+
+    def get_queryset(self):
+        return VinculacionMonitor.objects.filter(
+            Q(titular=self.request.user) | Q(monitor=self.request.user)
+        ).select_related('titular', 'monitor').order_by('-fecha_creacion')
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+    def perform_update(self, serializer):
+        vinculacion = serializer.instance
+        if vinculacion.titular_id != self.request.user.id:
+            raise PermissionDenied('Solo el titular puede editar los permisos de una vinculación.')
+        serializer.save(
+            puede_ver_medicamentos=serializer.validated_data.get(
+                'puede_ver_medicamentos', vinculacion.puede_ver_medicamentos
+            ),
+            puede_ver_horarios=serializer.validated_data.get(
+                'puede_ver_horarios', vinculacion.puede_ver_horarios
+            ),
+            puede_ver_registros=serializer.validated_data.get(
+                'puede_ver_registros', vinculacion.puede_ver_registros
+            ),
+        )
+
+    def perform_destroy(self, instance):
+        if self.request.user.id not in (instance.titular_id, instance.monitor_id):
+            raise PermissionDenied('No puedes eliminar esta vinculación.')
+        instance.delete()
+
+    @action(detail=True, methods=['post'])
+    def aceptar(self, request, pk=None):
+        vinculacion = self.get_object()
+        if request.user.id != vinculacion.monitor_id:
+            raise PermissionDenied('Solo el monitor invitado puede aceptar esta vinculación.')
+        vinculacion.estado = VinculacionMonitor.Estado.ACEPTADA
+        vinculacion.fecha_respuesta = timezone.now()
+        vinculacion.save(update_fields=['estado', 'fecha_respuesta'])
+        return Response(VinculacionMonitorSerializer(vinculacion, context={'request': request}).data)
+
+    @action(detail=True, methods=['post'])
+    def rechazar(self, request, pk=None):
+        vinculacion = self.get_object()
+        if request.user.id != vinculacion.monitor_id:
+            raise PermissionDenied('Solo el monitor invitado puede rechazar esta vinculación.')
+        vinculacion.estado = VinculacionMonitor.Estado.RECHAZADA
+        vinculacion.fecha_respuesta = timezone.now()
+        vinculacion.save(update_fields=['estado', 'fecha_respuesta'])
+        return Response(VinculacionMonitorSerializer(vinculacion, context={'request': request}).data)
 
 
 @api_view(['POST'])

@@ -5,11 +5,16 @@
       <h1>Horarios de toma</h1>
       <p class="page-intro">Programa cuándo debes tomar cada medicamento.</p>
     </div>
-    <button type="button" class="btn btn-primary add-button" (click)="abrirFormularioNuevo()">
+    <button *ngIf="!esSoloLectura" type="button" class="btn btn-primary add-button" (click)="abrirFormularioNuevo()">
       <span class="material-icons" aria-hidden="true">add</span>
       Nuevo horario
     </button>
   </header>
+
+  <div *ngIf="cuentaActiva" class="viendo-como-banner">
+    <span class="material-icons" aria-hidden="true">visibility</span>
+    <span>Viendo los horarios de <strong>{{ cuentaActiva.nombre }}</strong> en modo solo lectura.</span>
+  </div>
 
   <div *ngIf="successMessage" class="alert alert-success feedback page-feedback" role="status">
     <span class="material-icons" aria-hidden="true">check_circle</span>
@@ -32,9 +37,9 @@
 
     <div *ngIf="!loading && totalHorarios === 0" class="state-message empty-state">
       <span class="empty-icon material-icons" aria-hidden="true">schedule</span>
-      <h3>No tienes horarios programados</h3>
-      <p>Configura un horario para organizar las próximas tomas de tus medicamentos.</p>
-      <button type="button" class="btn btn-primary" (click)="abrirFormularioNuevo()">
+      <h3>{{ esSoloLectura ? (cuentaActiva?.nombre) + ' no tiene horarios programados' : 'No tienes horarios programados' }}</h3>
+      <p *ngIf="!esSoloLectura">Configura un horario para organizar las próximas tomas de tus medicamentos.</p>
+      <button *ngIf="!esSoloLectura" type="button" class="btn btn-primary" (click)="abrirFormularioNuevo()">
         <span class="material-icons" aria-hidden="true">add</span>
         Crear horario
       </button>
@@ -48,7 +53,7 @@
             <th>Hora</th>
             <th>Frecuencia</th>
             <th>Próxima toma</th>
-            <th class="actions-heading">Acciones</th>
+            <th *ngIf="!esSoloLectura" class="actions-heading">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -76,23 +81,28 @@
                 <strong *ngIf="horario.activo">{{ horario.proxima_toma | date: 'dd/MM/yyyy HH:mm' }}</strong>
               </div>
             </td>
-            <td class="actions-cell">
-              <button type="button" class="btn btn-sm action-button action-edit" (click)="editarHorario(horario)">
-                <span class="material-icons" aria-hidden="true">edit</span>
-                Editar
+            <td *ngIf="!esSoloLectura" class="actions-cell">
+              <button type="button" class="icon-button" [matMenuTriggerFor]="rowMenu" aria-label="Más acciones para {{ horario.medicamento_nombre }}">
+                <span class="material-icons" aria-hidden="true">more_vert</span>
               </button>
-              <button *ngIf="horario.activo" type="button" class="btn btn-sm action-button action-delete" (click)="deshabilitarHorario(horario.id)">
-                <span class="material-icons" aria-hidden="true">pause_circle_outline</span>
-                Deshabilitar
-              </button>
-              <button *ngIf="!horario.activo" type="button" class="btn btn-sm action-button action-edit" (click)="activarHorario(horario.id)">
-                <span class="material-icons" aria-hidden="true">play_circle_outline</span>
-                Habilitar
-              </button>
-              <button type="button" class="btn btn-sm action-button action-delete" (click)="eliminarHorario(horario.id)">
-                <span class="material-icons" aria-hidden="true">delete_outline</span>
-                Eliminar
-              </button>
+              <mat-menu #rowMenu="matMenu" xPosition="before">
+                <button mat-menu-item type="button" (click)="editarHorario(horario)">
+                  <span class="material-icons" aria-hidden="true">edit</span>
+                  Editar
+                </button>
+                <button *ngIf="horario.activo" mat-menu-item type="button" (click)="deshabilitarHorario(horario.id)">
+                  <span class="material-icons" aria-hidden="true">pause_circle_outline</span>
+                  Deshabilitar
+                </button>
+                <button *ngIf="!horario.activo" mat-menu-item type="button" (click)="activarHorario(horario.id)">
+                  <span class="material-icons" aria-hidden="true">play_circle_outline</span>
+                  Habilitar
+                </button>
+                <button mat-menu-item type="button" (click)="eliminarHorario(horario.id)">
+                  <span class="material-icons menu-icon-danger" aria-hidden="true">delete_outline</span>
+                  <span class="menu-text-danger">Eliminar</span>
+                </button>
+              </mat-menu>
             </td>
           </tr>
         </tbody>
@@ -121,23 +131,28 @@
             <strong *ngIf="horario.activo">{{ horario.proxima_toma | date: 'dd/MM/yyyy HH:mm' }}</strong>
           </div>
         </div>
-        <div class="mobile-actions">
-          <button type="button" class="btn btn-sm action-button action-edit" (click)="editarHorario(horario)">
-            <span class="material-icons" aria-hidden="true">edit</span>
-            Editar
+        <div *ngIf="!esSoloLectura" class="mobile-actions">
+          <button type="button" class="icon-button" [matMenuTriggerFor]="rowMenuMobile" aria-label="Más acciones para {{ horario.medicamento_nombre }}">
+            <span class="material-icons" aria-hidden="true">more_vert</span>
           </button>
-          <button *ngIf="horario.activo" type="button" class="btn btn-sm action-button action-delete" (click)="deshabilitarHorario(horario.id)">
-            <span class="material-icons" aria-hidden="true">pause_circle_outline</span>
-            Deshabilitar
-          </button>
-          <button *ngIf="!horario.activo" type="button" class="btn btn-sm action-button action-edit" (click)="activarHorario(horario.id)">
-            <span class="material-icons" aria-hidden="true">play_circle_outline</span>
-            Habilitar
-          </button>
-          <button type="button" class="btn btn-sm action-button action-delete" (click)="eliminarHorario(horario.id)">
-            <span class="material-icons" aria-hidden="true">delete_outline</span>
-            Eliminar
-          </button>
+          <mat-menu #rowMenuMobile="matMenu" xPosition="before">
+            <button mat-menu-item type="button" (click)="editarHorario(horario)">
+              <span class="material-icons" aria-hidden="true">edit</span>
+              Editar
+            </button>
+            <button *ngIf="horario.activo" mat-menu-item type="button" (click)="deshabilitarHorario(horario.id)">
+              <span class="material-icons" aria-hidden="true">pause_circle_outline</span>
+              Deshabilitar
+            </button>
+            <button *ngIf="!horario.activo" mat-menu-item type="button" (click)="activarHorario(horario.id)">
+              <span class="material-icons" aria-hidden="true">play_circle_outline</span>
+              Habilitar
+            </button>
+            <button mat-menu-item type="button" (click)="eliminarHorario(horario.id)">
+              <span class="material-icons menu-icon-danger" aria-hidden="true">delete_outline</span>
+              <span class="menu-text-danger">Eliminar</span>
+            </button>
+          </mat-menu>
         </div>
       </article>
     </div>
@@ -185,7 +200,7 @@
                 {{ medicamento.nombre }}
               </mat-option>
             </mat-select>
-            <mat-hint>Selecciona el medicamento que deseas programar.</mat-hint>
+            <mat-hint>Elige el medicamento a programar.</mat-hint>
             <mat-error *ngIf="medicamento.invalid && (medicamento.dirty || medicamento.touched)">
               Debes seleccionar un medicamento.
             </mat-error>
@@ -197,7 +212,7 @@
             <mat-label>Hora de toma</mat-label>
             <input matInput id="horario-hora" type="time" [(ngModel)]="form.hora_toma" #hora="ngModel"
               name="hora_toma" required />
-            <mat-hint>Hora inicial para calcular las próximas tomas.</mat-hint>
+            <mat-hint>Hora inicial de las tomas.</mat-hint>
             <mat-error *ngIf="hora.invalid && (hora.dirty || hora.touched)">Debes indicar una hora.</mat-error>
           </mat-form-field>
         </div>
@@ -207,8 +222,7 @@
             <mat-label>Frecuencia (horas)</mat-label>
             <input matInput id="horario-frecuencia" type="number" [(ngModel)]="form.frecuencia" #frecuencia="ngModel"
               name="frecuencia" min="0" step="1" placeholder="Ej. 8" required />
-            <span matSuffix>h</span>
-            <mat-hint>Usa 0 para una toma diaria a la hora indicada.</mat-hint>
+            <mat-hint>0 = toma diaria.</mat-hint>
             <mat-error *ngIf="frecuencia.invalid && (frecuencia.dirty || frecuencia.touched)">
               Indica una frecuencia válida.
             </mat-error>

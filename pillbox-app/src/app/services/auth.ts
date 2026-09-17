@@ -12,6 +12,7 @@ import {
   RegistroRequest,
   UsuarioResponse
 } from '../core/models/api.interfaces';
+import { CuentaActiva } from './cuenta-activa';
 
 const STORAGE_KEYS = {
   usuario: 'pillbox_usuario',
@@ -25,7 +26,10 @@ const STORAGE_KEYS = {
 export class Auth {
   private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private cuentaActivaService: CuentaActiva,
+  ) {}
 
   registrar(data: RegistroRequest): Observable<UsuarioResponse> {
     return this.http.post<UsuarioResponse>(`${this.apiUrl}registro/`, data);
@@ -103,6 +107,7 @@ export class Auth {
     localStorage.removeItem(STORAGE_KEYS.usuario);
     localStorage.removeItem(STORAGE_KEYS.accessToken);
     localStorage.removeItem(STORAGE_KEYS.refreshToken);
+    this.cuentaActivaService.volverAMiCuenta();
   }
 
   private manejarError(error: any): Observable<never> {

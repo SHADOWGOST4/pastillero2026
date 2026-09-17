@@ -13,6 +13,7 @@ router.register(r'horarios', HorarioViewSet)
 router.register(r'registros', RegistroTomaViewSet)
 router.register(r'notificaciones', NotificacionViewSet)
 router.register(r'movimientos-stock', MovimientoStockViewSet, basename='movimiento-stock')
+router.register(r'vinculaciones', VinculacionMonitorViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

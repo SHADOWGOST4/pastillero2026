@@ -1,5 +1,12 @@
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
 
+/* Los overlays de Angular Material (mat-select, mat-menu, mat-autocomplete,
+   mat-datepicker...) se insertan como hijos de <body>, fuera de nuestros
+   modales. Su z-index por defecto (1000) queda por debajo del fondo de
+   nuestros modales (hasta 1100), así que sin este ajuste cualquier select
+   abierto dentro de un modal queda oculto detrás del fondo. */
+.cdk-overlay-container { z-index: 1200 !important; }
+
 :root { --cui-primary:#321fdb; --cui-primary-rgb:50,31,219; --cui-body-bg:#f3f4f7; --cui-body-color:#3c4b64; --cui-secondary-color:#6b7785; --cui-border-color:#d8dbe0; --cui-tertiary-bg:#ebedef; --primary:var(--cui-primary); --primary-hover:#2819af; --primary-soft:#eeecfc; --success:#2eb85c; --success-soft:#e7f8ed; --warning:#f9b115; --warning-soft:#fff8df; --danger:#e55353; --danger-soft:#fdeaea; --text-primary:var(--cui-body-color); --text-secondary:var(--cui-secondary-color); --text-muted:#8a93a2; --background:var(--cui-body-bg); --surface:#fff; --border:var(--cui-border-color); --focus-ring:rgba(var(--cui-primary-rgb),.22); --radius-sm:.375rem; --radius-md:.5rem; --radius-lg:.5rem; --shadow-sm:0 1px 2px rgba(60,75,100,.08); --shadow-md:0 4px 12px rgba(60,75,100,.12); }
 html, body { min-height:100%; }
 body { margin:0; color:var(--text-primary); background:var(--background); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; -webkit-font-smoothing:antialiased; }
@@ -48,6 +55,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .table td, .table th, .data-table td, .data-table th { padding:.85rem 1rem; vertical-align:middle; }
 .table tbody tr:hover, .data-table tbody tr:hover { background:#f8f9fa; }
 .actions-cell { display:flex; flex-wrap:wrap; justify-content:center; gap:.5rem; white-space:nowrap; }
+.icon-button { display:inline-flex; align-items:center; justify-content:center; width:2.25rem; height:2.25rem; padding:0; border:1px solid transparent; border-radius:999px; color:var(--text-secondary); background:transparent; cursor:pointer; transition:background-color 160ms ease,color 160ms ease; }
+.icon-button:hover, .icon-button:focus-visible { background:var(--cui-tertiary-bg); color:var(--text-primary); }
+.menu-icon-danger, .menu-text-danger { color:var(--danger); }
+.viendo-como-banner { display:flex; align-items:center; gap:.5rem; padding:.65rem 1rem; border:1px solid #bfdbfe; border-radius:var(--radius-md); color:var(--primary-hover); background:var(--primary-soft); font-size:.86rem; }
+.viendo-como-banner .material-icons { font-size:1.1rem; }
 .state-message, .loading-state, .empty-state, .error-state, .success-state { padding:1.5rem 1rem; color:var(--text-secondary); text-align:center; }
 .empty-state .material-icons, .loading-state .material-icons, .error-state .material-icons { display:block; margin-bottom:.5rem; color:var(--text-muted); font-size:2rem; }
 .error-state, .alert-danger { color:var(--danger); background:var(--danger-soft); }

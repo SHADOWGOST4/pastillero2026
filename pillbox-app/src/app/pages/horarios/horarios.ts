@@ -1,31 +1,34 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { Observable, Subject, takeUntil } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatRadioModule } from '@angular/material/radio';
+import { MatMenuModule } from '@angular/material/menu';
 import {
   ActualizarHorarioRequest,
   CrearHorarioRequest,
   HorarioResponse,
   MedicamentoResponse,
   TipoDuracion,
+  UsuarioResumenResponse,
 } from '../../core/models/api.interfaces';
 import { Medicamento } from '../../services/medicamento';
 import { Horario } from '../../services/horario';
+import { CuentaActiva } from '../../services/cuenta-activa';
 import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
 
 @Component({
   selector: 'app-horarios',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatRadioModule, ConfirmModal],
+  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatRadioModule, MatMenuModule, ConfirmModal],
   templateUrl: './horarios.html',
   styleUrl: './horarios.css',
 })
-export class Horarios implements OnInit {
+export class Horarios implements OnDestroy, OnInit {
   horarios: HorarioResponse[] = [];
   medicamentos: MedicamentoResponse[] = [];
   totalHorarios = 0;
@@ -43,6 +46,8 @@ export class Horarios implements OnInit {
   eliminando = false;
   horarioPendienteEliminar: number | null = null;
   accionModal: 'deshabilitar' | 'eliminar' = 'deshabilitar';
+  cuentaActiva: UsuarioResumenResponse | null = null;
+  private readonly destroyed$ = new Subject<void>();
 
   form: CrearHorarioRequest = {
     id_medicamento: 0,
@@ -58,7 +63,12 @@ export class Horarios implements OnInit {
   constructor(
     private horarioService: Horario,
     private medicamentoService: Medicamento,
+    private cuentaActivaService: CuentaActiva,
   ) {}
+
+  get esSoloLectura(): boolean {
+    return this.cuentaActiva !== null;
+  }
 
   @HostListener('document:keydown.escape')
   cerrarModalConEscape(): void {
@@ -68,8 +78,20 @@ export class Horarios implements OnInit {
   }
 
   ngOnInit(): void {
-    this.cargarMedicamentos();
-    this.cargarHorarios();
+    this.cuentaActivaService.cuentaActiva$
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe((cuenta) => {
+        this.cuentaActiva = cuenta;
+        if (!this.esSoloLectura) {
+          this.cargarMedicamentos();
+        }
+        this.cargarHorarios(1);
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed$.next();
+    this.destroyed$.complete();
   }
 
   cargarMedicamentos(): void {
@@ -87,7 +109,7 @@ export class Horarios implements OnInit {
     this.loading = true;
     this.errorMessage = '';
 
-    this.horarioService.getPage(pagina).subscribe({
+    this.horarioService.getPage(pagina, this.cuentaActiva?.id).subscribe({
       next: (data) => {
         if (data.results.length === 0 && data.count > 0 && pagina > 1) {
           this.cargarHorarios(pagina - 1);

@@ -47,6 +47,11 @@
           <span>Contactos</span>
         </button>
 
+        <button class="nav-item" routerLink="/cuentas-vinculadas" routerLinkActive="selected" [routerLinkActiveOptions]="{ exact: true }">
+          <span class="material-icons" aria-hidden="true">supervisor_account</span>
+          <span>Cuentas vinculadas</span>
+        </button>
+
         <button class="nav-item" routerLink="/dispositivo" routerLinkActive="selected" [routerLinkActiveOptions]="{ exact: true }">
           <span class="material-icons" aria-hidden="true">devices</span>
           <span>Dispositivo</span>
@@ -70,13 +75,35 @@
         </div>
       </div>
 
-      <div class="topbar-user">
-        <div class="user-avatar">{{ usuario?.nombre?.charAt(0)?.toUpperCase() || 'U' }}</div>
+      <button type="button" class="topbar-user" [matMenuTriggerFor]="cuentaMenu" aria-label="Cambiar de cuenta">
+        <div class="user-avatar">{{ (cuentaActiva?.nombre || usuario?.nombre)?.charAt(0)?.toUpperCase() || 'U' }}</div>
         <div>
-          <small>Usuario</small>
-          <strong>{{ usuario?.nombre || 'Sin nombre' }}</strong>
+          <small>{{ cuentaActiva ? 'Viendo como' : 'Usuario' }}</small>
+          <strong>{{ cuentaActiva?.nombre || usuario?.nombre || 'Sin nombre' }}</strong>
         </div>
-      </div>
+        <span class="material-icons topbar-user-caret" aria-hidden="true">expand_more</span>
+      </button>
+
+      <mat-menu #cuentaMenu="matMenu" xPosition="before">
+        <button mat-menu-item type="button" [class.cuenta-activa-item]="!cuentaActiva" (click)="volverAMiCuenta()">
+          <span class="material-icons" aria-hidden="true">person</span>
+          Mi cuenta ({{ usuario?.nombre }})
+        </button>
+        <button
+          mat-menu-item
+          type="button"
+          *ngFor="let v of cuentasMonitoreadas"
+          [class.cuenta-activa-item]="cuentaActiva?.id === v.titular.id"
+          (click)="verComo(v.titular)"
+        >
+          <span class="material-icons" aria-hidden="true">visibility</span>
+          {{ v.titular.nombre }}
+        </button>
+        <button mat-menu-item type="button" routerLink="/cuentas-vinculadas">
+          <span class="material-icons" aria-hidden="true">supervisor_account</span>
+          Cuentas vinculadas
+        </button>
+      </mat-menu>
     </header>
 
     <main class="content-area">

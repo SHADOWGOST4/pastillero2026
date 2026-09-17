@@ -1,26 +1,29 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { forkJoin } from 'rxjs';
+import { MatMenuModule } from '@angular/material/menu';
+import { Subject, forkJoin, takeUntil } from 'rxjs';
 import {
   AjustarStockRequest,
   CrearMedicamentoRequest,
   MedicamentoCoberturaResponse,
   MedicamentoResponse,
+  UsuarioResumenResponse,
 } from '../../core/models/api.interfaces';
 import { Medicamento } from '../../services/medicamento';
+import { CuentaActiva } from '../../services/cuenta-activa';
 import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
 
 @Component({
   selector: 'app-medicamentos',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, ConfirmModal],
+  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatMenuModule, ConfirmModal],
   templateUrl: './medicamentos.html',
   styleUrls: ['./medicamentos.css'],
 })
-export class Medicamentos implements OnInit {
+export class Medicamentos implements OnDestroy, OnInit {
   medicamentos: MedicamentoResponse[] = [];
   coberturaPorMedicamento: Record<number, MedicamentoCoberturaResponse> = {};
   totalMedicamentos = 0;
@@ -42,6 +45,8 @@ export class Medicamentos implements OnInit {
   modalEliminarAbierto = false;
   eliminando = false;
   medicamentoPendienteEliminar: number | null = null;
+  cuentaActiva: UsuarioResumenResponse | null = null;
+  private readonly destroyed$ = new Subject<void>();
 
   form: CrearMedicamentoRequest = {
     nombre: '',
@@ -50,7 +55,14 @@ export class Medicamentos implements OnInit {
     stock: 0,
   };
 
-  constructor(private medicamentoService: Medicamento) {}
+  constructor(
+    private medicamentoService: Medicamento,
+    private cuentaActivaService: CuentaActiva,
+  ) {}
+
+  get esSoloLectura(): boolean {
+    return this.cuentaActiva !== null;
+  }
 
   @HostListener('document:keydown.escape')
   cerrarModalConEscape(): void {
@@ -60,14 +72,24 @@ export class Medicamentos implements OnInit {
   }
 
   ngOnInit(): void {
-    this.cargarMedicamentos();
+    this.cuentaActivaService.cuentaActiva$
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe((cuenta) => {
+        this.cuentaActiva = cuenta;
+        this.cargarMedicamentos(1);
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed$.next();
+    this.destroyed$.complete();
   }
 
   cargarMedicamentos(pagina = this.paginaActual): void {
     this.loading = true;
     this.errorMessage = '';
 
-    this.medicamentoService.getPage(pagina).subscribe({
+    this.medicamentoService.getPage(pagina, this.cuentaActiva?.id).subscribe({
       next: (data) => {
         if (data.results.length === 0 && data.count > 0 && pagina > 1) {
           this.cargarMedicamentos(pagina - 1);
@@ -281,7 +303,7 @@ export class Medicamentos implements OnInit {
       return;
     }
 
-    forkJoin(this.medicamentos.map((med) => this.medicamentoService.getCobertura(med.id))).subscribe({
+    forkJoin(this.medicamentos.map((med) => this.medicamentoService.getCobertura(med.id, this.cuentaActiva?.id))).subscribe({
       next: (respuestas) => {
         this.coberturaPorMedicamento = {};
         respuestas.forEach((respuesta) => {
