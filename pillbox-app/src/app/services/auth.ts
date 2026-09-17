@@ -32,7 +32,9 @@ export class Auth {
   ) {}
 
   registrar(data: RegistroRequest): Observable<UsuarioResponse> {
-    return this.http.post<UsuarioResponse>(`${this.apiUrl}registro/`, data);
+    return this.http.post<UsuarioResponse>(`${this.apiUrl}registro/`, data).pipe(
+      catchError((error) => this.manejarError(error))
+    );
   }
 
   login(data: LoginRequest): Observable<LoginResponse> {
@@ -110,9 +112,47 @@ export class Auth {
     this.cuentaActivaService.volverAMiCuenta();
   }
 
+  private readonly ETIQUETAS_CAMPO: Record<string, string> = {
+    nombre: 'Nombre',
+    correo: 'Correo',
+    password: 'Contraseña',
+    telefono: 'Teléfono',
+  };
+
   private manejarError(error: any): Observable<never> {
     const apiError: ApiErrorResponse = error?.error ?? {};
-    const message = apiError?.detail || apiError?.code || 'Error de autenticación';
-    return throwError(() => new Error(message));
+    return throwError(() => new Error(this.extraerMensajeError(apiError)));
+  }
+
+  private extraerMensajeError(apiError: ApiErrorResponse): string {
+    if (!apiError || typeof apiError !== 'object') {
+      return 'Ocurrió un error inesperado. Intenta nuevamente.';
+    }
+
+    const partes: string[] = [];
+
+    for (const campo of Object.keys(apiError)) {
+      if (campo === 'code') {
+        continue;
+      }
+      const valor = (apiError as any)[campo];
+      const mensajes = Array.isArray(valor) ? valor : [valor];
+      const etiqueta = campo === 'detail' || campo === 'non_field_errors'
+        ? ''
+        : this.ETIQUETAS_CAMPO[campo] ?? campo;
+
+      for (const mensaje of mensajes) {
+        if (!mensaje) {
+          continue;
+        }
+        partes.push(etiqueta ? `${etiqueta}: ${mensaje}` : `${mensaje}`);
+      }
+    }
+
+    if (partes.length) {
+      return partes.join(' ');
+    }
+
+    return apiError?.code || 'Ocurrió un error inesperado. Intenta nuevamente.';
   }
 }

@@ -22,12 +22,19 @@ export class Registro {
   constructor(private auth: Auth, private router: Router) {}
 
   registrar() {
+    this.error = '';
     this.auth.registrar(this.nuevoUsuario).subscribe({
-      next: (res) => {
+      next: () => {
         this.mensaje = 'Usuario registrado correctamente';
-        setTimeout(() => this.router.navigate(['/login']), 1500);
+        this.auth.login({
+          correo: this.nuevoUsuario.correo,
+          password: this.nuevoUsuario.password
+        }).subscribe({
+          next: () => this.router.navigate(['/dashboard']),
+          error: () => this.router.navigate(['/login'])
+        });
       },
-      error: () => (this.error = 'Error al registrar el usuario')
+      error: (err: any) => (this.error = err?.message || 'Error al registrar el usuario')
     });
   }
 
