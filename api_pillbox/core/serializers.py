@@ -18,7 +18,9 @@ from .models import (
     Notificacion,
     AsignacionDispositivo,
     WebPushSubscription,
+    VinculacionMonitor,
 )
+from . import vinculaciones
 
 class UsuarioSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
@@ -280,6 +282,64 @@ class WebPushSubscriptionSerializer(serializers.ModelSerializer):
 
     def get_keys(self, obj):
         return {'auth': obj.auth, 'p256dh': obj.p256dh}
+
+
+class UsuarioResumenSerializer(serializers.ModelSerializer):
+    """Versión reducida de Usuario para exponer a la otra parte de una
+    vinculación: nunca se filtran teléfono/estado de la cuenta ajena."""
+
+    class Meta:
+        model = Usuario
+        fields = ['id', 'nombre', 'correo']
+        read_only_fields = fields
+
+
+class VinculacionMonitorSerializer(serializers.ModelSerializer):
+    titular = UsuarioResumenSerializer(read_only=True)
+    monitor = UsuarioResumenSerializer(read_only=True)
+    correo_monitor = serializers.EmailField(write_only=True, required=False)
+
+    class Meta:
+        model = VinculacionMonitor
+        fields = [
+            'id', 'titular', 'monitor', 'correo_monitor', 'estado',
+            'puede_ver_medicamentos', 'puede_ver_horarios', 'puede_ver_registros',
+            'fecha_creacion', 'fecha_respuesta',
+        ]
+        read_only_fields = ['estado', 'fecha_creacion', 'fecha_respuesta']
+
+    def create(self, validated_data):
+        request = self.context['request']
+        correo_monitor = validated_data.pop('correo_monitor', '').lower().strip()
+
+        if not correo_monitor:
+            raise serializers.ValidationError({'correo_monitor': 'El correo del monitor es obligatorio.'})
+        if correo_monitor == request.user.correo.lower():
+            raise serializers.ValidationError({'correo_monitor': 'No puedes invitarte a ti mismo.'})
+
+        try:
+            monitor = Usuario.objects.get(correo=correo_monitor)
+        except Usuario.DoesNotExist:
+            raise serializers.ValidationError(
+                {'correo_monitor': 'No existe ninguna cuenta de Pillbox con ese correo.'}
+            )
+
+        vinculacion, creada = VinculacionMonitor.objects.get_or_create(
+            titular=request.user,
+            monitor=monitor,
+            defaults={
+                'puede_ver_medicamentos': validated_data.get('puede_ver_medicamentos', True),
+                'puede_ver_horarios': validated_data.get('puede_ver_horarios', True),
+                'puede_ver_registros': validated_data.get('puede_ver_registros', True),
+            },
+        )
+        if not creada:
+            vinculacion.estado = VinculacionMonitor.Estado.PENDIENTE
+            vinculacion.fecha_respuesta = None
+            vinculacion.save(update_fields=['estado', 'fecha_respuesta'])
+
+        vinculaciones.enviar_invitacion(vinculacion)
+        return vinculacion
 
 
 class UsuarioTokenObtainPairSerializer(serializers.Serializer):

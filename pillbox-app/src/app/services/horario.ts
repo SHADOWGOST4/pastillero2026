@@ -18,14 +18,15 @@ export class Horario {
 
   constructor(private http: HttpClient) {}
 
-  getPage(page = 1): Observable<PaginatedResponse<HorarioResponse>> {
-    return this.http.get<PaginatedResponse<HorarioResponse>>(this.apiUrl, {
-      params: { page },
-    });
+  getPage(page = 1, titular?: number): Observable<PaginatedResponse<HorarioResponse>> {
+    const params: Record<string, number> = { page };
+    if (titular) params['titular'] = titular;
+    return this.http.get<PaginatedResponse<HorarioResponse>>(this.apiUrl, { params });
   }
 
-  getAll(): Observable<HorarioResponse[]> {
-    return this.getAllPages(this.apiUrl, []);
+  getAll(titular?: number): Observable<HorarioResponse[]> {
+    const url = titular ? `${this.apiUrl}?titular=${titular}` : this.apiUrl;
+    return this.getAllPages(url, []);
   }
 
   private getAllPages(url: string, accumulated: HorarioResponse[]): Observable<HorarioResponse[]> {

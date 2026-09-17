@@ -10,7 +10,8 @@ from django.db import IntegrityError
 from django.utils import timezone
 from pywebpush import webpush
 
-from .models import Registro_Toma, WebPushNotificationLog, WebPushSubscription
+from . import vinculaciones
+from .models import Registro_Toma, WebPushNotificationLog
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +90,7 @@ def send_web_push_for_registro(registro):
 
     payload = build_push_payload(registro, evento_id)
 
-    subscriptions = WebPushSubscription.objects.filter(usuario=registro.id_usuario, active=True)
+    subscriptions = vinculaciones.suscripciones_para_registro(registro)
     if not subscriptions.exists():
         log.status = 'skipped'
         log.save(update_fields=['status'])

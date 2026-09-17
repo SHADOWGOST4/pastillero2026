@@ -20,18 +20,19 @@ export class Medicamento {
 
   constructor(private http: HttpClient) {}
 
-  getPage(page = 1): Observable<PaginatedResponse<MedicamentoResponse>> {
-    return this.http.get<PaginatedResponse<MedicamentoResponse>>(this.apiUrl, {
-      params: { page },
-    });
+  getPage(page = 1, titular?: number): Observable<PaginatedResponse<MedicamentoResponse>> {
+    const params: Record<string, number> = { page };
+    if (titular) params['titular'] = titular;
+    return this.http.get<PaginatedResponse<MedicamentoResponse>>(this.apiUrl, { params });
   }
 
   /**
    * Obtiene la colección completa para selectores y procesos globales.
    * Las pantallas de listado deben usar getPage() para conservar la paginación.
    */
-  getAll(): Observable<MedicamentoResponse[]> {
-    return this.getAllPages(this.apiUrl, []);
+  getAll(titular?: number): Observable<MedicamentoResponse[]> {
+    const url = titular ? `${this.apiUrl}?titular=${titular}` : this.apiUrl;
+    return this.getAllPages(url, []);
   }
 
   private getAllPages(
@@ -57,8 +58,10 @@ export class Medicamento {
     return this.http.get<MedicamentoResponse>(`${this.apiUrl}${id}/`);
   }
 
-  getCobertura(id: number): Observable<MedicamentoCoberturaResponse> {
-    return this.http.get<MedicamentoCoberturaResponse>(`${this.apiUrl}${id}/cobertura/`);
+  getCobertura(id: number, titular?: number): Observable<MedicamentoCoberturaResponse> {
+    const params: Record<string, number> = {};
+    if (titular) params['titular'] = titular;
+    return this.http.get<MedicamentoCoberturaResponse>(`${this.apiUrl}${id}/cobertura/`, { params });
   }
 
   reponer(id: number, data: ReponerStockRequest): Observable<MovimientoStockResponse> {

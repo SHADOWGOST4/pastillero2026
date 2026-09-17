@@ -26,8 +26,7 @@
 
 .add-button,
 .save-button,
-.empty-state .btn,
-.action-button {
+.empty-state .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -91,7 +90,7 @@
 .form-grid {
   display: grid;
   grid-template-columns: 1.35fr 0.85fr 0.85fr;
-  gap: 1rem 1.25rem;
+  gap: 1.5rem 1.25rem;
 }
 
 .field {
@@ -153,7 +152,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 0.65rem;
-  margin-top: 1.25rem;
+  margin-top: 2rem;
 }
 
 .feedback {
@@ -254,6 +253,7 @@
   justify-content: center;
   gap: 1rem;
   margin-top: 1rem;
+  padding: 0 1.35rem 1.35rem;
   color: var(--text-secondary);
   font-size: 0.88rem;
 }
@@ -335,42 +335,6 @@
 .next-dose strong {
   color: var(--text-primary);
   font-size: 0.88rem;
-}
-
-.action-button {
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  white-space: nowrap;
-}
-
-.action-edit,
-.action-delete {
-  border-color: transparent;
-  color: #fff;
-}
-
-.action-edit {
-  background: #2563eb;
-}
-
-.action-edit:hover,
-.action-edit:focus-visible {
-  border-color: #1d4ed8;
-  color: #fff;
-  background: #1d4ed8;
-}
-
-.action-delete {
-  background: #dc2626;
-}
-
-.action-delete:hover,
-.action-delete:focus-visible {
-  border-color: #b91c1c;
-  color: #fff;
-  background: #b91c1c;
 }
 
 .loading-state {
@@ -504,15 +468,8 @@
   .mobile-actions {
     display: flex;
     min-width: 0;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+    justify-content: flex-end;
     margin-top: 1rem;
-  }
-
-  .mobile-actions .btn {
-    flex: 1 1 calc(50% - 0.25rem);
-    min-width: 0;
-    width: 100%;
   }
 }
 
@@ -525,13 +482,5 @@
   .mobile-card-heading .schedule-time,
   .mobile-schedule-details .next-dose {
     margin-top: 0.75rem;
-  }
-
-  .mobile-actions {
-    flex-direction: column;
-  }
-
-  .mobile-actions .btn {
-    flex-basis: 100%;
   }
 }

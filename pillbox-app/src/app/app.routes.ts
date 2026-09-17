@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { Contactos } from './pages/contactos/contactos';
+import { CuentasVinculadas } from './pages/cuentas-vinculadas/cuentas-vinculadas';
 import { Dashboard } from './pages/dashboard/dashboard';
 import { Dispositivo } from './pages/dispositivo/dispositivo';
 import { Horarios } from './pages/horarios/horarios';
@@ -32,6 +33,7 @@ export const routes: Routes = [
       { path: 'horarios', component: Horarios },
       { path: 'registros', component: Registros },
       { path: 'contactos', component: Contactos },
+      { path: 'cuentas-vinculadas', component: CuentasVinculadas },
       { path: 'dispositivo', component: Dispositivo }
     ]
   },

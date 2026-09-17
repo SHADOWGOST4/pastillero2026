@@ -11,6 +11,11 @@
     </button>
   </header>
 
+  <div *ngIf="cuentaActiva" class="viendo-como-banner">
+    <span class="material-icons" aria-hidden="true">visibility</span>
+    <span>Viendo el historial de <strong>{{ cuentaActiva.nombre }}</strong> en modo solo lectura.</span>
+  </div>
+
   <section class="summary-grid" aria-label="Resumen del historial">
     <article class="summary-card">
       <span class="summary-icon material-icons" aria-hidden="true">history</span>

@@ -1,0 +1,188 @@
+<div class="vinculadas-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Monitoreo compartido</p>
+      <h1>Cuentas vinculadas</h1>
+      <p class="page-intro">Invita a alguien para que vea tu medicación, o revisa las cuentas que tú monitoreas.</p>
+    </div>
+    <button type="button" class="btn btn-primary add-button" (click)="abrirFormularioInvitar()">
+      <span class="material-icons" aria-hidden="true">person_add</span>
+      Invitar monitor
+    </button>
+  </header>
+
+  <div *ngIf="successMessage" class="alert alert-success feedback page-feedback" role="status">
+    <span class="material-icons" aria-hidden="true">check_circle</span>
+    <span>{{ successMessage }}</span>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger feedback page-feedback" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <div *ngIf="loading" class="state-message loading-state">
+    <span class="spinner" aria-hidden="true"></span>
+    <span>Cargando cuentas vinculadas...</span>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <section class="list-section">
+      <div class="section-header list-header">
+        <div>
+          <p class="section-kicker">Yo invité</p>
+          <h2>Monitores de mi cuenta</h2>
+        </div>
+        <span class="list-count">{{ enviadas.length }} registrados</span>
+      </div>
+
+      <div *ngIf="enviadas.length === 0" class="state-message empty-state">
+        <span class="empty-icon material-icons" aria-hidden="true">visibility</span>
+        <h3>No has invitado a nadie</h3>
+        <p>Invita a un familiar o cuidador para que pueda ver tu medicación en solo lectura.</p>
+      </div>
+
+      <div *ngIf="enviadas.length > 0" class="vinculaciones-grid">
+        <article class="vinculacion-card" *ngFor="let v of enviadas">
+          <div class="vinculacion-card-header">
+            <div class="vinculacion-avatar" aria-hidden="true">{{ obtenerIniciales(v.monitor.nombre) }}</div>
+            <div class="vinculacion-heading">
+              <h3>{{ v.monitor.nombre }}</h3>
+              <span class="vinculacion-correo">{{ v.monitor.correo }}</span>
+            </div>
+            <span class="estado-badge" [ngClass]="'estado-' + v.estado.toLowerCase()">{{ v.estado }}</span>
+          </div>
+
+          <div class="permisos-list" *ngIf="v.estado === 'ACEPTADA'">
+            <label class="permiso-item">
+              <input type="checkbox" [checked]="v.puede_ver_medicamentos" (change)="togglePermiso(v, 'puede_ver_medicamentos')" />
+              Medicamentos y stock
+            </label>
+            <label class="permiso-item">
+              <input type="checkbox" [checked]="v.puede_ver_horarios" (change)="togglePermiso(v, 'puede_ver_horarios')" />
+              Horarios programados
+            </label>
+            <label class="permiso-item">
+              <input type="checkbox" [checked]="v.puede_ver_registros" (change)="togglePermiso(v, 'puede_ver_registros')" />
+              Historial de tomas
+            </label>
+          </div>
+          <p class="vinculacion-hint" *ngIf="v.estado === 'PENDIENTE'">Esperando que {{ v.monitor.nombre }} acepte la invitación.</p>
+          <p class="vinculacion-hint" *ngIf="v.estado === 'RECHAZADA'">{{ v.monitor.nombre }} rechazó esta invitación.</p>
+
+          <div class="vinculacion-actions">
+            <button type="button" class="icon-button" [matMenuTriggerFor]="menuEnviada" aria-label="Más acciones">
+              <span class="material-icons" aria-hidden="true">more_vert</span>
+            </button>
+            <mat-menu #menuEnviada="matMenu" xPosition="before">
+              <button mat-menu-item type="button" (click)="solicitarEliminar(v.id)">
+                <span class="material-icons menu-icon-danger" aria-hidden="true">link_off</span>
+                <span class="menu-text-danger">Revocar acceso</span>
+              </button>
+            </mat-menu>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="list-section">
+      <div class="section-header list-header">
+        <div>
+          <p class="section-kicker">Me invitaron</p>
+          <h2>Cuentas que monitoreo</h2>
+        </div>
+        <span class="list-count">{{ recibidas.length }} registrados</span>
+      </div>
+
+      <div *ngIf="recibidas.length === 0" class="state-message empty-state">
+        <span class="empty-icon material-icons" aria-hidden="true">groups</span>
+        <h3>Nadie te ha invitado todavía</h3>
+        <p>Cuando alguien te invite a monitorear su medicación, aparecerá aquí.</p>
+      </div>
+
+      <div *ngIf="recibidas.length > 0" class="vinculaciones-grid">
+        <article class="vinculacion-card" *ngFor="let v of recibidas">
+          <div class="vinculacion-card-header">
+            <div class="vinculacion-avatar" aria-hidden="true">{{ obtenerIniciales(v.titular.nombre) }}</div>
+            <div class="vinculacion-heading">
+              <h3>{{ v.titular.nombre }}</h3>
+              <span class="vinculacion-correo">{{ v.titular.correo }}</span>
+            </div>
+            <span class="estado-badge" [ngClass]="'estado-' + v.estado.toLowerCase()">{{ v.estado }}</span>
+          </div>
+
+          <div class="permisos-list" *ngIf="v.estado === 'ACEPTADA'">
+            <span class="permiso-chip" [class.permiso-off]="!v.puede_ver_medicamentos">Medicamentos y stock</span>
+            <span class="permiso-chip" [class.permiso-off]="!v.puede_ver_horarios">Horarios programados</span>
+            <span class="permiso-chip" [class.permiso-off]="!v.puede_ver_registros">Historial de tomas</span>
+          </div>
+
+          <div class="vinculacion-actions" *ngIf="v.estado === 'PENDIENTE'">
+            <button type="button" class="btn btn-outline-secondary" (click)="rechazar(v)">Rechazar</button>
+            <button type="button" class="btn btn-primary" (click)="aceptar(v)">Aceptar</button>
+          </div>
+
+          <div class="vinculacion-actions" *ngIf="v.estado === 'ACEPTADA'">
+            <button type="button" class="icon-button" [matMenuTriggerFor]="menuRecibida" aria-label="Más acciones">
+              <span class="material-icons" aria-hidden="true">more_vert</span>
+            </button>
+            <mat-menu #menuRecibida="matMenu" xPosition="before">
+              <button mat-menu-item type="button" (click)="solicitarEliminar(v.id)">
+                <span class="material-icons menu-icon-danger" aria-hidden="true">link_off</span>
+                <span class="menu-text-danger">Dejar de monitorear</span>
+              </button>
+            </mat-menu>
+          </div>
+        </article>
+      </div>
+    </section>
+  </ng-container>
+</div>
+
+<div *ngIf="modalFormularioAbierto" class="vinculacion-modal-backdrop" (click)="!submitting && cancelarInvitacion()">
+  <section
+    class="vinculacion-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="vinculacion-modal-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="vinculacion-modal-header">
+      <div>
+        <p class="section-kicker">Nueva invitación</p>
+        <h2 id="vinculacion-modal-title">Invitar monitor</h2>
+      </div>
+      <button type="button" class="modal-close" (click)="cancelarInvitacion()" [disabled]="submitting" aria-label="Cerrar">×</button>
+    </header>
+
+    <form #invitarForm="ngForm" (ngSubmit)="onSubmitInvitacion()" novalidate>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Correo del monitor</mat-label>
+        <input matInput type="email" [(ngModel)]="correoMonitor" name="correoMonitor" placeholder="correo@ejemplo.com" required />
+        <mat-hint>Debe ser el correo de una cuenta ya registrada en Pillbox.</mat-hint>
+      </mat-form-field>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline-secondary" (click)="cancelarInvitacion()" [disabled]="submitting">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary save-button" [disabled]="submitting">
+          <span class="material-icons" aria-hidden="true" *ngIf="!submitting">send</span>
+          <span class="loading-dot" aria-hidden="true" *ngIf="submitting"></span>
+          {{ submitting ? 'Enviando...' : 'Enviar invitación' }}
+        </button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<app-confirm-modal
+  [visible]="modalEliminarAbierto"
+  [busy]="eliminando"
+  title="Eliminar vinculación"
+  message="Se eliminará esta vinculación y perderás el acceso asociado. Esta acción no se puede deshacer."
+  confirmLabel="Eliminar vinculación"
+  icon="link_off"
+  (closed)="cancelarEliminacion()"
+  (confirmed)="confirmarEliminacion()"
+/>

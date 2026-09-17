@@ -5,11 +5,16 @@
       <h1>Medicamentos</h1>
       <p class="page-intro">Gestiona tus medicamentos y mantén organizada tu medicación.</p>
     </div>
-    <button type="button" class="btn btn-primary add-button" (click)="abrirFormularioNuevo()">
+    <button *ngIf="!esSoloLectura" type="button" class="btn btn-primary add-button" (click)="abrirFormularioNuevo()">
       <span class="material-icons" aria-hidden="true">add</span>
       Agregar medicamento
     </button>
   </header>
+
+  <div *ngIf="cuentaActiva" class="viendo-como-banner">
+    <span class="material-icons" aria-hidden="true">visibility</span>
+    <span>Viendo los medicamentos de <strong>{{ cuentaActiva.nombre }}</strong> en modo solo lectura.</span>
+  </div>
 
   <section class="summary-card" aria-label="Resumen de medicamentos">
     <div class="summary-icon" aria-hidden="true">
@@ -80,9 +85,9 @@
 
     <div *ngIf="!loading && totalMedicamentos === 0" class="state-message empty-state">
       <span class="empty-icon material-icons" aria-hidden="true">medication</span>
-      <h3>No tienes medicamentos registrados</h3>
-      <p>Agrega tu primer medicamento para comenzar a organizar tus tomas.</p>
-      <button type="button" class="btn btn-primary" (click)="abrirFormularioNuevo()">
+      <h3>{{ esSoloLectura ? (cuentaActiva?.nombre) + ' no tiene medicamentos registrados' : 'No tienes medicamentos registrados' }}</h3>
+      <p *ngIf="!esSoloLectura">Agrega tu primer medicamento para comenzar a organizar tus tomas.</p>
+      <button *ngIf="!esSoloLectura" type="button" class="btn btn-primary" (click)="abrirFormularioNuevo()">
         <span class="material-icons" aria-hidden="true">add</span>
         Agregar medicamento
       </button>
@@ -96,7 +101,7 @@
             <th>Dosis</th>
             <th>Stock</th>
             <th>Descripción</th>
-            <th class="actions-heading">Acciones</th>
+            <th *ngIf="!esSoloLectura" class="actions-heading">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -118,21 +123,28 @@
               <small class="stock-detail">{{ getCoberturaTexto(med.id) }}</small>
             </td>
             <td class="description-cell">{{ med.descripcion || 'Sin descripción' }}</td>
-            <td class="actions-cell">
-              <button type="button" class="btn btn-sm action-button action-edit" (click)="editarMedicamento(med)">
-                <span class="material-icons" aria-hidden="true">edit</span>
-                Editar
+            <td *ngIf="!esSoloLectura" class="actions-cell">
+              <button type="button" class="icon-button" [matMenuTriggerFor]="rowMenu" aria-label="Más acciones para {{ med.nombre }}">
+                <span class="material-icons" aria-hidden="true">more_vert</span>
               </button>
-              <button type="button" class="btn btn-sm action-button action-delete" (click)="eliminarMedicamento(med.id)">
-                <span class="material-icons" aria-hidden="true">delete_outline</span>
-                Eliminar
-              </button>
-              <button type="button" class="btn btn-sm action-button action-stock" (click)="abrirOperacionStock(med, 'reponer')">
-                Reponer
-              </button>
-              <button type="button" class="btn btn-sm action-button action-adjust" (click)="abrirOperacionStock(med, 'ajustar')">
-                Ajustar
-              </button>
+              <mat-menu #rowMenu="matMenu" xPosition="before">
+                <button mat-menu-item type="button" (click)="editarMedicamento(med)">
+                  <span class="material-icons" aria-hidden="true">edit</span>
+                  Editar
+                </button>
+                <button mat-menu-item type="button" (click)="abrirOperacionStock(med, 'reponer')">
+                  <span class="material-icons" aria-hidden="true">add_circle_outline</span>
+                  Reponer stock
+                </button>
+                <button mat-menu-item type="button" (click)="abrirOperacionStock(med, 'ajustar')">
+                  <span class="material-icons" aria-hidden="true">tune</span>
+                  Ajustar stock
+                </button>
+                <button mat-menu-item type="button" (click)="eliminarMedicamento(med.id)">
+                  <span class="material-icons menu-icon-danger" aria-hidden="true">delete_outline</span>
+                  <span class="menu-text-danger">Eliminar</span>
+                </button>
+              </mat-menu>
             </td>
           </tr>
         </tbody>
@@ -167,21 +179,28 @@
         <p class="mobile-stock-detail">{{ getCoberturaTexto(med.id) }}</p>
         <p *ngIf="med.descripcion" class="mobile-description">{{ med.descripcion }}</p>
         <p *ngIf="!med.descripcion" class="mobile-description muted">Sin descripción</p>
-        <div class="mobile-actions">
-          <button type="button" class="btn btn-sm action-button action-edit" (click)="editarMedicamento(med)">
-            <span class="material-icons" aria-hidden="true">edit</span>
-            Editar
+        <div *ngIf="!esSoloLectura" class="mobile-actions">
+          <button type="button" class="icon-button" [matMenuTriggerFor]="rowMenuMobile" aria-label="Más acciones para {{ med.nombre }}">
+            <span class="material-icons" aria-hidden="true">more_vert</span>
           </button>
-          <button type="button" class="btn btn-sm action-button action-delete" (click)="eliminarMedicamento(med.id)">
-            <span class="material-icons" aria-hidden="true">delete_outline</span>
-            Eliminar
-          </button>
-          <button type="button" class="btn btn-sm action-button action-stock" (click)="abrirOperacionStock(med, 'reponer')">
-            Reponer
-          </button>
-          <button type="button" class="btn btn-sm action-button action-adjust" (click)="abrirOperacionStock(med, 'ajustar')">
-            Ajustar
-          </button>
+          <mat-menu #rowMenuMobile="matMenu" xPosition="before">
+            <button mat-menu-item type="button" (click)="editarMedicamento(med)">
+              <span class="material-icons" aria-hidden="true">edit</span>
+              Editar
+            </button>
+            <button mat-menu-item type="button" (click)="abrirOperacionStock(med, 'reponer')">
+              <span class="material-icons" aria-hidden="true">add_circle_outline</span>
+              Reponer stock
+            </button>
+            <button mat-menu-item type="button" (click)="abrirOperacionStock(med, 'ajustar')">
+              <span class="material-icons" aria-hidden="true">tune</span>
+              Ajustar stock
+            </button>
+            <button mat-menu-item type="button" (click)="eliminarMedicamento(med.id)">
+              <span class="material-icons menu-icon-danger" aria-hidden="true">delete_outline</span>
+              <span class="menu-text-danger">Eliminar</span>
+            </button>
+          </mat-menu>
         </div>
       </article>
     </div>
@@ -233,8 +252,9 @@
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Stock</mat-label>
             <input matInput id="stock-medicamento" type="number" min="0" step="1" pattern="^[0-9]+$"
-              [(ngModel)]="form.stock" #stock="ngModel" name="stock" required />
-            <mat-hint>Indica la cantidad disponible.</mat-hint>
+              [(ngModel)]="form.stock" #stock="ngModel" name="stock" [required]="!isEditMode" [disabled]="isEditMode" />
+            <mat-hint *ngIf="!isEditMode">Indica la cantidad disponible.</mat-hint>
+            <mat-hint *ngIf="isEditMode">Solo informativo. Edítalo desde el menú.</mat-hint>
             <mat-error *ngIf="stock.invalid && (stock.dirty || stock.touched)">
               Introduce un número entero mayor o igual a 0.
             </mat-error>
