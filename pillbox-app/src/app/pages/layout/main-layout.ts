@@ -93,7 +93,6 @@ export class MainLayout implements OnDestroy, OnInit {
       medicamentos: 'Medicamentos',
       horarios: 'Horarios',
       registros: 'Registros',
-      contactos: 'Contactos',
       'cuentas-vinculadas': 'Cuentas vinculadas',
       dispositivo: 'Dispositivo'
     };

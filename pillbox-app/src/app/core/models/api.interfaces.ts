@@ -199,26 +199,6 @@ export interface IoTConfirmarTomaResponse {
   detail?: string;
 }
 
-export interface CrearContactoRequest {
-  nombre: string;
-  correo: string;
-  telefono: string;
-}
-
-export interface ActualizarContactoRequest {
-  nombre?: string;
-  correo?: string;
-  telefono?: string;
-}
-
-export interface ContactoResponse {
-  id: number;
-  nombre: string;
-  correo: string;
-  telefono: string;
-  id_usuario: number;
-}
-
 export interface CrearDispositivoRequest {
   nombre: string;
   ip_esp32: string;
@@ -275,20 +255,6 @@ export interface ModuloResponse {
   numero_modulo: number;
   id_medicamento: number | null;
   medicamento_nombre: string | null;
-}
-
-export interface CrearNotificacionRequest {
-  mensaje: string;
-  id_registro: number;
-  id_contacto: number;
-}
-
-export interface NotificacionResponse {
-  id: number;
-  mensaje: string;
-  fecha_envio: string;
-  id_registro: number;
-  id_contacto: number;
 }
 
 export interface UsuarioResumenResponse {

@@ -5,13 +5,11 @@ from core.views import *
 
 router = DefaultRouter()
 router.register(r'usuarios', UsuarioViewSet)
-router.register(r'contactos', ContactoViewSet)
 router.register(r'dispositivos', DispositivoViewSet)
 router.register(r'medicamentos', MedicamentoViewSet)
 router.register(r'modulos', ModuloViewSet)
 router.register(r'horarios', HorarioViewSet)
 router.register(r'registros', RegistroTomaViewSet)
-router.register(r'notificaciones', NotificacionViewSet)
 router.register(r'movimientos-stock', MovimientoStockViewSet, basename='movimiento-stock')
 router.register(r'vinculaciones', VinculacionMonitorViewSet)
 

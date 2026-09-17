@@ -29,16 +29,6 @@ class Usuario(models.Model):
         return self.nombre
 
 
-class Contacto(models.Model):
-    nombre = models.CharField(max_length=100)
-    correo = models.EmailField()
-    telefono = models.CharField(max_length=15)
-    id_usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='contactos')
-
-    def __str__(self):
-        return self.nombre
-
-
 class Dispositivo(models.Model):
     nombre = models.CharField(max_length=100)
     # Informativa: la IP cambia y nunca se usa como identidad ni credencial.
@@ -286,16 +276,6 @@ class EventoDispositivo(models.Model):
     fecha_dispositivo = models.DateTimeField()
     fecha_recibido = models.DateTimeField(auto_now_add=True)
     id_registro = models.ForeignKey(Registro_Toma, null=True, blank=True, on_delete=models.SET_NULL, related_name='eventos_dispositivo')
-
-
-class Notificacion(models.Model):
-    mensaje = models.CharField(max_length=255)
-    fecha_envio = models.DateTimeField(auto_now_add=True)
-    id_registro = models.ForeignKey(Registro_Toma, on_delete=models.CASCADE, related_name='notificaciones')
-    id_contacto = models.ForeignKey(Contacto, on_delete=models.CASCADE, related_name='notificaciones')
-
-    def __str__(self):
-        return f"Notif: {self.mensaje}"
 
 
 class WebPushSubscription(models.Model):

@@ -18,14 +18,12 @@ from rest_framework_simplejwt.views import TokenViewBase
 from . import vinculaciones
 from .inventory import calcular_cobertura_medicamento
 from .models import (
-    Contacto,
     Dispositivo,
     EventoDispositivo,
     Horario,
     Medicamento,
     Modulo,
     MovimientoStock,
-    Notificacion,
     Registro_Toma,
     Usuario,
     VinculacionMonitor,
@@ -34,13 +32,11 @@ from .models import (
 from .serializers import (
     AjustarStockSerializer,
     AsignacionDispositivoSerializer,
-    ContactoSerializer,
     DispositivoSerializer,
     HorarioSerializer,
     MedicamentoSerializer,
     ModuloSerializer,
     MovimientoStockSerializer,
-    NotificacionSerializer,
     RegistroTomaSerializer,
     ReponerStockSerializer,
     UsuarioSerializer,
@@ -130,18 +126,6 @@ class UsuarioViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Usuario.objects.filter(id=self.request.user.id)
-
-
-class ContactoViewSet(viewsets.ModelViewSet):
-    serializer_class = ContactoSerializer
-    permission_classes = [IsAuthenticated]
-    queryset = Contacto.objects.none()
-
-    def get_queryset(self):
-        return Contacto.objects.filter(id_usuario=self.request.user)
-
-    def perform_create(self, serializer):
-        serializer.save(id_usuario=self.request.user)
 
 
 class DispositivoViewSet(viewsets.ModelViewSet):
@@ -410,22 +394,6 @@ class RegistroTomaViewSet(viewsets.ModelViewSet):
             fecha_hora_real,
         )
         serializer.instance = registro
-
-
-class NotificacionViewSet(viewsets.ModelViewSet):
-    serializer_class = NotificacionSerializer
-    permission_classes = [IsAuthenticated]
-    queryset = Notificacion.objects.none()
-
-    def get_queryset(self):
-        return Notificacion.objects.filter(id_contacto__id_usuario=self.request.user)
-
-    def perform_create(self, serializer):
-        contacto = serializer.validated_data.get('id_contacto')
-        registro = serializer.validated_data.get('id_registro')
-        if contacto.id_usuario_id != self.request.user.id or registro.id_usuario_id != self.request.user.id:
-            raise serializers.ValidationError('El contacto o registro no pertenece al usuario autenticado.')
-        serializer.save()
 
 
 class VinculacionMonitorViewSet(viewsets.ModelViewSet):

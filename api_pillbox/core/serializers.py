@@ -8,14 +8,12 @@ from datetime import date, timedelta
 from django.utils import timezone
 from .models import (
     Usuario,
-    Contacto,
     Dispositivo,
     Medicamento,
     Modulo,
     Horario,
     Registro_Toma,
     MovimientoStock,
-    Notificacion,
     AsignacionDispositivo,
     WebPushSubscription,
     VinculacionMonitor,
@@ -59,15 +57,6 @@ class UsuarioSerializer(serializers.ModelSerializer):
         if password:
             instance.password = make_password(password)
         return super().update(instance, validated_data)
-
-
-class ContactoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Contacto
-        fields = ['id', 'nombre', 'correo', 'telefono', 'id_usuario']
-        extra_kwargs = {
-            'id_usuario': {'read_only': True}
-        }
 
 
 class DispositivoSerializer(serializers.ModelSerializer):
@@ -255,26 +244,6 @@ class RegistroTomaSerializer(serializers.ModelSerializer):
             if value.id_medicamento.id_usuario_id != request.user.id:
                 raise serializers.ValidationError('El horario especificado no pertenece a los medicamentos del usuario autenticado.')
         return value
-
-
-class NotificacionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Notificacion
-        fields = ['id', 'mensaje', 'fecha_envio', 'id_registro', 'id_contacto']
-        extra_kwargs = {
-            'fecha_envio': {'read_only': True}
-        }
-
-    def validate(self, attrs):
-        request = self.context.get('request')
-        if request and hasattr(request, 'user') and request.user.is_authenticated:
-            id_contacto = attrs.get('id_contacto')
-            id_registro = attrs.get('id_registro')
-            if id_contacto and id_contacto.id_usuario_id != request.user.id:
-                raise serializers.ValidationError({'id_contacto': 'El contacto no pertenece al usuario autenticado.'})
-            if id_registro and id_registro.id_usuario_id != request.user.id:
-                raise serializers.ValidationError({'id_registro': 'El registro de toma no pertenece al usuario autenticado.'})
-        return attrs
 
 
 class WebPushSubscriptionSerializer(serializers.ModelSerializer):

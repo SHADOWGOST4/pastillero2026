@@ -1,6 +1,6 @@
 # Electronic Pillbox
 
-Aplicación web para administrar medicamentos, horarios de toma, registros de cumplimiento, contactos de emergencia y pastilleros electrónicos asociados a una cuenta de usuario.
+Aplicación web para administrar medicamentos, horarios de toma, registros de cumplimiento y pastilleros electrónicos asociados a una cuenta de usuario.
 
 El repositorio contiene dos proyectos independientes:
 
@@ -20,7 +20,6 @@ Actualmente se pueden administrar:
 - Medicamentos.
 - Horarios de toma.
 - Registros de toma.
-- Contactos de emergencia.
 - Dispositivos/pastilleros registrados.
 - Dashboard de próximas tomas.
 
@@ -138,10 +137,8 @@ El frontend guarda la sesión, agrega automáticamente el token a las solicitude
 | Medicamentos | `/api/medicamentos/` | Crear, consultar, editar y eliminar. |
 | Horarios | `/api/horarios/` | Crear, consultar, editar y eliminar. |
 | Registros de toma | `/api/registros/` | Crear, consultar, confirmar y eliminar. |
-| Contactos | `/api/contactos/` | Crear, consultar, editar y eliminar. |
 | Dispositivos | `/api/dispositivos/` | Registrar, consultar, editar y desvincular. |
 | Próximas tomas | `/api/proximos-horarios/` | Consultar próximas tomas del usuario. |
-| Notificaciones | `/api/notificaciones/` | Consultar y administrar historial de alertas. |
 
 La especificación detallada se encuentra en:
 
@@ -155,7 +152,6 @@ Usuario
  ├── Medicamentos
  │    └── Horarios
  │         └── Registros de toma
- ├── Contactos de emergencia
  └── Dispositivos registrados
 ```
 

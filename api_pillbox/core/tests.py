@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from datetime import datetime, time, timedelta
-from .models import Usuario, Medicamento, Horario, Dispositivo, Contacto, Registro_Toma, Notificacion, Modulo
+from .models import Usuario, Medicamento, Horario, Dispositivo, Registro_Toma, Modulo
 
 
 @api_view(['GET'])
@@ -251,20 +251,6 @@ class AislamientoRecursosTests(TestCase):
             id_medicamento=self.med_b
         )
 
-        # Contactos
-        self.contacto_a = Contacto.objects.create(
-            nombre='Contacto Emergencia A',
-            correo='contacto.a@example.com',
-            telefono='3119999999',
-            id_usuario=self.usuario_a
-        )
-        self.contacto_b = Contacto.objects.create(
-            nombre='Contacto Emergencia B',
-            correo='contacto.b@example.com',
-            telefono='3229999999',
-            id_usuario=self.usuario_b
-        )
-
         # Dispositivos
         self.disp_a = Dispositivo.objects.create(
             nombre='ESP32 Sala A',
@@ -354,7 +340,7 @@ class AislamientoRecursosTests(TestCase):
         self.assertIn('id_medicamento', response.data)
 
     def test_9_creacion_asigna_propietario_automaticamente_e_ignora_spoofing(self):
-        """Test 9: Al crear medicamentos o contactos pasando id_usuario de otro, se asigna request.user."""
+        """Test 9: Al crear medicamentos pasando id_usuario de otro, se asigna request.user."""
         data_med = {
             'nombre': 'Amoxicilina Nueva',
             'descripcion': '500mg',
@@ -368,15 +354,11 @@ class AislamientoRecursosTests(TestCase):
         # El propietario debe ser B, no A
         self.assertEqual(med_creado.id_usuario, self.usuario_b)
 
-    def test_10_aislamiento_de_horarios_dispositivos_contactos(self):
-        """Test 10: Usuario B no puede ver ni modificar horarios, contactos o dispositivos de A."""
+    def test_10_aislamiento_de_horarios_dispositivos(self):
+        """Test 10: Usuario B no puede ver ni modificar horarios o dispositivos de A."""
         # Horarios
         resp_horario = self.client_b.get(f'/api/horarios/{self.horario_a.id}/')
         self.assertEqual(resp_horario.status_code, status.HTTP_404_NOT_FOUND)
-
-        # Contactos
-        resp_contacto = self.client_b.get(f'/api/contactos/{self.contacto_a.id}/')
-        self.assertEqual(resp_contacto.status_code, status.HTTP_404_NOT_FOUND)
 
         # Dispositivos
         resp_disp = self.client_b.get(f'/api/dispositivos/{self.disp_a.id}/')
@@ -399,12 +381,10 @@ class AislamientoRecursosTests(TestCase):
         """Test 12: Todos los endpoints privados responden 401 a peticiones anónimas."""
         endpoints = [
             '/api/usuarios/',
-            '/api/contactos/',
             '/api/dispositivos/',
             '/api/medicamentos/',
             '/api/horarios/',
             '/api/registros/',
-            '/api/notificaciones/',
             '/api/proximos-horarios/'
         ]
         for ep in endpoints:
