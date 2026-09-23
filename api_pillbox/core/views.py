@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
+from django.core import signing
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Q
@@ -15,7 +16,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenViewBase
 
-from . import vinculaciones
+from . import verificacion, vinculaciones
 from .inventory import calcular_cobertura_medicamento
 from .models import (
     Dispositivo,
@@ -79,9 +80,43 @@ class ResourcePagination(PageNumberPagination):
 def registrar_usuario(request):
     serializer = UsuarioSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
+        usuario = serializer.save()
+        verificacion.enviar_correo_verificacion(usuario)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verificar_correo(request):
+    """Confirma el token enviado por correo y marca la cuenta como
+    verificada. No requiere sesión: el enlace del correo debe funcionar por
+    sí solo."""
+    token = request.data.get('token', '')
+    if not token:
+        return Response({'detail': 'Token requerido.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        usuario = verificacion.verificar_token(token)
+    except signing.SignatureExpired:
+        return Response(
+            {'detail': 'El enlace de verificación expiró. Solicita uno nuevo.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    except (signing.BadSignature, ValueError, Usuario.DoesNotExist):
+        return Response({'detail': 'El enlace de verificación no es válido.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({'detail': 'Correo verificado correctamente.', 'correo': usuario.correo})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def reenviar_verificacion(request):
+    usuario = request.user
+    if usuario.correo_verificado:
+        return Response({'detail': 'Tu correo ya está verificado.'}, status=status.HTTP_400_BAD_REQUEST)
+    verificacion.enviar_correo_verificacion(usuario)
+    return Response({'detail': 'Te enviamos un nuevo correo de verificación.'})
 
 
 class CustomTokenObtainPairView(TokenViewBase):

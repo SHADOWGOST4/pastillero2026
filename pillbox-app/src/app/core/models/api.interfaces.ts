@@ -26,6 +26,7 @@ export interface UsuarioResponse {
   correo: string;
   telefono: string;
   activo: boolean;
+  correo_verificado: boolean;
   fecha_creacion: string;
 }
 
@@ -37,7 +38,16 @@ export interface LoginResponse {
     nombre: string;
     correo: string;
     telefono: string;
+    correo_verificado: boolean;
   };
+}
+
+export interface VerificarCorreoRequest {
+  token: string;
+}
+
+export interface MensajeResponse {
+  detail: string;
 }
 
 export interface ActualizarUsuarioRequest {
@@ -285,6 +295,8 @@ export interface VinculacionResponse {
   puede_ver_registros: boolean;
   fecha_creacion: string;
   fecha_respuesta: string | null;
+  /** Solo viene informado justo tras crear la invitación (POST); en el resto de respuestas es null. */
+  notificacion_enviada?: boolean | null;
 }
 
 export interface ApiErrorResponse {

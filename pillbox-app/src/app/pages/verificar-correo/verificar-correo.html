@@ -1,0 +1,27 @@
+<body>
+  <div class="background">
+    <div class="shape"></div>
+    <div class="shape"></div>
+  </div>
+
+  <div class="login-container">
+    <div class="login-box">
+      <div class="logo-section">
+        <img src="logo_fet.png" alt="Logo fet" class="logo-img-form">
+        <h1>Verificación de correo</h1>
+      </div>
+
+      <div *ngIf="estado === 'cargando'" class="estado-verificando">
+        <span class="spinner" aria-hidden="true"></span>
+        <p>Verificando tu correo...</p>
+      </div>
+
+      <div *ngIf="estado === 'exito'" class="alert alert-success">{{ mensaje }}</div>
+      <div *ngIf="estado === 'error'" class="alert alert-danger">{{ mensaje }}</div>
+
+      <div *ngIf="estado !== 'cargando'" class="register">
+        <p><a routerLink="/login">Ir a iniciar sesión</a></p>
+      </div>
+    </div>
+  </div>
+</body>

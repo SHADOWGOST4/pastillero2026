@@ -11,6 +11,7 @@ class Usuario(models.Model):
     password = models.CharField(max_length=255)
     telefono = models.CharField(max_length=15)
     activo = models.BooleanField(default=True)
+    correo_verificado = models.BooleanField(default=False)
     fecha_creacion = models.DateTimeField(default=timezone.now)
 
     @property

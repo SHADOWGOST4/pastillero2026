@@ -21,6 +21,10 @@ export const routes: Routes = [
     canActivate: [publicOnlyGuard],
     loadComponent: () => import('./pages/registro/registro').then((m) => m.Registro)
   },
+  {
+    path: 'verificar-correo',
+    loadComponent: () => import('./pages/verificar-correo/verificar-correo').then((m) => m.VerificarCorreo)
+  },
 
   {
     path: '',

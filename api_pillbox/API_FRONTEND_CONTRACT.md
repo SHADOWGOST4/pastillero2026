@@ -120,9 +120,38 @@ con controles de navegación.
     "correo": "ana.perez@example.com",
     "telefono": "3001234567",
     "activo": true,
+    "correo_verificado": false,
     "fecha_creacion": "2026-08-31T10:00:00-05:00"
   }
   ```
+* Al registrarse, el backend envía un correo con un enlace de verificación
+  (`{FRONTEND_URL}/verificar-correo?token=...`, válido 48h). Un fallo de
+  envío no hace fallar el registro (solo se registra en el log). La cuenta
+  queda utilizable de inmediato (login normal); `correo_verificado` solo
+  afecta si las invitaciones de "Cuentas vinculadas" dirigidas a este
+  usuario se notifican por correo (ver 3.6).
+
+---
+
+#### `POST /api/verificar-correo/`
+* **Permiso:** Público (`AllowAny`)
+* **Request Body:**
+  ```json
+  { "token": "eyJ..." }
+  ```
+* **Response (HTTP 200 OK):**
+  ```json
+  { "detail": "Correo verificado correctamente.", "correo": "ana.perez@example.com" }
+  ```
+* **Response (HTTP 400 Bad Request):** token ausente, inválido o expirado (`{"detail": "..."}`).
+
+---
+
+#### `POST /api/reenviar-verificacion/`
+* **Permiso:** Requiere autenticación (`IsAuthenticated`)
+* **Request Body:** ninguno.
+* **Response (HTTP 200 OK):** `{"detail": "Te enviamos un nuevo correo de verificación."}`
+* **Response (HTTP 400 Bad Request):** el correo ya estaba verificado (`{"detail": "Tu correo ya está verificado."}`).
 
 ---
 
@@ -144,7 +173,8 @@ con controles de navegación.
       "id": 1,
       "nombre": "Ana Perez",
       "correo": "ana.perez@example.com",
-      "telefono": "3001234567"
+      "telefono": "3001234567",
+      "correo_verificado": false
     }
   }
   ```
@@ -360,6 +390,7 @@ export interface UsuarioResponse {
   correo: string;
   telefono: string;
   activo: boolean;
+  correo_verificado: boolean; // false al registrarse; true tras confirmar el enlace de /api/verificar-correo/
   fecha_creacion: string; // Formato ISO-8601 (ej. "2026-08-31T10:00:00-05:00")
 }
 
@@ -371,7 +402,16 @@ export interface LoginResponse {
     nombre: string;
     correo: string;
     telefono: string;
+    correo_verificado: boolean;
   };
+}
+
+export interface VerificarCorreoRequest {
+  token: string;
+}
+
+export interface MensajeResponse {
+  detail: string;
 }
 
 export interface ActualizarUsuarioRequest {

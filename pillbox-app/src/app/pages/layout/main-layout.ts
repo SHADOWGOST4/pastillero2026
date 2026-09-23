@@ -24,6 +24,9 @@ export class MainLayout implements OnDestroy, OnInit {
   breadcrumbActual = 'Dashboard';
   cuentaActiva: UsuarioResumenResponse | null = null;
   cuentasMonitoreadas: VinculacionResponse[] = [];
+  reenviandoVerificacion = false;
+  verificacionMensaje = '';
+  verificacionReenviada = false;
   private readonly destroyed$ = new Subject<void>();
 
   constructor(
@@ -115,5 +118,23 @@ export class MainLayout implements OnDestroy, OnInit {
   cerrarSesion() {
     this.auth.cerrarSesion();
     this.router.navigate(['/login']);
+  }
+
+  reenviarVerificacion(): void {
+    if (this.reenviandoVerificacion) return;
+    this.reenviandoVerificacion = true;
+    this.verificacionMensaje = '';
+
+    this.auth.reenviarVerificacion().subscribe({
+      next: (respuesta) => {
+        this.reenviandoVerificacion = false;
+        this.verificacionReenviada = true;
+        this.verificacionMensaje = respuesta.detail || 'Te enviamos un nuevo correo de verificación.';
+      },
+      error: (err: any) => {
+        this.reenviandoVerificacion = false;
+        this.verificacionMensaje = err?.message || 'No se pudo reenviar el correo de verificación.';
+      },
+    });
   }
 }

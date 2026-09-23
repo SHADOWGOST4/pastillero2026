@@ -17,6 +17,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api/registro/', registrar_usuario, name='registro_usuario'),
+    path('api/verificar-correo/', verificar_correo, name='verificar_correo'),
+    path('api/reenviar-verificacion/', reenviar_verificacion, name='reenviar_verificacion'),
     path('api/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair_alias'),
     path('api/token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),

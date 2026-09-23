@@ -101,6 +101,25 @@
       </mat-menu>
     </header>
 
+    <div *ngIf="usuario && usuario.correo_verificado === false" class="verificacion-banner">
+      <span class="material-icons" aria-hidden="true">mark_email_unread</span>
+      <span class="verificacion-texto">
+        <ng-container *ngIf="!verificacionMensaje">
+          Verifica tu correo para que tus invitaciones de "Cuentas vinculadas" lleguen por email a quien invites.
+        </ng-container>
+        <ng-container *ngIf="verificacionMensaje">{{ verificacionMensaje }}</ng-container>
+      </span>
+      <button
+        *ngIf="!verificacionReenviada"
+        type="button"
+        class="verificacion-reenviar"
+        (click)="reenviarVerificacion()"
+        [disabled]="reenviandoVerificacion"
+      >
+        {{ reenviandoVerificacion ? 'Enviando...' : 'Reenviar correo' }}
+      </button>
+    </div>
+
     <main class="content-area">
       <router-outlet></router-outlet>
     </main>

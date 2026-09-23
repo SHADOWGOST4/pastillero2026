@@ -30,9 +30,10 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Usuario
-        fields = ['id', 'nombre', 'correo', 'password', 'telefono', 'activo', 'fecha_creacion']
+        fields = ['id', 'nombre', 'correo', 'password', 'telefono', 'activo', 'correo_verificado', 'fecha_creacion']
         extra_kwargs = {
             'fecha_creacion': {'read_only': True},
+            'correo_verificado': {'read_only': True},
         }
 
     def validate_correo(self, value):
@@ -272,15 +273,22 @@ class VinculacionMonitorSerializer(serializers.ModelSerializer):
     titular = UsuarioResumenSerializer(read_only=True)
     monitor = UsuarioResumenSerializer(read_only=True)
     correo_monitor = serializers.EmailField(write_only=True, required=False)
+    notificacion_enviada = serializers.SerializerMethodField()
 
     class Meta:
         model = VinculacionMonitor
         fields = [
             'id', 'titular', 'monitor', 'correo_monitor', 'estado',
             'puede_ver_medicamentos', 'puede_ver_horarios', 'puede_ver_registros',
-            'fecha_creacion', 'fecha_respuesta',
+            'fecha_creacion', 'fecha_respuesta', 'notificacion_enviada',
         ]
         read_only_fields = ['estado', 'fecha_creacion', 'fecha_respuesta']
+
+    def get_notificacion_enviada(self, obj):
+        """Solo tiene valor justo después de crear la invitación (ver
+        create()); en cualquier otra respuesta (list/retrieve/aceptar/
+        rechazar) es None porque no aplica."""
+        return getattr(obj, 'notificacion_enviada', None)
 
     def create(self, validated_data):
         request = self.context['request']
@@ -312,7 +320,7 @@ class VinculacionMonitorSerializer(serializers.ModelSerializer):
             vinculacion.fecha_respuesta = None
             vinculacion.save(update_fields=['estado', 'fecha_respuesta'])
 
-        vinculaciones.enviar_invitacion(vinculacion)
+        vinculacion.notificacion_enviada = vinculaciones.enviar_invitacion(vinculacion)
         return vinculacion
 
 
@@ -357,6 +365,7 @@ class UsuarioTokenObtainPairSerializer(serializers.Serializer):
                 'nombre': usuario.nombre,
                 'correo': usuario.correo,
                 'telefono': usuario.telefono,
+                'correo_verificado': usuario.correo_verificado,
             }
         }
 
