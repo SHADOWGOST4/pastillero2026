@@ -1,0 +1,12 @@
+.venv
+venv/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.production.example
+db.sqlite3
+staticfiles/
+.git
+.gitignore
+*.md

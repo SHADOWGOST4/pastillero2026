@@ -1,0 +1,25 @@
+# PASO 1 de 2: usar este archivo (renombrado a pillbox.conf) para el primer
+# arranque, ANTES de tener el certificado TLS. Sirve la API por HTTP y
+# habilita la ruta que Let's Encrypt necesita para verificar el dominio.
+# Ver deploy/README-deploy.md para el proceso completo.
+
+server {
+    listen 80;
+    server_name TU_DOMINIO_AQUI;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location /static/ {
+        alias /app/staticfiles/;
+    }
+
+    location / {
+        proxy_pass http://web:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
