@@ -69,6 +69,9 @@ export class Medicamentos implements OnDestroy, OnInit {
     if (this.modalFormularioAbierto && !this.submitting) {
       this.cancelEdit();
     }
+    if (this.stockOperationType && !this.stockOperationBusy) {
+      this.cancelarOperacionStock();
+    }
   }
 
   ngOnInit(): void {
