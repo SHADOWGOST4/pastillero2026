@@ -222,6 +222,71 @@
   font-size: 0.85rem;
 }
 
+.permiso-item .checkbox-30 {
+  --bg: var(--surface);
+  --brdr: var(--border);
+  --brdr-actv: var(--primary);
+  --brdr-hovr: #bbc1e1;
+  display: inline-block;
+  width: 20px;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.permiso-item .checkbox-30 input,
+.permiso-item .checkbox-30 svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+.permiso-item .checkbox-30 input {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  padding: 0;
+  background-color: var(--bg);
+  border-radius: 4px;
+  border: 1px solid var(--brdr);
+  transition: border-color 0.2s ease, border-width 0.2s ease;
+}
+
+.permiso-item .checkbox-30 input:hover {
+  border-width: 2px;
+  border-color: var(--brdr-hovr);
+}
+
+.permiso-item .checkbox-30 input:checked {
+  border-width: 2px;
+  border-color: var(--brdr-actv);
+}
+
+.permiso-item .checkbox-30 input:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.permiso-item .checkbox-30 svg {
+  fill: none;
+  pointer-events: none;
+  stroke: var(--brdr-actv);
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 93;
+  stroke-dashoffset: 94;
+  transition: stroke-dasharray 0.35s ease, stroke-dashoffset 0.35s ease;
+}
+
+.permiso-item .checkbox-30 input:checked + svg {
+  stroke-dasharray: 16 93;
+  stroke-dashoffset: 109;
+}
+
 .permiso-chip {
   display: inline-flex;
   align-items: center;
