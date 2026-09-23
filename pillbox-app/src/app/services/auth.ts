@@ -7,6 +7,7 @@ import {
   ApiErrorResponse,
   LoginRequest,
   LoginResponse,
+  MensajeResponse,
   RefreshTokenRequest,
   RefreshTokenResponse,
   RegistroRequest,
@@ -40,6 +41,18 @@ export class Auth {
   login(data: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}login/`, data).pipe(
       tap((response) => this.guardarSesion(response)),
+      catchError((error) => this.manejarError(error))
+    );
+  }
+
+  verificarCorreo(token: string): Observable<MensajeResponse> {
+    return this.http.post<MensajeResponse>(`${this.apiUrl}verificar-correo/`, { token }).pipe(
+      catchError((error) => this.manejarError(error))
+    );
+  }
+
+  reenviarVerificacion(): Observable<MensajeResponse> {
+    return this.http.post<MensajeResponse>(`${this.apiUrl}reenviar-verificacion/`, {}).pipe(
       catchError((error) => this.manejarError(error))
     );
   }

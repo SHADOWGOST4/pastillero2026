@@ -133,7 +133,7 @@
         <span class="material-icons" aria-hidden="true">chevron_left</span>
         Anterior
       </button>
-      <span>Página {{ paginaActual }} de {{ totalPaginas }}</span>
+      <span class="pagination-info">Página {{ paginaActual }} de {{ totalPaginas }}</span>
       <button type="button" class="btn btn-outline-secondary" (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">
         Siguiente
         <span class="material-icons" aria-hidden="true">chevron_right</span>

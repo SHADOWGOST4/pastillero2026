@@ -98,9 +98,11 @@ export class CuentasVinculadas implements OnInit {
     this.successMessage = '';
 
     this.vinculacionService.create({ correo_monitor: correo }).subscribe({
-      next: () => {
+      next: (vinculacion) => {
         this.submitting = false;
-        this.successMessage = 'Invitación enviada correctamente.';
+        this.successMessage = vinculacion.notificacion_enviada === false
+          ? 'Invitación creada. Esa persona aún no verificó su correo, así que no se le notificó por email; la verá al iniciar sesión en Pillbox.'
+          : 'Invitación enviada correctamente.';
         this.modalFormularioAbierto = false;
         this.correoMonitor = '';
         this.cargarVinculaciones();

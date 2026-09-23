@@ -12,7 +12,7 @@
 
 1. **Gestión de Propietario (`request.user`):**
    * El cliente Angular **NUNCA** debe enviar `id_usuario` en los cuerpos JSON al crear o actualizar recursos.
-   * El backend asigna y valida la pertenencia de todos los recursos (`Medicamentos`, `Horarios`, `Contactos`, `Dispositivos`, `Registros`) a partir del usuario autenticado en el token JWT (`request.user`).
+   * El backend asigna y valida la pertenencia de todos los recursos (`Medicamentos`, `Horarios`, `Dispositivos`, `Registros`) a partir del usuario autenticado en el token JWT (`request.user`).
    * Cualquier intento de manipular recursos pertenecientes a otro usuario resulta en un error `404 Not Found` (o `400 Bad Request` en caso de intentar enlazar llaves foráneas ajenas).
 
 2. **Esquema de Autenticación:**
@@ -71,11 +71,7 @@ El modelo representa el historial y cumplimiento de cada toma individual:
   2. La aplicación consulta `GET /api/registros/` para mostrar el historial; no crea, confirma ni elimina registros desde esta pantalla.
   3. La confirmación se registra cuando el usuario responde a la alerta o utiliza el botón físico del dispositivo.
 
-### 2.3 Notificaciones
-* Representa el registro de alertas enviadas a los contactos de emergencia (`Contacto`) ante eventos de tomas (`Registro_Toma`).
-* **Estado Actual:** El endpoint `GET /api/notificaciones/` permite a Angular listar el historial de notificaciones. La generación automática y despacho de notificaciones externas (Email/SMS/WhatsApp) es una tarea programada del backend para fases posteriores.
-
-### 2.4 Dispositivos IoT
+### 2.3 Dispositivos IoT
 * Permite al usuario registrar y consultar sus pastilleros físicos ESP32 (`nombre`, `ip_esp32`, `estado_conexion`).
 * Las funcionalidades de telemetría avanzada (batería, RSSI, sincronización hardware) corresponden a la fase de integración física del ESP32.
 
@@ -124,9 +120,38 @@ con controles de navegación.
     "correo": "ana.perez@example.com",
     "telefono": "3001234567",
     "activo": true,
+    "correo_verificado": false,
     "fecha_creacion": "2026-08-31T10:00:00-05:00"
   }
   ```
+* Al registrarse, el backend envía un correo con un enlace de verificación
+  (`{FRONTEND_URL}/verificar-correo?token=...`, válido 48h). Un fallo de
+  envío no hace fallar el registro (solo se registra en el log). La cuenta
+  queda utilizable de inmediato (login normal); `correo_verificado` solo
+  afecta si las invitaciones de "Cuentas vinculadas" dirigidas a este
+  usuario se notifican por correo (ver 3.6).
+
+---
+
+#### `POST /api/verificar-correo/`
+* **Permiso:** Público (`AllowAny`)
+* **Request Body:**
+  ```json
+  { "token": "eyJ..." }
+  ```
+* **Response (HTTP 200 OK):**
+  ```json
+  { "detail": "Correo verificado correctamente.", "correo": "ana.perez@example.com" }
+  ```
+* **Response (HTTP 400 Bad Request):** token ausente, inválido o expirado (`{"detail": "..."}`).
+
+---
+
+#### `POST /api/reenviar-verificacion/`
+* **Permiso:** Requiere autenticación (`IsAuthenticated`)
+* **Request Body:** ninguno.
+* **Response (HTTP 200 OK):** `{"detail": "Te enviamos un nuevo correo de verificación."}`
+* **Response (HTTP 400 Bad Request):** el correo ya estaba verificado (`{"detail": "Tu correo ya está verificado."}`).
 
 ---
 
@@ -148,7 +173,8 @@ con controles de navegación.
       "id": 1,
       "nombre": "Ana Perez",
       "correo": "ana.perez@example.com",
-      "telefono": "3001234567"
+      "telefono": "3001234567",
+      "correo_verificado": false
     }
   }
   ```
@@ -300,28 +326,7 @@ El historial se ordena por `fecha_hora` descendente y cada usuario solo puede co
 
 ---
 
-### 3.6 Contactos de Emergencia
-
-| Operación | Método | URL | Request Body | Response Status | Response Type |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Listar** | `GET` | `/api/contactos/` | N/A | `200 OK` | `ContactoResponse[]` |
-| **Crear** | `POST` | `/api/contactos/` | `CrearContactoRequest` | `201 Created` | `ContactoResponse` |
-| **Consultar** | `GET` | `/api/contactos/{id}/` | N/A | `200 OK` | `ContactoResponse` |
-| **Actualizar** | `PUT`/`PATCH` | `/api/contactos/{id}/` | `ActualizarContactoRequest` | `200 OK` | `ContactoResponse` |
-| **Eliminar** | `DELETE` | `/api/contactos/{id}/` | N/A | `204 No Content` | Cuerpo vacío |
-
-* **Ejemplo Request (`CrearContactoRequest`):**
-  ```json
-  {
-    "nombre": "Carlos Perez (Hijo)",
-    "correo": "carlos.perez@example.com",
-    "telefono": "3101234567"
-  }
-  ```
-
----
-
-### 3.7 Dispositivos IoT
+### 3.6 Dispositivos IoT
 
 | Operación | Método | URL | Request Body | Response Status | Response Type |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -342,26 +347,7 @@ El historial se ordena por `fecha_hora` descendente y cada usuario solo puede co
 
 ---
 
-### 3.8 Notificaciones
-
-| Operación | Método | URL | Request Body | Response Status | Response Type |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Listar** | `GET` | `/api/notificaciones/` | N/A | `200 OK` | `NotificacionResponse[]` |
-| **Crear** | `POST` | `/api/notificaciones/` | `CrearNotificacionRequest` | `201 Created` | `NotificacionResponse` |
-| **Eliminar** | `DELETE` | `/api/notificaciones/{id}/` | N/A | `204 No Content` | Cuerpo vacío |
-
-* **Ejemplo Request (`CrearNotificacionRequest`):**
-  ```json
-  {
-    "mensaje": "Alerta: El paciente no confirmó la toma programada de las 08:00",
-    "id_registro": 1,
-    "id_contacto": 1
-  }
-  ```
-
----
-
-### 3.9 Perfil de Usuario
+### 3.7 Perfil de Usuario
 
 * **`GET /api/usuarios/`**: Devuelve arreglo con el perfil del usuario autenticado (`UsuarioResponse[]`).
 * **`GET /api/usuarios/{id}/`**: Devuelve el perfil del usuario autenticado (`UsuarioResponse`).
@@ -404,6 +390,7 @@ export interface UsuarioResponse {
   correo: string;
   telefono: string;
   activo: boolean;
+  correo_verificado: boolean; // false al registrarse; true tras confirmar el enlace de /api/verificar-correo/
   fecha_creacion: string; // Formato ISO-8601 (ej. "2026-08-31T10:00:00-05:00")
 }
 
@@ -415,7 +402,16 @@ export interface LoginResponse {
     nombre: string;
     correo: string;
     telefono: string;
+    correo_verificado: boolean;
   };
+}
+
+export interface VerificarCorreoRequest {
+  token: string;
+}
+
+export interface MensajeResponse {
+  detail: string;
 }
 
 export interface ActualizarUsuarioRequest {
@@ -508,31 +504,7 @@ export interface RegistroTomaResponse {
 }
 
 // ============================================================================
-// 5. CONTACTOS DE EMERGENCIA
-// ============================================================================
-
-export interface CrearContactoRequest {
-  nombre: string;
-  correo: string;
-  telefono: string;
-}
-
-export interface ActualizarContactoRequest {
-  nombre?: string;
-  correo?: string;
-  telefono?: string;
-}
-
-export interface ContactoResponse {
-  id: number;
-  nombre: string;
-  correo: string;
-  telefono: string;
-  id_usuario: number;
-}
-
-// ============================================================================
-// 6. DISPOSITIVOS IOT
+// 5. DISPOSITIVOS IOT
 // ============================================================================
 
 export interface CrearDispositivoRequest {
@@ -556,25 +528,7 @@ export interface DispositivoResponse {
 }
 
 // ============================================================================
-// 7. NOTIFICACIONES
-// ============================================================================
-
-export interface CrearNotificacionRequest {
-  mensaje: string;
-  id_registro: number;
-  id_contacto: number;
-}
-
-export interface NotificacionResponse {
-  id: number;
-  mensaje: string;
-  fecha_envio: string; // Formato ISO-8601
-  id_registro: number;
-  id_contacto: number;
-}
-
-// ============================================================================
-// 8. ESTRUCTURA DE ERRORES DE LA API
+// 6. ESTRUCTURA DE ERRORES DE LA API
 // ============================================================================
 
 export interface ApiErrorResponse {

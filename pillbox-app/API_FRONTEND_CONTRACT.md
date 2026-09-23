@@ -12,7 +12,7 @@
 
 1. **Gestión de Propietario (`request.user`):**
    * El cliente Angular **NUNCA** debe enviar `id_usuario` en los cuerpos JSON al crear o actualizar recursos.
-   * El backend asigna y valida la pertenencia de todos los recursos (`Medicamentos`, `Horarios`, `Contactos`, `Dispositivos`, `Registros`) a partir del usuario autenticado en el token JWT (`request.user`).
+   * El backend asigna y valida la pertenencia de todos los recursos (`Medicamentos`, `Horarios`, `Dispositivos`, `Registros`) a partir del usuario autenticado en el token JWT (`request.user`).
    * Cualquier intento de manipular recursos pertenecientes a otro usuario resulta en un error `404 Not Found` (o `400 Bad Request` en caso de intentar enlazar llaves foráneas ajenas).
 
 2. **Esquema de Autenticación:**
@@ -55,11 +55,7 @@ El modelo representa el historial y cumplimiento de cada toma individual:
   1. Angular (o el backend) registra la toma con `POST /api/registros/` indicando `fecha_hora_programada` e `id_horario`.
   2. Cuando el usuario pulsa "Confirmar Toma", Angular envía `PATCH /api/registros/{id}/` con `{"fecha_hora_real": "<ISO-TIMESTAMP>"}`.
 
-### 2.3 Notificaciones
-* Representa el registro de alertas enviadas a los contactos de emergencia (`Contacto`) ante eventos de tomas (`Registro_Toma`).
-* **Estado Actual:** El endpoint `GET /api/notificaciones/` permite a Angular listar el historial de notificaciones. La generación automática y despacho de notificaciones externas (Email/SMS/WhatsApp) es una tarea programada del backend para fases posteriores.
-
-### 2.4 Dispositivos IoT
+### 2.3 Dispositivos IoT
 * Permite al usuario registrar y consultar sus pastilleros físicos ESP32 (`nombre`, `ip_esp32`, `estado_conexion`).
 * Las funcionalidades de telemetría avanzada (batería, RSSI, sincronización hardware) corresponden a la fase de integración física del ESP32.
 
@@ -263,28 +259,7 @@ Al confirmar un `Registro_Toma` mediante `PATCH /api/registros/{id}/` con `fecha
 
 ---
 
-### 3.6 Contactos de Emergencia
-
-| Operación | Método | URL | Request Body | Response Status | Response Type |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Listar** | `GET` | `/api/contactos/` | N/A | `200 OK` | `ContactoResponse[]` |
-| **Crear** | `POST` | `/api/contactos/` | `CrearContactoRequest` | `201 Created` | `ContactoResponse` |
-| **Consultar** | `GET` | `/api/contactos/{id}/` | N/A | `200 OK` | `ContactoResponse` |
-| **Actualizar** | `PUT`/`PATCH` | `/api/contactos/{id}/` | `ActualizarContactoRequest` | `200 OK` | `ContactoResponse` |
-| **Eliminar** | `DELETE` | `/api/contactos/{id}/` | N/A | `204 No Content` | Cuerpo vacío |
-
-* **Ejemplo Request (`CrearContactoRequest`):**
-  ```json
-  {
-    "nombre": "Carlos Perez (Hijo)",
-    "correo": "carlos.perez@example.com",
-    "telefono": "3101234567"
-  }
-  ```
-
----
-
-### 3.7 Dispositivos IoT
+### 3.6 Dispositivos IoT
 
 | Operación | Método | URL | Request Body | Response Status | Response Type |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -305,26 +280,7 @@ Al confirmar un `Registro_Toma` mediante `PATCH /api/registros/{id}/` con `fecha
 
 ---
 
-### 3.8 Notificaciones
-
-| Operación | Método | URL | Request Body | Response Status | Response Type |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Listar** | `GET` | `/api/notificaciones/` | N/A | `200 OK` | `NotificacionResponse[]` |
-| **Crear** | `POST` | `/api/notificaciones/` | `CrearNotificacionRequest` | `201 Created` | `NotificacionResponse` |
-| **Eliminar** | `DELETE` | `/api/notificaciones/{id}/` | N/A | `204 No Content` | Cuerpo vacío |
-
-* **Ejemplo Request (`CrearNotificacionRequest`):**
-  ```json
-  {
-    "mensaje": "Alerta: El paciente no confirmó la toma programada de las 08:00",
-    "id_registro": 1,
-    "id_contacto": 1
-  }
-  ```
-
----
-
-### 3.9 Perfil de Usuario
+### 3.7 Perfil de Usuario
 
 * **`GET /api/usuarios/`**: Devuelve arreglo con el perfil del usuario autenticado (`UsuarioResponse[]`).
 * **`GET /api/usuarios/{id}/`**: Devuelve el perfil del usuario autenticado (`UsuarioResponse`).
@@ -471,31 +427,7 @@ export interface RegistroTomaResponse {
 }
 
 // ============================================================================
-// 5. CONTACTOS DE EMERGENCIA
-// ============================================================================
-
-export interface CrearContactoRequest {
-  nombre: string;
-  correo: string;
-  telefono: string;
-}
-
-export interface ActualizarContactoRequest {
-  nombre?: string;
-  correo?: string;
-  telefono?: string;
-}
-
-export interface ContactoResponse {
-  id: number;
-  nombre: string;
-  correo: string;
-  telefono: string;
-  id_usuario: number;
-}
-
-// ============================================================================
-// 6. DISPOSITIVOS IOT
+// 5. DISPOSITIVOS IOT
 // ============================================================================
 
 export interface CrearDispositivoRequest {
@@ -519,25 +451,7 @@ export interface DispositivoResponse {
 }
 
 // ============================================================================
-// 7. NOTIFICACIONES
-// ============================================================================
-
-export interface CrearNotificacionRequest {
-  mensaje: string;
-  id_registro: number;
-  id_contacto: number;
-}
-
-export interface NotificacionResponse {
-  id: number;
-  mensaje: string;
-  fecha_envio: string; // Formato ISO-8601
-  id_registro: number;
-  id_contacto: number;
-}
-
-// ============================================================================
-// 8. ESTRUCTURA DE ERRORES DE LA API
+// 6. ESTRUCTURA DE ERRORES DE LA API
 // ============================================================================
 
 export interface ApiErrorResponse {

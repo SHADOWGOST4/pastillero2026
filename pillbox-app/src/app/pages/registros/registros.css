@@ -298,7 +298,13 @@
   }
 
   .pagination-controls .btn {
-    flex: 1 1 8rem;
+    flex: 0 1 auto;
+  }
+
+  .pagination-controls .pagination-info {
+    order: 1;
+    flex: 1 0 100%;
+    text-align: center;
   }
 
   .summary-grid {

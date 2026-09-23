@@ -26,6 +26,7 @@ export interface UsuarioResponse {
   correo: string;
   telefono: string;
   activo: boolean;
+  correo_verificado: boolean;
   fecha_creacion: string;
 }
 
@@ -37,7 +38,16 @@ export interface LoginResponse {
     nombre: string;
     correo: string;
     telefono: string;
+    correo_verificado: boolean;
   };
+}
+
+export interface VerificarCorreoRequest {
+  token: string;
+}
+
+export interface MensajeResponse {
+  detail: string;
 }
 
 export interface ActualizarUsuarioRequest {
@@ -199,26 +209,6 @@ export interface IoTConfirmarTomaResponse {
   detail?: string;
 }
 
-export interface CrearContactoRequest {
-  nombre: string;
-  correo: string;
-  telefono: string;
-}
-
-export interface ActualizarContactoRequest {
-  nombre?: string;
-  correo?: string;
-  telefono?: string;
-}
-
-export interface ContactoResponse {
-  id: number;
-  nombre: string;
-  correo: string;
-  telefono: string;
-  id_usuario: number;
-}
-
 export interface CrearDispositivoRequest {
   nombre: string;
   ip_esp32: string;
@@ -277,20 +267,6 @@ export interface ModuloResponse {
   medicamento_nombre: string | null;
 }
 
-export interface CrearNotificacionRequest {
-  mensaje: string;
-  id_registro: number;
-  id_contacto: number;
-}
-
-export interface NotificacionResponse {
-  id: number;
-  mensaje: string;
-  fecha_envio: string;
-  id_registro: number;
-  id_contacto: number;
-}
-
 export interface UsuarioResumenResponse {
   id: number;
   nombre: string;
@@ -319,6 +295,8 @@ export interface VinculacionResponse {
   puede_ver_registros: boolean;
   fecha_creacion: string;
   fecha_respuesta: string | null;
+  /** Solo viene informado justo tras crear la invitación (POST); en el resto de respuestas es null. */
+  notificacion_enviada?: boolean | null;
 }
 
 export interface ApiErrorResponse {

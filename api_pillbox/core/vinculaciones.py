@@ -33,7 +33,21 @@ def titulares_visibles_para(monitor):
 def enviar_invitacion(vinculacion):
     """Envía el correo de invitación. No lanza excepción si el envío falla
     (la vinculación ya quedó creada en PENDIENTE; el titular puede reintentar
-    reenviando la invitación), solo lo registra en el log."""
+    reenviando la invitación), solo lo registra en el log.
+
+    Si el monitor invitado no tiene el correo verificado, no se intenta
+    enviar nada: la vinculación queda creada igual (el monitor la verá al
+    iniciar sesión), pero sin correo saliente a una dirección no verificada.
+
+    Devuelve True si se intentó notificar por correo (monitor verificado) o
+    False si se omitió por no estar verificado."""
+    if not vinculacion.monitor.correo_verificado:
+        logger.info(
+            '[VINCULACION] correo no verificado, no se envía invitación a %s',
+            vinculacion.monitor.correo,
+        )
+        return False
+
     asunto = f'{vinculacion.titular.nombre} te invitó a monitorear su medicación en Pillbox'
     cuerpo = (
         f'Hola {vinculacion.monitor.nombre},\n\n'
@@ -54,6 +68,7 @@ def enviar_invitacion(vinculacion):
             '[VINCULACION] no se pudo enviar el correo de invitación a %s',
             vinculacion.monitor.correo,
         )
+    return True
 
 
 def suscripciones_para_registro(registro):

@@ -280,28 +280,14 @@ textarea.form-control {
   margin-bottom: 0.75rem;
 }
 
-.stock-operation-card {
-  display: grid;
-  grid-template-columns: minmax(180px, 0.6fr) minmax(0, 1.4fr);
-  gap: 1rem;
-  align-items: end;
-  margin-bottom: 1rem;
-  padding: 1rem;
-  border: 1px solid #bfdbfe;
-  border-radius: var(--radius-md);
-  background: #eff6ff;
-}
-
-.stock-operation-card h3 {
-  margin: 0;
-  color: var(--text-primary);
+.stock-operation-modal {
+  width: min(100%, 420px);
 }
 
 .stock-operation-form {
   display: flex;
-  align-items: end;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.9rem;
 }
 
 .stock-operation-form label {
@@ -322,6 +308,7 @@ textarea.form-control {
 
 .stock-operation-actions {
   display: flex;
+  justify-content: flex-end;
   gap: 0.5rem;
 }
 
@@ -490,10 +477,6 @@ textarea.form-control {
     width: 100%;
   }
 
-  .stock-operation-card {
-    grid-template-columns: 1fr;
-  }
-
   .summary-card {
     width: 100%;
   }
@@ -531,7 +514,13 @@ textarea.form-control {
   }
 
   .pagination-controls .btn {
-    flex: 1 1 8rem;
+    flex: 0 1 auto;
+  }
+
+  .pagination-controls .pagination-info {
+    order: 1;
+    flex: 1 0 100%;
+    text-align: center;
   }
 
   .mobile-medication-card {

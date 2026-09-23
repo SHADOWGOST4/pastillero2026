@@ -40,44 +40,6 @@
       <span class="list-count" *ngIf="!loading">{{ totalMedicamentos }} registrados</span>
     </div>
 
-    <div *ngIf="stockOperationType" class="stock-operation-card">
-      <div>
-        <p class="section-kicker">Inventario auditable</p>
-        <h3>{{ stockOperationType === 'reponer' ? 'Registrar reposición' : 'Registrar ajuste' }}</h3>
-      </div>
-      <form (ngSubmit)="guardarOperacionStock()" class="stock-operation-form">
-        <label>
-          Cantidad
-          <input
-            type="number"
-            [min]="stockOperationType === 'reponer' ? 1 : null"
-            [step]="1"
-            [(ngModel)]="stockOperationAmount"
-            name="stockOperationAmount"
-            required
-          />
-        </label>
-        <label *ngIf="stockOperationType === 'ajustar'">
-          Motivo
-          <input
-            type="text"
-            [(ngModel)]="stockOperationReason"
-            name="stockOperationReason"
-            maxlength="1000"
-            required
-          />
-        </label>
-        <div class="stock-operation-actions">
-          <button type="button" class="btn btn-outline-secondary" (click)="cancelarOperacionStock()">
-            Cancelar
-          </button>
-          <button type="submit" class="btn btn-primary" [disabled]="stockOperationBusy">
-            {{ stockOperationBusy ? 'Guardando...' : 'Guardar movimiento' }}
-          </button>
-        </div>
-      </form>
-    </div>
-
     <div *ngIf="loading" class="state-message loading-state">
       <span class="spinner" aria-hidden="true"></span>
       <span>Cargando medicamentos...</span>
@@ -156,7 +118,7 @@
         <span class="material-icons" aria-hidden="true">chevron_left</span>
         Anterior
       </button>
-      <span>Página {{ paginaActual }} de {{ totalPaginas }}</span>
+      <span class="pagination-info">Página {{ paginaActual }} de {{ totalPaginas }}</span>
       <button type="button" class="btn btn-outline-secondary" (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">
         Siguiente
         <span class="material-icons" aria-hidden="true">chevron_right</span>
@@ -279,6 +241,63 @@
           <span class="material-icons" aria-hidden="true" *ngIf="!submitting">save</span>
           <span class="loading-dot" aria-hidden="true" *ngIf="submitting"></span>
           {{ submitting ? 'Guardando...' : 'Guardar medicamento' }}
+        </button>
+      </div>
+    </form>
+
+    <div *ngIf="errorMessage" class="alert alert-danger feedback" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      <span>{{ errorMessage }}</span>
+    </div>
+  </section>
+</div>
+
+<div *ngIf="stockOperationType" class="medication-modal-backdrop" (click)="!stockOperationBusy && cancelarOperacionStock()">
+  <section
+    class="medication-modal stock-operation-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="stock-operation-modal-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="medication-modal-header">
+      <div>
+        <p class="section-kicker">Inventario auditable</p>
+        <h2 id="stock-operation-modal-title">{{ stockOperationType === 'reponer' ? 'Registrar reposición' : 'Registrar ajuste' }}</h2>
+      </div>
+      <button type="button" class="modal-close" (click)="cancelarOperacionStock()" [disabled]="stockOperationBusy" aria-label="Cerrar">
+        ×
+      </button>
+    </header>
+
+    <form (ngSubmit)="guardarOperacionStock()" class="stock-operation-form">
+      <label>
+        Cantidad
+        <input
+          type="number"
+          [min]="stockOperationType === 'reponer' ? 1 : null"
+          [step]="1"
+          [(ngModel)]="stockOperationAmount"
+          name="stockOperationAmount"
+          required
+        />
+      </label>
+      <label *ngIf="stockOperationType === 'ajustar'">
+        Motivo
+        <input
+          type="text"
+          [(ngModel)]="stockOperationReason"
+          name="stockOperationReason"
+          maxlength="1000"
+          required
+        />
+      </label>
+      <div class="stock-operation-actions">
+        <button type="button" class="btn btn-outline-secondary" (click)="cancelarOperacionStock()" [disabled]="stockOperationBusy">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="stockOperationBusy">
+          {{ stockOperationBusy ? 'Guardando...' : 'Guardar movimiento' }}
         </button>
       </div>
     </form>

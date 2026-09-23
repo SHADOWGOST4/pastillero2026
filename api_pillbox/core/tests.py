@@ -1,3 +1,7 @@
+import time as time_module
+from unittest import mock
+
+from django.core import mail
 from django.test import TestCase
 from django.utils import timezone
 from django.contrib.auth.hashers import check_password, make_password
@@ -8,7 +12,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from datetime import datetime, time, timedelta
-from .models import Usuario, Medicamento, Horario, Dispositivo, Contacto, Registro_Toma, Notificacion, Modulo
+from .models import Usuario, Medicamento, Horario, Dispositivo, Registro_Toma, Modulo, VinculacionMonitor
+from . import verificacion as verificacion_module
+from . import vinculaciones as vinculaciones_module
 
 
 @api_view(['GET'])
@@ -251,20 +257,6 @@ class AislamientoRecursosTests(TestCase):
             id_medicamento=self.med_b
         )
 
-        # Contactos
-        self.contacto_a = Contacto.objects.create(
-            nombre='Contacto Emergencia A',
-            correo='contacto.a@example.com',
-            telefono='3119999999',
-            id_usuario=self.usuario_a
-        )
-        self.contacto_b = Contacto.objects.create(
-            nombre='Contacto Emergencia B',
-            correo='contacto.b@example.com',
-            telefono='3229999999',
-            id_usuario=self.usuario_b
-        )
-
         # Dispositivos
         self.disp_a = Dispositivo.objects.create(
             nombre='ESP32 Sala A',
@@ -354,7 +346,7 @@ class AislamientoRecursosTests(TestCase):
         self.assertIn('id_medicamento', response.data)
 
     def test_9_creacion_asigna_propietario_automaticamente_e_ignora_spoofing(self):
-        """Test 9: Al crear medicamentos o contactos pasando id_usuario de otro, se asigna request.user."""
+        """Test 9: Al crear medicamentos pasando id_usuario de otro, se asigna request.user."""
         data_med = {
             'nombre': 'Amoxicilina Nueva',
             'descripcion': '500mg',
@@ -368,15 +360,11 @@ class AislamientoRecursosTests(TestCase):
         # El propietario debe ser B, no A
         self.assertEqual(med_creado.id_usuario, self.usuario_b)
 
-    def test_10_aislamiento_de_horarios_dispositivos_contactos(self):
-        """Test 10: Usuario B no puede ver ni modificar horarios, contactos o dispositivos de A."""
+    def test_10_aislamiento_de_horarios_dispositivos(self):
+        """Test 10: Usuario B no puede ver ni modificar horarios o dispositivos de A."""
         # Horarios
         resp_horario = self.client_b.get(f'/api/horarios/{self.horario_a.id}/')
         self.assertEqual(resp_horario.status_code, status.HTTP_404_NOT_FOUND)
-
-        # Contactos
-        resp_contacto = self.client_b.get(f'/api/contactos/{self.contacto_a.id}/')
-        self.assertEqual(resp_contacto.status_code, status.HTTP_404_NOT_FOUND)
 
         # Dispositivos
         resp_disp = self.client_b.get(f'/api/dispositivos/{self.disp_a.id}/')
@@ -399,12 +387,10 @@ class AislamientoRecursosTests(TestCase):
         """Test 12: Todos los endpoints privados responden 401 a peticiones anónimas."""
         endpoints = [
             '/api/usuarios/',
-            '/api/contactos/',
             '/api/dispositivos/',
             '/api/medicamentos/',
             '/api/horarios/',
             '/api/registros/',
-            '/api/notificaciones/',
             '/api/proximos-horarios/'
         ]
         for ep in endpoints:
@@ -1022,4 +1008,209 @@ class ModuloAPITests(TestCase):
         # Medicamento y Dispositivo siguen existiendo
         self.assertTrue(Medicamento.objects.filter(id=med_id).exists())
         self.assertTrue(Dispositivo.objects.filter(id=disp_id).exists())
+
+
+class VinculacionInvitacionCorreoTests(TestCase):
+    """Fase 1 de verificación de correo: la invitación siempre se crea, pero
+    el correo de invitación solo se envía si el monitor invitado tiene el
+    correo verificado."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.titular = Usuario.objects.create(
+            nombre='Titular Uno',
+            correo='titular.correo@example.com',
+            password=make_password('PasswordT123!'),
+            telefono='3120000001',
+            activo=True,
+            correo_verificado=True,
+        )
+        self.token = str(RefreshToken.for_user(self.titular).access_token)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.token}')
+
+    def test_no_envia_correo_si_monitor_no_verificado(self):
+        """enviar_invitacion() no manda correo cuando el monitor no tiene el correo verificado."""
+        monitor = Usuario.objects.create(
+            nombre='Monitor No Verificado',
+            correo='monitor.noverificado@example.com',
+            password=make_password('PasswordM123!'),
+            telefono='3120000002',
+            activo=True,
+            correo_verificado=False,
+        )
+        vinculacion = VinculacionMonitor.objects.create(titular=self.titular, monitor=monitor)
+
+        resultado = vinculaciones_module.enviar_invitacion(vinculacion)
+
+        self.assertFalse(resultado)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_envia_correo_si_monitor_verificado(self):
+        """enviar_invitacion() sí manda correo cuando el monitor tiene el correo verificado."""
+        monitor = Usuario.objects.create(
+            nombre='Monitor Verificado',
+            correo='monitor.verificado@example.com',
+            password=make_password('PasswordM123!'),
+            telefono='3120000003',
+            activo=True,
+            correo_verificado=True,
+        )
+        vinculacion = VinculacionMonitor.objects.create(titular=self.titular, monitor=monitor)
+
+        resultado = vinculaciones_module.enviar_invitacion(vinculacion)
+
+        self.assertTrue(resultado)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(monitor.correo, mail.outbox[0].to)
+
+    def test_post_vinculaciones_crea_invitacion_sin_correo_si_monitor_no_verificado(self):
+        """POST /api/vinculaciones/ crea la vinculación en PENDIENTE aunque el monitor no
+        tenga el correo verificado; solo se omite el envío del correo."""
+        monitor = Usuario.objects.create(
+            nombre='Monitor Pendiente Verificar',
+            correo='monitor.pendiente@example.com',
+            password=make_password('PasswordM123!'),
+            telefono='3120000004',
+            activo=True,
+            correo_verificado=False,
+        )
+
+        response = self.client.post('/api/vinculaciones/', {'correo_monitor': monitor.correo}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['estado'], 'PENDIENTE')
+        self.assertFalse(response.data['notificacion_enviada'])
+        self.assertTrue(
+            VinculacionMonitor.objects.filter(titular=self.titular, monitor=monitor, estado='PENDIENTE').exists()
+        )
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_post_vinculaciones_envia_correo_si_monitor_verificado(self):
+        """POST /api/vinculaciones/ sí dispara el correo cuando el monitor está verificado."""
+        monitor = Usuario.objects.create(
+            nombre='Monitor Ya Verificado',
+            correo='monitor.yaverificado@example.com',
+            password=make_password('PasswordM123!'),
+            telefono='3120000005',
+            activo=True,
+            correo_verificado=True,
+        )
+
+        response = self.client.post('/api/vinculaciones/', {'correo_monitor': monitor.correo}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(response.data['notificacion_enviada'])
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(monitor.correo, mail.outbox[0].to)
+
+
+class VerificacionCorreoTests(TestCase):
+    """Fase 2 de verificación de correo: registro envía el correo con el
+    enlace, y los endpoints de verificación/reenvío funcionan."""
+
+    def setUp(self):
+        self.client = APIClient()
+
+    def test_registro_envia_correo_de_verificacion_y_queda_sin_verificar(self):
+        """Registrar una cuenta nueva la deja con correo_verificado=False y envía el correo con el enlace."""
+        data = {
+            'nombre': 'Nuevo Usuario',
+            'correo': 'nuevo.usuario@example.com',
+            'password': 'PasswordNuevo123!',
+            'telefono': '3130000001',
+        }
+        response = self.client.post('/api/registro/', data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertFalse(response.data['correo_verificado'])
+
+        usuario = Usuario.objects.get(correo='nuevo.usuario@example.com')
+        self.assertFalse(usuario.correo_verificado)
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(usuario.correo, mail.outbox[0].to)
+        self.assertIn('/verificar-correo?token=', mail.outbox[0].body)
+
+    def test_verificar_correo_con_token_valido_marca_cuenta_como_verificada(self):
+        usuario = Usuario.objects.create(
+            nombre='Pendiente Verificar',
+            correo='pendiente.verificar@example.com',
+            password=make_password('Password123!'),
+            telefono='3130000002',
+            activo=True,
+            correo_verificado=False,
+        )
+        token = verificacion_module.generar_token_verificacion(usuario)
+
+        response = self.client.post('/api/verificar-correo/', {'token': token}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        usuario.refresh_from_db()
+        self.assertTrue(usuario.correo_verificado)
+
+    def test_verificar_correo_con_token_invalido_devuelve_400(self):
+        response = self.client.post('/api/verificar-correo/', {'token': 'token-basura'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_verificar_correo_sin_token_devuelve_400(self):
+        response = self.client.post('/api/verificar-correo/', {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_verificar_correo_con_token_expirado_devuelve_400(self):
+        usuario = Usuario.objects.create(
+            nombre='Token Expirado',
+            correo='token.expirado@example.com',
+            password=make_password('Password123!'),
+            telefono='3130000003',
+            activo=True,
+            correo_verificado=False,
+        )
+        token = verificacion_module.generar_token_verificacion(usuario)
+
+        with mock.patch.object(verificacion_module, 'TOKEN_MAX_AGE', 0):
+            time_module.sleep(1.1)
+            response = self.client.post('/api/verificar-correo/', {'token': token}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        usuario.refresh_from_db()
+        self.assertFalse(usuario.correo_verificado)
+
+    def test_reenviar_verificacion_requiere_autenticacion(self):
+        response = self.client.post('/api/reenviar-verificacion/', {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_reenviar_verificacion_envia_nuevo_correo_si_no_verificado(self):
+        usuario = Usuario.objects.create(
+            nombre='Reenviar Verificacion',
+            correo='reenviar.verificacion@example.com',
+            password=make_password('Password123!'),
+            telefono='3130000004',
+            activo=True,
+            correo_verificado=False,
+        )
+        token_acceso = str(RefreshToken.for_user(usuario).access_token)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token_acceso}')
+
+        response = self.client.post('/api/reenviar-verificacion/', {}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(usuario.correo, mail.outbox[0].to)
+
+    def test_reenviar_verificacion_rechaza_si_ya_verificado(self):
+        usuario = Usuario.objects.create(
+            nombre='Ya Verificado',
+            correo='ya.verificado@example.com',
+            password=make_password('Password123!'),
+            telefono='3130000005',
+            activo=True,
+            correo_verificado=True,
+        )
+        token_acceso = str(RefreshToken.for_user(usuario).access_token)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token_acceso}')
+
+        response = self.client.post('/api/reenviar-verificacion/', {}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(len(mail.outbox), 0)
 

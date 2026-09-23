@@ -14,7 +14,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const isPublicEndpoint =
     url.includes('/login/') ||
     url.includes('/registro/') ||
-    url.includes('/token/refresh/');
+    url.includes('/token/refresh/') ||
+    url.includes('/verificar-correo/');
 
   const token = auth.obtenerAccessToken();
   const request = !isPublicEndpoint && token

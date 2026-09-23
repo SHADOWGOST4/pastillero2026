@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { Contactos } from './pages/contactos/contactos';
 import { CuentasVinculadas } from './pages/cuentas-vinculadas/cuentas-vinculadas';
 import { Dashboard } from './pages/dashboard/dashboard';
 import { Dispositivo } from './pages/dispositivo/dispositivo';
@@ -22,6 +21,10 @@ export const routes: Routes = [
     canActivate: [publicOnlyGuard],
     loadComponent: () => import('./pages/registro/registro').then((m) => m.Registro)
   },
+  {
+    path: 'verificar-correo',
+    loadComponent: () => import('./pages/verificar-correo/verificar-correo').then((m) => m.VerificarCorreo)
+  },
 
   {
     path: '',
@@ -32,7 +35,6 @@ export const routes: Routes = [
       { path: 'medicamentos', component: Medicamentos },
       { path: 'horarios', component: Horarios },
       { path: 'registros', component: Registros },
-      { path: 'contactos', component: Contactos },
       { path: 'cuentas-vinculadas', component: CuentasVinculadas },
       { path: 'dispositivo', component: Dispositivo }
     ]
