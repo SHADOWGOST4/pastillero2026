@@ -299,6 +299,20 @@ class WebPushSubscription(models.Model):
         return f"WebPushSubscription({self.usuario_id} @ {self.endpoint})"
 
 
+class FcmSubscription(models.Model):
+    """Token de Firebase Cloud Messaging de un dispositivo Android
+    (Capacitor). Análogo a WebPushSubscription pero para push nativo, que es
+    el único canal que llega con la app cerrada en el APK."""
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='fcm_subscriptions')
+    token = models.CharField(max_length=255, unique=True)
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"FcmSubscription({self.usuario_id} @ {self.token[:16]}…)"
+
+
 class WebPushNotificationLog(models.Model):
     registro = models.OneToOneField(Registro_Toma, on_delete=models.CASCADE, related_name='web_push_log')
     evento_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)

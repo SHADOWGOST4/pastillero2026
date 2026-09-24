@@ -3,7 +3,7 @@ import logging
 from django.conf import settings
 from django.core.mail import send_mail
 
-from .models import VinculacionMonitor, WebPushSubscription
+from .models import FcmSubscription, VinculacionMonitor, WebPushSubscription
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +71,8 @@ def enviar_invitacion(vinculacion):
     return True
 
 
-def suscripciones_para_registro(registro):
-    """Suscripciones push que deben recibir la notificación de una toma
+def usuarios_para_registro(registro):
+    """IDs de los usuarios que deben recibir la notificación de una toma
     pendiente/perdida: el titular más los monitores aceptados que tienen
     permiso para ver el historial de tomas."""
     monitores_ids = VinculacionMonitor.objects.filter(
@@ -81,7 +81,20 @@ def suscripciones_para_registro(registro):
         puede_ver_registros=True,
     ).values_list('monitor_id', flat=True)
 
+    return [registro.id_usuario_id, *monitores_ids]
+
+
+def suscripciones_para_registro(registro):
+    """Suscripciones de Web Push (navegador) para una toma."""
     return WebPushSubscription.objects.filter(
-        usuario_id__in=[registro.id_usuario_id, *monitores_ids],
+        usuario_id__in=usuarios_para_registro(registro),
+        active=True,
+    )
+
+
+def fcm_suscripciones_para_registro(registro):
+    """Suscripciones de Firebase Cloud Messaging (app Android) para una toma."""
+    return FcmSubscription.objects.filter(
+        usuario_id__in=usuarios_para_registro(registro),
         active=True,
     )
