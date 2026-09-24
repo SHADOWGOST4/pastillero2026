@@ -14,3 +14,19 @@ una carpeta fuera del repo — ver conversación/README de deploy).
   versiona. La clave que sí es secreta es la cuenta de servicio para *enviar*
   push desde el backend (`FIREBASE_CREDENTIALS_JSON` en el `.env` de la VM) —
   esa nunca se commitea.
+
+- **icon-logo.png**: la imagen fuente del ícono de la app (mínimo 1024×1024,
+  con fondo transparente). Para regenerar los íconos de Android después de
+  cambiarla, parado en la carpeta del proyecto Android nativo (fuera del
+  repo):
+
+  ```bash
+  mkdir -p assets
+  cp <ruta-al-repo>/pillbox-app/android-config/icon-logo.png assets/logo.png
+  npm install -D @capacitor/assets   # una sola vez
+  npx @capacitor/assets generate --android --iconBackgroundColor '#ffffff' --iconBackgroundColorDark '#ffffff'
+  ```
+
+  Esto sobreescribe `android/app/src/main/res/mipmap-*` (íconos) y
+  `drawable*/splash.png` (splash screen). Después, `./gradlew assembleDebug`
+  como siempre.
