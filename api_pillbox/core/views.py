@@ -6,7 +6,9 @@ from django.core import signing
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Q
+from django.http import HttpResponse
 from django.utils import timezone
+from django.utils.html import escape
 
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import api_view, permission_classes, action
@@ -107,6 +109,66 @@ def verificar_correo(request):
         return Response({'detail': 'El enlace de verificación no es válido.'}, status=status.HTTP_400_BAD_REQUEST)
 
     return Response({'detail': 'Correo verificado correctamente.', 'correo': usuario.correo})
+
+
+def _pagina_verificacion(titulo, mensaje, ok):
+    color = '#2e7d32' if ok else '#c62828'
+    icono = '✓' if ok else '✕'
+    html = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{escape(titulo)} · Pillbox</title>
+<style>
+  body {{ font-family: system-ui, sans-serif; background: #f5f5f5; margin: 0;
+         display: flex; align-items: center; justify-content: center; min-height: 100vh; }}
+  .card {{ background: #fff; border-radius: 12px; padding: 32px 28px; max-width: 360px;
+           box-shadow: 0 2px 12px rgba(0,0,0,0.08); text-align: center; }}
+  .icono {{ font-size: 40px; color: {color}; }}
+  h1 {{ font-size: 20px; color: #222; margin: 12px 0; }}
+  p {{ color: #555; font-size: 15px; line-height: 1.4; }}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="icono">{icono}</div>
+    <h1>{escape(titulo)}</h1>
+    <p>{escape(mensaje)}</p>
+  </div>
+</body>
+</html>"""
+    return HttpResponse(html, content_type='text/html; charset=utf-8')
+
+
+def verificar_correo_pagina(request):
+    """Página HTML de confirmación para el enlace del correo de
+    verificación. No hay un frontend web público desplegado (el Angular solo
+    se compila a APK), así que esta página la sirve el propio backend."""
+    token = request.GET.get('token', '')
+    if not token:
+        return _pagina_verificacion('Enlace inválido', 'Falta el token de verificación.', ok=False)
+
+    try:
+        usuario = verificacion.verificar_token(token)
+    except signing.SignatureExpired:
+        return _pagina_verificacion(
+            'Enlace expirado',
+            'El enlace de verificación expiró. Solicita uno nuevo desde la app.',
+            ok=False,
+        )
+    except (signing.BadSignature, ValueError, Usuario.DoesNotExist):
+        return _pagina_verificacion(
+            'Enlace inválido',
+            'El enlace de verificación no es válido.',
+            ok=False,
+        )
+
+    return _pagina_verificacion(
+        '¡Correo verificado!',
+        f'{usuario.correo} quedó verificado correctamente. Ya puedes volver a la app.',
+        ok=True,
+    )
 
 
 @api_view(['POST'])

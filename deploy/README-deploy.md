@@ -95,7 +95,14 @@ python3 -c "import secrets,string; print(''.join(secrets.choice(string.ascii_let
 ```
 
 Pon en `ALLOWED_HOSTS` y en `CORS_ALLOWED_ORIGINS` el dominio de DuckDNS que
-creaste (ej. `pillbox2026.duckdns.org`).
+creaste (ej. `pillbox2026.duckdns.org`). En `CORS_ALLOWED_ORIGINS` agrega
+también `https://localhost` (el origen desde el que hace las peticiones el
+WebView de la app Android/Capacitor).
+
+También define `FRONTEND_URL=https://pillbox2026.duckdns.org` (tu mismo
+dominio): se usa para armar el enlace del correo de verificación, que el
+propio backend sirve como página de confirmación en `/verificar-correo`
+(no hay un frontend web público separado, el Angular solo se compila a APK).
 
 ## Fase 5 — Primer arranque (HTTP, sin certificado todavía)
 

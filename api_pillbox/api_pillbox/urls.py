@@ -15,6 +15,7 @@ router.register(r'vinculaciones', VinculacionMonitorViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('verificar-correo/', verificar_correo_pagina, name='verificar_correo_pagina'),
     path('api/', include(router.urls)),
     path('api/registro/', registrar_usuario, name='registro_usuario'),
     path('api/verificar-correo/', verificar_correo, name='verificar_correo'),
