@@ -19,6 +19,7 @@ import {
 import { Medicamento } from '../../services/medicamento';
 import { Horario } from '../../services/horario';
 import { CuentaActiva } from '../../services/cuenta-activa';
+import { LocalReminderSchedulerService } from '../../services/local-reminder-scheduler.service';
 import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
 
 @Component({
@@ -64,6 +65,7 @@ export class Horarios implements OnDestroy, OnInit {
     private horarioService: Horario,
     private medicamentoService: Medicamento,
     private cuentaActivaService: CuentaActiva,
+    private localReminderScheduler: LocalReminderSchedulerService,
   ) {}
 
   get esSoloLectura(): boolean {
@@ -202,6 +204,7 @@ export class Horarios implements OnDestroy, OnInit {
         this.modalFormularioAbierto = false;
         this.resetForm();
         this.cargarHorarios(this.paginaActual);
+        void this.localReminderScheduler.sync();
       },
       error: (err) => {
         this.submitting = false;
@@ -268,6 +271,7 @@ export class Horarios implements OnDestroy, OnInit {
           this.resetForm();
         }
         this.cargarHorarios(this.paginaActual);
+        void this.localReminderScheduler.sync();
       },
       error: (err) => {
         this.eliminando = false;
@@ -289,6 +293,7 @@ export class Horarios implements OnDestroy, OnInit {
       next: () => {
         this.successMessage = 'Horario habilitado correctamente.';
         this.cargarHorarios(this.paginaActual);
+        void this.localReminderScheduler.sync();
       },
       error: (err) => {
         this.errorMessage = this.extraerError(err, 'No se pudo habilitar el horario.');
