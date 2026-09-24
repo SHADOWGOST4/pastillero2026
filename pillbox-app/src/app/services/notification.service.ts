@@ -173,14 +173,20 @@ export class NotificationService {
    * primer plano) con @capacitor/local-notifications.
    */
   private async initializeAndroidPush(): Promise<boolean> {
+    console.log('[FCM] initializeAndroidPush: inicio');
+
     if (!this.androidProvider.isSupported() || this.androidPushInicializado) {
+      console.log(`[FCM] initializeAndroidPush: salida temprana (supported=${this.androidProvider.isSupported()}, ya inicializado=${this.androidPushInicializado})`);
       return this.androidPushInicializado;
     }
 
     try {
+      console.log('[FCM] importando @capacitor/push-notifications...');
       const { PushNotifications } = await import('@capacitor/push-notifications');
+      console.log('[FCM] plugin importado OK');
 
       const permiso = await PushNotifications.requestPermissions();
+      console.log(`[FCM] permiso de push: ${permiso.receive}`);
       if (permiso.receive !== 'granted') {
         return false;
       }
@@ -188,9 +194,17 @@ export class NotificationService {
       await this.androidProvider.requestPermission();
 
       PushNotifications.addListener('registration', (token) => {
+        console.log(`[FCM] token de registro obtenido: ${token.value}`);
         firstValueFrom(
           this.http.post(`${environment.apiUrl}notificaciones/fcm/subscribe/`, { token: token.value }),
-        ).catch(() => {});
+        ).then(
+          () => console.log('[FCM] token enviado al backend OK'),
+          (error) => console.error(`[FCM] error mandando el token al backend: ${String(error)}`),
+        );
+      });
+
+      PushNotifications.addListener('registrationError', (error) => {
+        console.error(`[FCM] error de registro contra Firebase: ${JSON.stringify(error)}`);
       });
 
       PushNotifications.addListener('pushNotificationReceived', (notification) => {
@@ -207,10 +221,14 @@ export class NotificationService {
         void this.router.navigateByUrl(targetUrl);
       });
 
+      console.log('[FCM] llamando a PushNotifications.register()...');
       await PushNotifications.register();
+      console.log('[FCM] register() resuelto OK');
       this.androidPushInicializado = true;
       return true;
-    } catch (_error) {
+    } catch (error) {
+      const detalle = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+      console.error(`[FCM] error inicializando push notifications: ${detalle}`);
       return false;
     }
   }
