@@ -16,6 +16,36 @@ from .models import Registro_Toma, WebPushNotificationLog
 logger = logging.getLogger(__name__)
 
 
+def get_firebase_app():
+    """Inicializa (una sola vez por proceso) el SDK admin de Firebase, a
+    partir de la clave de cuenta de servicio en settings.FIREBASE_CREDENTIALS_JSON.
+    Devuelve None si no está configurada (p. ej. en desarrollo local sin
+    Firebase), igual que get_vapid_config() para Web Push."""
+    import firebase_admin
+    from firebase_admin import credentials
+
+    if firebase_admin._apps:
+        return firebase_admin.get_app()
+
+    creds_json = getattr(settings, 'FIREBASE_CREDENTIALS_JSON', '').strip()
+    if not creds_json:
+        return None
+
+    cred = credentials.Certificate(json.loads(creds_json))
+    return firebase_admin.initialize_app(cred)
+
+
+def send_fcm_to_subscription(subscription, payload):
+    from firebase_admin import messaging
+
+    message = messaging.Message(
+        token=subscription.token,
+        notification=messaging.Notification(title=payload['title'], body=payload['body']),
+        data={str(k): str(v) for k, v in payload['data'].items()},
+    )
+    messaging.send(message)
+
+
 def get_vapid_config():
     public_key = getattr(settings, 'WEBPUSH_PUBLIC_KEY', '').strip()
     private_key = getattr(settings, 'WEBPUSH_PRIVATE_KEY', '').strip()
@@ -71,9 +101,14 @@ def send_push_to_subscription(subscription, payload, vapid_config):
 
 
 def send_web_push_for_registro(registro):
+    """Manda la notificación de una toma pendiente por todos los canales
+    disponibles: Web Push (navegador) y FCM (app Android). El nombre se
+    mantiene por compatibilidad con WebPushNotificationLog, que funciona
+    como el lock atómico de "ya se envió este registro" para ambos canales."""
     vapid_config = get_vapid_config()
-    if vapid_config is None:
-        logger.error('[WEB PUSH] faltan claves VAPID en la configuración del backend.')
+    firebase_app = get_firebase_app()
+    if vapid_config is None and firebase_app is None:
+        logger.error('[PUSH] faltan credenciales de Web Push y de Firebase en la configuración del backend.')
         return False
 
     evento_id = uuid.uuid4()
@@ -85,20 +120,23 @@ def send_web_push_for_registro(registro):
     try:
         log = WebPushNotificationLog.objects.create(registro=registro, evento_id=evento_id, status='queued')
     except IntegrityError:
-        logger.info('[WEB PUSH] registro=%s ya tiene log previo; no se reenvia.', registro.id)
+        logger.info('[PUSH] registro=%s ya tiene log previo; no se reenvia.', registro.id)
         return False
 
     payload = build_push_payload(registro, evento_id)
 
-    subscriptions = vinculaciones.suscripciones_para_registro(registro)
-    if not subscriptions.exists():
+    web_subscriptions = vinculaciones.suscripciones_para_registro(registro) if vapid_config else []
+    fcm_subscriptions = vinculaciones.fcm_suscripciones_para_registro(registro) if firebase_app else []
+    if not web_subscriptions and not fcm_subscriptions:
         log.status = 'skipped'
         log.save(update_fields=['status'])
-        logger.warning('[WEB PUSH] usuario=%s sin subscriptions activas para registro=%s', registro.id_usuario_id, registro.id)
+        logger.warning('[PUSH] usuario=%s sin subscriptions activas para registro=%s', registro.id_usuario_id, registro.id)
         return False
 
     sent = False
-    for subscription in subscriptions:
+    errores = []
+
+    for subscription in web_subscriptions:
         logger.info('[WEB PUSH] usuario=%s endpoint=%s enviando...', registro.id_usuario_id, subscription.endpoint)
         try:
             send_push_to_subscription(subscription, payload, vapid_config)
@@ -107,18 +145,25 @@ def send_web_push_for_registro(registro):
         except Exception as exc:
             subscription.active = False
             subscription.save(update_fields=['active'])
-            log.error = str(exc)
-            log.status = 'error'
-            log.save(update_fields=['status', 'error'])
+            errores.append(str(exc))
             logger.exception('[WEB PUSH] fallo envío usuario=%s endpoint=%s evento_id=%s', registro.id_usuario_id, subscription.endpoint, evento_id)
 
-    if sent:
-        log.status = 'sent'
-        log.error = ''
-        log.save(update_fields=['status', 'error'])
-        return True
+    for subscription in fcm_subscriptions:
+        logger.info('[FCM] usuario=%s token=%s… enviando...', registro.id_usuario_id, subscription.token[:16])
+        try:
+            send_fcm_to_subscription(subscription, payload)
+            sent = True
+            logger.info('[FCM] usuario=%s token=%s… enviado OK evento_id=%s', registro.id_usuario_id, subscription.token[:16], evento_id)
+        except Exception as exc:
+            subscription.active = False
+            subscription.save(update_fields=['active'])
+            errores.append(str(exc))
+            logger.exception('[FCM] fallo envío usuario=%s token=%s… evento_id=%s', registro.id_usuario_id, subscription.token[:16], evento_id)
 
-    return False
+    log.status = 'sent' if sent else 'error'
+    log.error = '; '.join(errores)
+    log.save(update_fields=['status', 'error'])
+    return sent
 
 
 def enviar_notificaciones_pendientes():

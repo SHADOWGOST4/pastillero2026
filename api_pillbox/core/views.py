@@ -23,6 +23,7 @@ from .inventory import calcular_cobertura_medicamento
 from .models import (
     Dispositivo,
     EventoDispositivo,
+    FcmSubscription,
     Horario,
     Medicamento,
     Modulo,
@@ -587,6 +588,31 @@ def web_push_unsubscribe(request):
         return Response({'detail': 'endpoint es obligatorio.'}, status=status.HTTP_400_BAD_REQUEST)
 
     deleted, _ = WebPushSubscription.objects.filter(usuario=request.user, endpoint=endpoint).delete()
+    return Response({'ok': True, 'deleted': deleted > 0}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def fcm_subscribe(request):
+    token = request.data.get('token')
+    if not token:
+        return Response({'detail': 'token es obligatorio.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    sub, created = FcmSubscription.objects.update_or_create(
+        token=token,
+        defaults={'usuario': request.user, 'active': True},
+    )
+    return Response({'ok': True, 'created': created, 'subscription_id': sub.id}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def fcm_unsubscribe(request):
+    token = request.data.get('token')
+    if not token:
+        return Response({'detail': 'token es obligatorio.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    deleted, _ = FcmSubscription.objects.filter(usuario=request.user, token=token).delete()
     return Response({'ok': True, 'deleted': deleted > 0}, status=status.HTTP_200_OK)
 
 

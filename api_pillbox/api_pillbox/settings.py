@@ -60,6 +60,11 @@ WEBPUSH_PUBLIC_KEY = os.getenv('WEBPUSH_PUBLIC_KEY', '')
 WEBPUSH_PRIVATE_KEY = os.getenv('WEBPUSH_PRIVATE_KEY', '')
 WEBPUSH_SUBJECT = os.getenv('WEBPUSH_SUBJECT', 'mailto:admin@pillbox.local')
 
+# JSON completo de la cuenta de servicio de Firebase (Project Settings >
+# Service accounts > Generate new private key), usado para mandar push
+# nativo (FCM) a la app Android. Vacío = FCM deshabilitado (solo Web Push).
+FIREBASE_CREDENTIALS_JSON = os.getenv('FIREBASE_CREDENTIALS_JSON', '')
+
 # Correo saliente (invitaciones de "Cuentas vinculadas"), vía Gmail SMTP con
 # contraseña de aplicación. Si no está configurado, se usa el backend de
 # consola de Django (imprime el correo en los logs) para no romper el

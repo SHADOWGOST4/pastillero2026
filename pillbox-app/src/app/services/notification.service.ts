@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { Capacitor } from '@capacitor/core';
 import { environment } from '../../environments/environment';
@@ -122,8 +123,11 @@ export class AndroidNotificationProvider extends NotificationProvider {
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
+  private androidPushInicializado = false;
+
   constructor(
     private readonly http: HttpClient,
+    private readonly router: Router,
     private readonly webProvider: WebNotificationProvider,
     private readonly androidProvider: AndroidNotificationProvider,
   ) {}
@@ -158,7 +162,57 @@ export class NotificationService {
       return true;
     }
 
-    return provider.requestPermission();
+    return this.initializeAndroidPush();
+  }
+
+  /**
+   * Web Push (VAPID) no llega al WebView de Capacitor, así que en Android
+   * el único camino para recibir notificaciones con la app cerrada es
+   * Firebase Cloud Messaging. Pide permiso, registra el dispositivo, manda
+   * el token al backend y muestra las notificaciones que lleguen (en
+   * primer plano) con @capacitor/local-notifications.
+   */
+  private async initializeAndroidPush(): Promise<boolean> {
+    if (!this.androidProvider.isSupported() || this.androidPushInicializado) {
+      return this.androidPushInicializado;
+    }
+
+    try {
+      const { PushNotifications } = await import('@capacitor/push-notifications');
+
+      const permiso = await PushNotifications.requestPermissions();
+      if (permiso.receive !== 'granted') {
+        return false;
+      }
+
+      await this.androidProvider.requestPermission();
+
+      PushNotifications.addListener('registration', (token) => {
+        firstValueFrom(
+          this.http.post(`${environment.apiUrl}notificaciones/fcm/subscribe/`, { token: token.value }),
+        ).catch(() => {});
+      });
+
+      PushNotifications.addListener('pushNotificationReceived', (notification) => {
+        void this.androidProvider.show({
+          title: notification.title ?? 'Pillbox',
+          body: notification.body ?? '',
+          data: notification.data as Record<string, unknown>,
+        });
+      });
+
+      PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+        const data = action.notification.data as Record<string, unknown> | undefined;
+        const targetUrl = (data?.['targetUrl'] as string) || '/dashboard';
+        void this.router.navigateByUrl(targetUrl);
+      });
+
+      await PushNotifications.register();
+      this.androidPushInicializado = true;
+      return true;
+    } catch (_error) {
+      return false;
+    }
   }
 
   async registerServiceWorker(): Promise<void> {
