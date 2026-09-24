@@ -42,6 +42,9 @@ def send_fcm_to_subscription(subscription, payload):
         token=subscription.token,
         notification=messaging.Notification(title=payload['title'], body=payload['body']),
         data={str(k): str(v) for k, v in payload['data'].items()},
+        # Prioridad alta: para un recordatorio de medicación, que intente
+        # entregarse igual aunque el sistema esté en Doze/ahorro de batería.
+        android=messaging.AndroidConfig(priority='high'),
     )
     messaging.send(message)
 

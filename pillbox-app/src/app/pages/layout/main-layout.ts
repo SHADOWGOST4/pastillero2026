@@ -10,6 +10,7 @@ import { MedicationReminderService } from '../../services/medication-reminder.se
 import { MedicationReminderModal } from '../../shared/medication-reminder-modal/medication-reminder-modal';
 import { UsuarioResumenResponse, VinculacionResponse } from '../../core/models/api.interfaces';
 import { Vinculacion } from '../../services/vinculacion';
+import { LocalReminderSchedulerService } from '../../services/local-reminder-scheduler.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -36,6 +37,7 @@ export class MainLayout implements OnDestroy, OnInit {
     private medicationReminderService: MedicationReminderService,
     private cuentaActivaService: CuentaActiva,
     private vinculacionService: Vinculacion,
+    private localReminderScheduler: LocalReminderSchedulerService,
   ) {
     this.usuario = this.auth.obtenerUsuario();
   }
@@ -43,12 +45,14 @@ export class MainLayout implements OnDestroy, OnInit {
   private readonly onVisibilityChange = () => {
     if (!document.hidden) {
       this.refrescarUsuario();
+      void this.localReminderScheduler.sync();
     }
   };
 
   ngOnInit() {
     void this.notificationService.initializeWebNotifications();
     this.medicationReminderService.start();
+    void this.localReminderScheduler.sync();
     this.sidebarAbierto = window.innerWidth >= 992;
     this.actualizarBreadcrumb(this.router.url);
     this.refrescarUsuario();
