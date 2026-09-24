@@ -196,6 +196,25 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Sin esto, logger.info()/logger.warning() (p. ej. en core.notifications, el
+# envío de push por el cron de enviar_notificaciones) no van a ningún lado:
+# Python no imprime nada por debajo de WARNING si no hay un handler
+# configurado. Manda todo a stdout, que es lo que el cron ya redirige a
+# pillbox-notificaciones.log.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}
+
 # CORS Configuration
 CORS_ALLOWED_ORIGINS_ENV = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:4200,http://127.0.0.1:4200,https://9klttgbw-4200.use2.devtunnels.ms, https://localhost')
 CORS_ALLOWED_ORIGINS = [origin.strip().rstrip('/') for origin in CORS_ALLOWED_ORIGINS_ENV.split(',') if origin.strip()]
