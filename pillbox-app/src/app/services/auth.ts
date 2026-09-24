@@ -57,6 +57,24 @@ export class Auth {
     );
   }
 
+  /**
+   * La verificación de correo ocurre fuera de la app (el usuario abre el
+   * enlace del correo en el navegador), así que el `usuario` cacheado en
+   * localStorage desde el login puede quedar desactualizado. Esto refresca
+   * el perfil desde el backend para reflejar el estado real.
+   */
+  refrescarUsuario(): Observable<any> {
+    const usuarioActual = this.obtenerUsuario();
+    if (!usuarioActual?.id) {
+      return throwError(() => new Error('No hay sesión activa.'));
+    }
+
+    return this.http.get<any>(`${this.apiUrl}usuarios/${usuarioActual.id}/`).pipe(
+      tap((usuario) => this.guardarUsuario(usuario)),
+      catchError((error) => this.manejarError(error))
+    );
+  }
+
   refreshAccessToken(): Observable<string> {
     const refreshToken = this.obtenerRefreshToken();
 

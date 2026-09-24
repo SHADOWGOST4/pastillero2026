@@ -40,11 +40,19 @@ export class MainLayout implements OnDestroy, OnInit {
     this.usuario = this.auth.obtenerUsuario();
   }
 
+  private readonly onVisibilityChange = () => {
+    if (!document.hidden) {
+      this.refrescarUsuario();
+    }
+  };
+
   ngOnInit() {
     void this.notificationService.initializeWebNotifications();
     this.medicationReminderService.start();
     this.sidebarAbierto = window.innerWidth >= 992;
     this.actualizarBreadcrumb(this.router.url);
+    this.refrescarUsuario();
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe((event) => {
@@ -69,8 +77,16 @@ export class MainLayout implements OnDestroy, OnInit {
 
   ngOnDestroy(): void {
     this.medicationReminderService.stop();
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
     this.destroyed$.next();
     this.destroyed$.complete();
+  }
+
+  private refrescarUsuario(): void {
+    this.auth.refrescarUsuario().subscribe({
+      next: (usuario) => (this.usuario = usuario),
+      error: () => {},
+    });
   }
 
   private cargarCuentasMonitoreadas(): void {
