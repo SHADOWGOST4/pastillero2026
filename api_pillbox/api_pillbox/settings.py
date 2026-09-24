@@ -47,6 +47,15 @@ PAGE_SIZE = int(os.getenv('PAGE_SIZE', '10'))
 ALLOWED_HOSTS_ENV = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver')
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_ENV.split(',') if host.strip()]
 
+# En producción, nginx termina el TLS y le reenvía las peticiones a Django
+# por HTTP puertas adentro (ver deploy/nginx/pillbox.conf.ssl), marcando el
+# esquema original con X-Forwarded-Proto. Sin esto, request.is_secure() da
+# False y DRF arma los links "next"/"previous" de paginación con http://,
+# que el WebView de la app bloquea como mixed content al estar servida por
+# https. Nginx es el único que puede setear este header (no llega directo
+# de internet), así que confiarlo acá es seguro.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Con DEBUG=False, un '*' en ALLOWED_HOSTS desactiva por completo la
 # validación del header Host. Se exige una lista explícita de hosts para
 # cualquier entorno que no sea el servidor de desarrollo local.
