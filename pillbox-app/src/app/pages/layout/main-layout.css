@@ -2,8 +2,6 @@
 
 .sidebar {
   width: 256px;
-  height: 100vh;
-  height: 100dvh;
   position: fixed;
   top: 0;
   bottom: 0;
@@ -128,10 +126,9 @@
   .sidebar {
     position: fixed;
     width: min(256px, 86vw);
-    height: 100vh;
-    height: 100dvh;
     max-height: none;
     padding: .85rem .55rem;
+    padding-top: calc(.85rem + env(safe-area-inset-top));
     padding-bottom: calc(.85rem + env(safe-area-inset-bottom));
     transform: translateX(-102%);
     box-shadow: 0 20px 40px rgba(15,23,42,.2);
@@ -159,7 +156,7 @@
   .sidebar-backdrop { position: fixed; inset: 0; z-index: 20; display: block; border: 0; background: rgba(15,23,42,.42); }
   .main-panel.with-sidebar { margin-left: 0; }
   .content-area { padding: 1rem; }
-  .verificacion-banner { flex-wrap: wrap; margin: 1rem 1rem 0; padding: .65rem 1rem; }
+  .verificacion-banner { width: auto; flex-wrap: wrap; margin: 1rem 1rem 0; padding: .65rem 1rem; }
   .verificacion-reenviar { flex-basis: 100%; }
   .app-footer { padding: 1rem; }
   .topbar-start { padding-left: 3.25rem; }
