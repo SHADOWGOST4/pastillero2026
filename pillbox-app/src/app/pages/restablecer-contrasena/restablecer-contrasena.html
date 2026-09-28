@@ -1,0 +1,46 @@
+<body>
+  <div class="background">
+    <div class="shape"></div>
+    <div class="shape"></div>
+  </div>
+
+  <div class="login-container">
+    <div class="login-box">
+      <div class="logo-section">
+        <img src="logo_fet.png" alt="Logo fet" class="logo-img-form">
+        <h1>Restablecer contraseña</h1>
+      </div>
+
+      <div *ngIf="estado === 'exito'" class="alert alert-success">{{ mensaje }}</div>
+      <div *ngIf="mensaje && estado !== 'exito'" class="alert alert-danger">{{ mensaje }}</div>
+
+      <ng-container *ngIf="estado === 'formulario'">
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nueva contraseña</mat-label>
+            <input matInput id="password" [(ngModel)]="password" placeholder="••••••••" type="password">
+          </mat-form-field>
+        </div>
+
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Confirmar contraseña</mat-label>
+            <input matInput id="confirmarPassword" [(ngModel)]="confirmarPassword" placeholder="••••••••"
+              type="password">
+          </mat-form-field>
+        </div>
+
+        <button class="btn-login" (click)="restablecer()" [disabled]="enviando || !password || !confirmarPassword">
+          {{ enviando ? 'Guardando...' : 'Cambiar contraseña' }}
+        </button>
+      </ng-container>
+
+      <div *ngIf="estado === 'exito'" class="register">
+        <p><a routerLink="/login">Ir a iniciar sesión</a></p>
+      </div>
+      <div *ngIf="estado === 'error'" class="register">
+        <p><a routerLink="/olvide-contrasena">Solicitar un enlace nuevo</a></p>
+      </div>
+    </div>
+  </div>
+</body>

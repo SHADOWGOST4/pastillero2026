@@ -16,10 +16,13 @@ router.register(r'vinculaciones', VinculacionMonitorViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('verificar-correo/', verificar_correo_pagina, name='verificar_correo_pagina'),
+    path('restablecer-contrasena/', restablecer_contrasena_pagina, name='restablecer_contrasena_pagina'),
     path('api/', include(router.urls)),
     path('api/registro/', registrar_usuario, name='registro_usuario'),
     path('api/verificar-correo/', verificar_correo, name='verificar_correo'),
     path('api/reenviar-verificacion/', reenviar_verificacion, name='reenviar_verificacion'),
+    path('api/olvide-contrasena/', olvide_contrasena, name='olvide_contrasena'),
+    path('api/restablecer-contrasena/', restablecer_contrasena_confirmar, name='restablecer_contrasena'),
     path('api/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair_alias'),
     path('api/token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),

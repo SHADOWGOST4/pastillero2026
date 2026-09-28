@@ -22,7 +22,6 @@
   height: 18rem;
   border-radius: 50%;
   opacity: 0.5;
-  filter: blur(1px);
 }
 
 .shape:first-child {
@@ -63,8 +62,15 @@
 .logo-section h1 {
   margin: 0;
   color: var(--text-primary);
-  font-size: 1.65rem;
+  font-size: 1.4rem;
   font-weight: 700;
+}
+
+.ayuda {
+  margin: 0 0 1rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  text-align: center;
 }
 
 .form-group {
@@ -87,30 +93,6 @@
   background: transparent;
 }
 
-label {
-  display: block;
-  margin-bottom: 0.4rem;
-  color: var(--text-primary);
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.olvide-contrasena {
-  margin-top: 0.6rem;
-  text-align: right;
-  font-size: 0.8125rem;
-}
-
-.olvide-contrasena a {
-  color: var(--primary);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.olvide-contrasena a:hover {
-  text-decoration: underline;
-}
-
 .btn-login {
   width: 100%;
   min-height: 2.75rem;
@@ -128,6 +110,12 @@ label {
   border-color: var(--primary-hover);
   background: var(--primary-hover);
   transform: translateY(-1px);
+}
+
+.btn-login:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
 }
 
 .register {
@@ -154,11 +142,20 @@ label {
 .alert {
   margin-bottom: 1rem;
   padding: 0.75rem 1rem;
-  border: 1px solid #fecaca;
   border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+}
+
+.alert-success {
+  border: 1px solid #bbf7d0;
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.alert-danger {
+  border: 1px solid #fecaca;
   color: var(--danger);
   background: var(--danger-soft);
-  font-size: 0.875rem;
 }
 
 @keyframes fadeIn {

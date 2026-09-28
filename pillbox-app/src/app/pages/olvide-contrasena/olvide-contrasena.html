@@ -1,0 +1,37 @@
+<body>
+  <div class="background">
+    <div class="shape"></div>
+    <div class="shape"></div>
+  </div>
+
+  <div class="login-container">
+    <div class="login-box">
+      <div class="logo-section">
+        <img src="logo_fet.png" alt="Logo fet" class="logo-img-form">
+        <h1>¿Olvidaste tu contraseña?</h1>
+      </div>
+
+      <div *ngIf="mensaje" class="alert alert-success">{{ mensaje }}</div>
+      <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+      <ng-container *ngIf="!mensaje">
+        <p class="ayuda">Escribe tu correo y te enviaremos instrucciones para restablecer tu contraseña.</p>
+
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Correo Electrónico</mat-label>
+            <input matInput id="correo" [(ngModel)]="correo" placeholder="ejemplo@mabsbygabs.com" type="email">
+          </mat-form-field>
+        </div>
+
+        <button class="btn-login" (click)="enviar()" [disabled]="enviando || !correo">
+          {{ enviando ? 'Enviando...' : 'Enviar instrucciones' }}
+        </button>
+      </ng-container>
+
+      <div class="register">
+        <p><a href="/login">Volver a iniciar sesión</a></p>
+      </div>
+    </div>
+  </div>
+</body>

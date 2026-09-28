@@ -147,6 +147,49 @@ el método `getAll()` agregado de sus servicios.
 
 ---
 
+#### `POST /api/olvide-contrasena/`
+Solicita el envío del correo para restablecer la contraseña. Responde siempre el mismo mensaje genérico, exista o no la cuenta, para no revelar qué correos están registrados.
+* **Permiso:** Público (`AllowAny`)
+* **Request Body (`OlvideContrasenaRequest`):**
+  ```json
+  {
+    "correo": "ana.perez@example.com"
+  }
+  ```
+* **Response (HTTP 200 OK - `MensajeResponse`):**
+  ```json
+  {
+    "detail": "Si el correo existe, te enviamos instrucciones para restablecer tu contraseña."
+  }
+  ```
+
+---
+
+#### `POST /api/restablecer-contrasena/`
+Confirma el token enviado por correo y establece la nueva contraseña. El token es de un solo uso y expira 1 hora después de generado.
+* **Permiso:** Público (`AllowAny`)
+* **Request Body (`RestablecerContrasenaRequest`):**
+  ```json
+  {
+    "token": "Mg:1abcXY:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "password": "MiPasswordNueva456!"
+  }
+  ```
+* **Response (HTTP 200 OK - `MensajeResponse`):**
+  ```json
+  {
+    "detail": "Contraseña actualizada correctamente."
+  }
+  ```
+* **Response (HTTP 400 Bad Request - `ApiErrorResponse`):** token faltante, inválido, expirado o ya usado.
+  ```json
+  {
+    "detail": "El enlace para restablecer la contraseña no es válido, o ya fue usado."
+  }
+  ```
+
+---
+
 ### 3.2 Dashboard: Próximas Tomas
 
 #### `GET /api/proximos-horarios/`
@@ -335,6 +378,19 @@ export interface LoginResponse {
     correo: string;
     telefono: string;
   };
+}
+
+export interface MensajeResponse {
+  detail: string;
+}
+
+export interface OlvideContrasenaRequest {
+  correo: string;
+}
+
+export interface RestablecerContrasenaRequest {
+  token: string;
+  password: string;
 }
 
 export interface ActualizarUsuarioRequest {
