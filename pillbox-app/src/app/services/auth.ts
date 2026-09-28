@@ -57,6 +57,18 @@ export class Auth {
     );
   }
 
+  olvidarContrasena(correo: string): Observable<MensajeResponse> {
+    return this.http.post<MensajeResponse>(`${this.apiUrl}olvide-contrasena/`, { correo }).pipe(
+      catchError((error) => this.manejarError(error))
+    );
+  }
+
+  restablecerContrasena(token: string, password: string): Observable<MensajeResponse> {
+    return this.http.post<MensajeResponse>(`${this.apiUrl}restablecer-contrasena/`, { token, password }).pipe(
+      catchError((error) => this.manejarError(error))
+    );
+  }
+
   /**
    * La verificación de correo ocurre fuera de la app (el usuario abre el
    * enlace del correo en el navegador), así que el `usuario` cacheado en

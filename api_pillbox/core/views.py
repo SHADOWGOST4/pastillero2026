@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -18,7 +19,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenViewBase
 
-from . import verificacion, vinculaciones
+from . import restablecer_contrasena, verificacion, vinculaciones
 from .inventory import calcular_cobertura_medicamento
 from .models import (
     Dispositivo,
@@ -180,6 +181,147 @@ def reenviar_verificacion(request):
         return Response({'detail': 'Tu correo ya está verificado.'}, status=status.HTTP_400_BAD_REQUEST)
     verificacion.enviar_correo_verificacion(usuario)
     return Response({'detail': 'Te enviamos un nuevo correo de verificación.'})
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def olvide_contrasena(request):
+    """Envía un correo para restablecer la contraseña si el correo
+    corresponde a una cuenta activa. Responde siempre el mismo mensaje
+    genérico, exista o no la cuenta, para no revelar qué correos están
+    registrados."""
+    correo = (request.data.get('correo') or '').lower().strip()
+    if correo:
+        try:
+            usuario = Usuario.objects.get(correo=correo, activo=True)
+        except Usuario.DoesNotExist:
+            usuario = None
+        if usuario:
+            restablecer_contrasena.enviar_correo_restablecimiento(usuario)
+    return Response({'detail': 'Si el correo existe, te enviamos instrucciones para restablecer tu contraseña.'})
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def restablecer_contrasena_confirmar(request):
+    """Confirma el token enviado por correo y establece la nueva contraseña.
+    No requiere sesión: el enlace del correo debe funcionar por sí solo."""
+    token = request.data.get('token', '')
+    password = request.data.get('password', '')
+    if not token or not password:
+        return Response({'detail': 'Token y contraseña son requeridos.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        usuario = restablecer_contrasena.verificar_token_restablecimiento(token)
+    except signing.SignatureExpired:
+        return Response(
+            {'detail': 'El enlace para restablecer la contraseña expiró. Solicita uno nuevo.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    except (signing.BadSignature, ValueError, Usuario.DoesNotExist):
+        return Response(
+            {'detail': 'El enlace para restablecer la contraseña no es válido, o ya fue usado.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    usuario.password = make_password(password)
+    usuario.save(update_fields=['password'])
+    return Response({'detail': 'Contraseña actualizada correctamente.'})
+
+
+def _pagina_restablecer_contrasena_formulario(token):
+    token_js = json.dumps(token)
+    html = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Restablecer contraseña · Pillbox</title>
+<style>
+  body {{ font-family: system-ui, sans-serif; background: #f5f5f5; margin: 0;
+         display: flex; align-items: center; justify-content: center; min-height: 100vh; }}
+  .card {{ background: #fff; border-radius: 12px; padding: 32px 28px; max-width: 360px; width: 100%;
+           box-shadow: 0 2px 12px rgba(0,0,0,0.08); text-align: center; box-sizing: border-box; }}
+  h1 {{ font-size: 20px; color: #222; margin: 0 0 16px; }}
+  input {{ width: 100%; padding: 10px 12px; margin-bottom: 12px; border: 1px solid #ccc;
+           border-radius: 8px; font-size: 15px; box-sizing: border-box; }}
+  button {{ width: 100%; padding: 10px 12px; border: none; border-radius: 8px; background: #3f51b5;
+            color: #fff; font-size: 15px; cursor: pointer; }}
+  button:disabled {{ opacity: 0.6; cursor: default; }}
+  .mensaje {{ font-size: 14px; margin-top: 12px; line-height: 1.4; }}
+  .mensaje.error {{ color: #c62828; }}
+  .mensaje.exito {{ color: #2e7d32; }}
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Restablecer contraseña</h1>
+    <form id="form">
+      <input type="password" id="password" placeholder="Nueva contraseña" required>
+      <input type="password" id="confirmar" placeholder="Confirmar contraseña" required>
+      <button type="submit" id="boton">Cambiar contraseña</button>
+    </form>
+    <div id="mensaje" class="mensaje"></div>
+  </div>
+  <script>
+    var token = {token_js};
+    var form = document.getElementById('form');
+    var mensajeEl = document.getElementById('mensaje');
+    var boton = document.getElementById('boton');
+    form.addEventListener('submit', function (evento) {{
+      evento.preventDefault();
+      var password = document.getElementById('password').value;
+      var confirmar = document.getElementById('confirmar').value;
+      mensajeEl.className = 'mensaje';
+      mensajeEl.textContent = '';
+      if (password !== confirmar) {{
+        mensajeEl.className = 'mensaje error';
+        mensajeEl.textContent = 'Las contraseñas no coinciden.';
+        return;
+      }}
+      boton.disabled = true;
+      fetch('/api/restablecer-contrasena/', {{
+        method: 'POST',
+        headers: {{ 'Content-Type': 'application/json' }},
+        body: JSON.stringify({{ token: token, password: password }})
+      }})
+        .then(function (respuesta) {{
+          return respuesta.json().then(function (datos) {{
+            return {{ ok: respuesta.ok, datos: datos }};
+          }});
+        }})
+        .then(function (resultado) {{
+          if (resultado.ok) {{
+            form.style.display = 'none';
+            mensajeEl.className = 'mensaje exito';
+            mensajeEl.textContent = (resultado.datos.detail || 'Contraseña actualizada correctamente.') + ' Ya puedes volver a la app e iniciar sesión.';
+          }} else {{
+            boton.disabled = false;
+            mensajeEl.className = 'mensaje error';
+            mensajeEl.textContent = resultado.datos.detail || 'No se pudo cambiar la contraseña.';
+          }}
+        }})
+        .catch(function () {{
+          boton.disabled = false;
+          mensajeEl.className = 'mensaje error';
+          mensajeEl.textContent = 'No se pudo conectar con el servidor. Intenta de nuevo.';
+        }});
+    }});
+  </script>
+</body>
+</html>"""
+    return HttpResponse(html, content_type='text/html; charset=utf-8')
+
+
+def restablecer_contrasena_pagina(request):
+    """Página HTML con formulario para restablecer la contraseña. No hay un
+    frontend web público desplegado (el Angular solo se compila a APK), así
+    que esta página la sirve el propio backend; el formulario llama al mismo
+    endpoint JSON que usa la app (`/api/restablecer-contrasena/`)."""
+    token = request.GET.get('token', '')
+    if not token:
+        return _pagina_verificacion('Enlace inválido', 'Falta el token de restablecimiento.', ok=False)
+    return _pagina_restablecer_contrasena_formulario(token)
 
 
 class CustomTokenObtainPairView(TokenViewBase):

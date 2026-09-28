@@ -50,6 +50,15 @@ export interface MensajeResponse {
   detail: string;
 }
 
+export interface OlvideContrasenaRequest {
+  correo: string;
+}
+
+export interface RestablecerContrasenaRequest {
+  token: string;
+  password: string;
+}
+
 export interface ActualizarUsuarioRequest {
   nombre?: string;
   telefono?: string;

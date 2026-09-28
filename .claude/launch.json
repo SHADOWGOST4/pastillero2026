@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "pillbox-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start", "--prefix", "pillbox-app"],
+      "port": 4200
+    }
+  ]
+}

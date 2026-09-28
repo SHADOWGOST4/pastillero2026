@@ -1,5 +1,7 @@
+import re
 import time as time_module
 from unittest import mock
+from urllib.parse import unquote
 
 from django.core import mail
 from django.test import TestCase
@@ -15,6 +17,7 @@ from datetime import datetime, time, timedelta
 from .models import Usuario, Medicamento, Horario, Dispositivo, Registro_Toma, Modulo, VinculacionMonitor
 from . import verificacion as verificacion_module
 from . import vinculaciones as vinculaciones_module
+from . import restablecer_contrasena as restablecer_contrasena_module
 
 
 @api_view(['GET'])
@@ -1213,4 +1216,134 @@ class VerificacionCorreoTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(len(mail.outbox), 0)
+
+
+class RestablecerContrasenaTests(TestCase):
+    """Flujo de "olvidé mi contraseña": solicitud de correo, restablecimiento
+    con token válido, y rechazo de tokens expirados/usados/inválidos."""
+
+    def setUp(self):
+        self.client = APIClient()
+
+    def _crear_usuario(self, correo, password='PasswordViejo123!', activo=True):
+        return Usuario.objects.create(
+            nombre='Usuario Reset',
+            correo=correo,
+            password=make_password(password),
+            telefono='3130000010',
+            activo=activo,
+        )
+
+    def test_olvide_contrasena_envia_correo_si_usuario_existe(self):
+        usuario = self._crear_usuario('existe.reset@example.com')
+
+        response = self.client.post('/api/olvide-contrasena/', {'correo': usuario.correo}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(usuario.correo, mail.outbox[0].to)
+        self.assertIn('/restablecer-contrasena?token=', mail.outbox[0].body)
+
+    def test_olvide_contrasena_no_revela_si_usuario_no_existe(self):
+        response = self.client.post(
+            '/api/olvide-contrasena/', {'correo': 'no.existe.reset@example.com'}, format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_olvide_contrasena_no_envia_correo_a_usuario_inactivo(self):
+        usuario = self._crear_usuario('inactivo.reset@example.com', activo=False)
+
+        response = self.client.post('/api/olvide-contrasena/', {'correo': usuario.correo}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_restablecer_contrasena_con_token_valido_cambia_password(self):
+        usuario = self._crear_usuario('valido.reset@example.com')
+        token = restablecer_contrasena_module.generar_token_restablecimiento(usuario)
+
+        response = self.client.post(
+            '/api/restablecer-contrasena/', {'token': token, 'password': 'PasswordNuevo456!'}, format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        usuario.refresh_from_db()
+        self.assertTrue(check_password('PasswordNuevo456!', usuario.password))
+        self.assertFalse(check_password('PasswordViejo123!', usuario.password))
+
+        login_viejo = self.client.post(
+            '/api/login/', {'correo': usuario.correo, 'password': 'PasswordViejo123!'}, format='json'
+        )
+        self.assertEqual(login_viejo.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        login_nuevo = self.client.post(
+            '/api/login/', {'correo': usuario.correo, 'password': 'PasswordNuevo456!'}, format='json'
+        )
+        self.assertEqual(login_nuevo.status_code, status.HTTP_200_OK)
+
+    def test_restablecer_contrasena_token_ya_usado_es_rechazado(self):
+        usuario = self._crear_usuario('reutilizado.reset@example.com')
+        token = restablecer_contrasena_module.generar_token_restablecimiento(usuario)
+
+        primera = self.client.post(
+            '/api/restablecer-contrasena/', {'token': token, 'password': 'PasswordNuevo456!'}, format='json'
+        )
+        self.assertEqual(primera.status_code, status.HTTP_200_OK)
+
+        segunda = self.client.post(
+            '/api/restablecer-contrasena/', {'token': token, 'password': 'PasswordOtro789!'}, format='json'
+        )
+        self.assertEqual(segunda.status_code, status.HTTP_400_BAD_REQUEST)
+
+        usuario.refresh_from_db()
+        self.assertTrue(check_password('PasswordNuevo456!', usuario.password))
+
+    def test_restablecer_contrasena_token_expirado_devuelve_400(self):
+        usuario = self._crear_usuario('expirado.reset@example.com')
+        token = restablecer_contrasena_module.generar_token_restablecimiento(usuario)
+
+        with mock.patch.object(restablecer_contrasena_module, 'TOKEN_MAX_AGE', 0):
+            time_module.sleep(1.1)
+            response = self.client.post(
+                '/api/restablecer-contrasena/', {'token': token, 'password': 'PasswordNuevo456!'}, format='json'
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        usuario.refresh_from_db()
+        self.assertTrue(check_password('PasswordViejo123!', usuario.password))
+
+    def test_restablecer_contrasena_token_invalido_devuelve_400(self):
+        response = self.client.post(
+            '/api/restablecer-contrasena/', {'token': 'token-basura', 'password': 'PasswordNuevo456!'}, format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_restablecer_contrasena_sin_token_o_password_devuelve_400(self):
+        response = self.client.post('/api/restablecer-contrasena/', {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_enviar_correo_restablecimiento_codifica_token_con_caracteres_especiales(self):
+        """El payload firmado incluye el hash de la contraseña (base64
+        estándar de Django), que puede traer '+', '/' o '='. Si el enlace del
+        correo no codifica el token, un '+' se interpreta como espacio en el
+        query string y el enlace queda roto (bug real detectado al probar el
+        flujo end-to-end)."""
+        usuario = self._crear_usuario('caracteres.especiales@example.com')
+        usuario.password = 'pbkdf2_sha256$1000000$sal+t/==$abc+def/ghi=='
+        usuario.save(update_fields=['password'])
+
+        restablecer_contrasena_module.enviar_correo_restablecimiento(usuario)
+
+        self.assertEqual(len(mail.outbox), 1)
+        match = re.search(r'token=(\S+)', mail.outbox[0].body)
+        self.assertIsNotNone(match)
+        token_en_enlace = match.group(1)
+
+        self.assertNotIn('+', token_en_enlace)
+
+        token_decodificado = unquote(token_en_enlace)
+        usuario_verificado = restablecer_contrasena_module.verificar_token_restablecimiento(token_decodificado)
+        self.assertEqual(usuario_verificado.id, usuario.id)
 

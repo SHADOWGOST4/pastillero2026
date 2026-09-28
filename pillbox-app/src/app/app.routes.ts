@@ -25,6 +25,16 @@ export const routes: Routes = [
     path: 'verificar-correo',
     loadComponent: () => import('./pages/verificar-correo/verificar-correo').then((m) => m.VerificarCorreo)
   },
+  {
+    path: 'olvide-contrasena',
+    canActivate: [publicOnlyGuard],
+    loadComponent: () => import('./pages/olvide-contrasena/olvide-contrasena').then((m) => m.OlvideContrasena)
+  },
+  {
+    path: 'restablecer-contrasena',
+    loadComponent: () =>
+      import('./pages/restablecer-contrasena/restablecer-contrasena').then((m) => m.RestablecerContrasena)
+  },
 
   {
     path: '',
