@@ -18,11 +18,12 @@ import { Horario } from '../../services/horario';
 import { Medicamento } from '../../services/medicamento';
 import { ModuloService } from '../../services/modulo';
 import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
+import { ConectarEsp32 } from './conectar-esp32/conectar-esp32';
 
 @Component({
   selector: 'app-dispositivo',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, ConfirmModal],
+  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, ConfirmModal, ConectarEsp32],
   templateUrl: './dispositivo.html',
   styleUrl: './dispositivo.css',
 })
@@ -49,6 +50,7 @@ export class Dispositivo implements OnInit {
   horarios: HorarioResponse[] = [];
   asignaciones: Record<number, number | undefined> = {};
   credencialGenerada = '';
+  asistenteAbierto = false;
 
   form: CrearDispositivoRequest = {
     nombre: '',
@@ -320,6 +322,12 @@ export class Dispositivo implements OnInit {
       next: () => (this.successMessage = 'Horario asignado al ESP32.'),
       error: (err) => (this.errorMessage = this.extraerError(err, 'No se pudo asignar el horario.')),
     });
+  }
+
+  onDispositivoConectado(): void {
+    this.asistenteAbierto = false;
+    this.successMessage = 'Pastillero conectado correctamente.';
+    this.cargarDispositivos();
   }
 
   generarCredencial(dispositivoId: number): void {

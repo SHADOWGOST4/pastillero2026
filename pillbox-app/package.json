@@ -34,6 +34,7 @@
     "@angular/material": "^20.2.10",
     "@angular/platform-browser": "^20.3.0",
     "@angular/router": "^20.3.0",
+    "@capacitor-mlkit/barcode-scanning": "^8.2.1",
     "@capacitor/android": "^8.5.1",
     "@capacitor/core": "^8.5.1",
     "@capacitor/local-notifications": "^8.3.1",
