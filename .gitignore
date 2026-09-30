@@ -3,3 +3,4 @@ api_pillbox/.venv/
 pillbox-app/node_modules/
 firmware/esp32_pillbox/secrets.h
 .tools/
+api_pillbox/fabrica_salida/
