@@ -12,7 +12,7 @@ export interface SolicitudAprovisionamiento {
   apiUrl: string;
 }
 
-export type ErrorAprovisionamiento = 'no-encontrado' | 'pop-invalido' | 'wifi' | 'permisos' | 'desconocido';
+export type ErrorAprovisionamiento = 'no-encontrado' | 'pop-invalido' | 'wifi' | 'permisos' | 'bluetooth-apagado' | 'desconocido';
 
 export class AprovisionamientoError extends Error {
   constructor(

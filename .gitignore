@@ -4,3 +4,5 @@ pillbox-app/node_modules/
 firmware/esp32_pillbox/secrets.h
 .tools/
 api_pillbox/fabrica_salida/
+pillbox-app/plugins/*/android/build/
+pillbox-app/plugins/*/android/.gradle/

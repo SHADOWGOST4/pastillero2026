@@ -190,6 +190,8 @@ export class ConectarEsp32 implements OnDestroy {
         return 'No se pudo verificar que estés junto al pastillero. Comprueba que escaneaste el QR de esa placa.';
       case 'wifi':
         return 'El pastillero no pudo conectarse al Wi‑Fi. Revisa el nombre y la contraseña.';
+      case 'bluetooth-apagado':
+        return 'Activa el Bluetooth del teléfono e inténtalo de nuevo.';
       case 'permisos':
         return 'Faltan permisos de Bluetooth. Actívalos en los ajustes de la app.';
       default:
