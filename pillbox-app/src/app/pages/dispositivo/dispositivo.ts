@@ -1,11 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import {
-  ActualizarDispositivoRequest,
-  CrearDispositivoRequest,
   DispositivoResponse,
   ActualizarModuloRequest,
   CrearModuloRequest,
@@ -19,22 +15,23 @@ import { Medicamento } from '../../services/medicamento';
 import { ModuloService } from '../../services/modulo';
 import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
 import { ConectarEsp32 } from './conectar-esp32/conectar-esp32';
+import { EditarDispositivoModal } from './editar-dispositivo-modal/editar-dispositivo-modal';
 
 @Component({
   selector: 'app-dispositivo',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, ConfirmModal, ConectarEsp32],
+  imports: [CommonModule, FormsModule, ConfirmModal, ConectarEsp32, EditarDispositivoModal],
   templateUrl: './dispositivo.html',
   styleUrl: './dispositivo.css',
 })
 export class Dispositivo implements OnInit {
   dispositivos: DispositivoResponse[] = [];
   loading = false;
-  submitting = false;
   errorMessage = '';
   successMessage = '';
-  isEditMode = false;
-  editingId: number | null = null;
+  dispositivoEnEdicion: DispositivoResponse | null = null;
+  guardandoEdicion = false;
+  errorEdicion = '';
   modalEliminarAbierto = false;
   eliminando = false;
   dispositivoPendienteEliminar: number | null = null;
@@ -49,14 +46,8 @@ export class Dispositivo implements OnInit {
   newModuleNumber: number | null = null;
   horarios: HorarioResponse[] = [];
   asignaciones: Record<number, number | undefined> = {};
-  credencialGenerada = '';
   asistenteAbierto = false;
 
-  form: CrearDispositivoRequest = {
-    nombre: '',
-    ip_esp32: '',
-    estado_conexion: false,
-  };
 
   constructor(
     private dispositivoService: DispositivoService,
@@ -222,54 +213,36 @@ export class Dispositivo implements OnInit {
     });
   }
 
-  onSubmit(): void {
-    if (!this.form.nombre.trim()) {
-      this.errorMessage = 'El nombre del dispositivo es obligatorio.';
-      this.successMessage = '';
-      return;
-    }
-
-    const payload: CrearDispositivoRequest & ActualizarDispositivoRequest = {
-      nombre: this.form.nombre.trim(),
-      ip_esp32: this.form.ip_esp32.trim(),
-      estado_conexion: Boolean(this.form.estado_conexion),
-    };
-
-    this.submitting = true;
+  editarDispositivo(dispositivo: DispositivoResponse): void {
+    this.dispositivoEnEdicion = dispositivo;
+    this.errorEdicion = '';
     this.errorMessage = '';
     this.successMessage = '';
+  }
 
-    const request$ =
-      this.isEditMode && this.editingId !== null
-        ? this.dispositivoService.update(this.editingId, payload)
-        : this.dispositivoService.create(payload);
+  cerrarEdicion(): void {
+    if (this.guardandoEdicion) return;
+    this.dispositivoEnEdicion = null;
+    this.errorEdicion = '';
+  }
 
-    request$.subscribe({
+  guardarEdicion(nombre: string): void {
+    const dispositivo = this.dispositivoEnEdicion;
+    if (!dispositivo || this.guardandoEdicion) return;
+    this.guardandoEdicion = true;
+    this.errorEdicion = '';
+    this.dispositivoService.update(dispositivo.id, { nombre }).subscribe({
       next: () => {
-        this.submitting = false;
-        this.successMessage = this.isEditMode
-          ? 'Dispositivo actualizado correctamente.'
-          : 'Dispositivo registrado correctamente.';
-        this.resetForm();
+        this.guardandoEdicion = false;
+        this.dispositivoEnEdicion = null;
+        this.successMessage = 'Dispositivo actualizado correctamente.';
         this.cargarDispositivos();
       },
       error: (err) => {
-        this.submitting = false;
-        this.errorMessage = this.extraerError(err, 'No se pudo guardar el dispositivo.');
+        this.guardandoEdicion = false;
+        this.errorEdicion = this.extraerError(err, 'No se pudo guardar el dispositivo.');
       },
     });
-  }
-
-  editarDispositivo(dispositivo: DispositivoResponse): void {
-    this.isEditMode = true;
-    this.editingId = dispositivo.id;
-    this.form = {
-      nombre: dispositivo.nombre,
-      ip_esp32: dispositivo.ip_esp32,
-      estado_conexion: dispositivo.estado_conexion,
-    };
-    this.errorMessage = '';
-    this.successMessage = '';
   }
 
   eliminarDispositivo(id: number): void {
@@ -292,9 +265,6 @@ export class Dispositivo implements OnInit {
         this.eliminando = false;
         this.cancelarEliminacion();
         this.successMessage = 'Dispositivo eliminado correctamente.';
-        if (this.editingId === id) {
-          this.resetForm();
-        }
         this.cargarDispositivos();
       },
       error: (err) => {
@@ -303,16 +273,6 @@ export class Dispositivo implements OnInit {
         this.errorMessage = this.extraerError(err, 'No se pudo eliminar el dispositivo.');
       },
     });
-  }
-
-  resetForm(): void {
-    this.isEditMode = false;
-    this.editingId = null;
-    this.form = {
-      nombre: '',
-      ip_esp32: '',
-      estado_conexion: false,
-    };
   }
 
   asignarHorario(dispositivoId: number): void {
@@ -328,17 +288,6 @@ export class Dispositivo implements OnInit {
     this.asistenteAbierto = false;
     this.successMessage = 'Pastillero conectado correctamente.';
     this.cargarDispositivos();
-  }
-
-  generarCredencial(dispositivoId: number): void {
-    if (!window.confirm('La credencial anterior dejará de funcionar. ¿Deseas continuar?')) return;
-    this.dispositivoService.generarCredencial(dispositivoId).subscribe({
-      next: (credencial) => {
-        this.credencialGenerada = `DEVICE_ID=${credencial.device_id}\nDEVICE_TOKEN=${credencial.device_token}`;
-        this.successMessage = 'Credencial generada. Cópiala ahora: no volverá a mostrarse.';
-      },
-      error: (err) => (this.errorMessage = this.extraerError(err, 'No se pudo generar la credencial.')),
-    });
   }
 
   private cargarAsignacion(dispositivoId: number): void {

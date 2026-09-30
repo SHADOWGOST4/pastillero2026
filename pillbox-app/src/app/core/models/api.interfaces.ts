@@ -250,11 +250,6 @@ export interface AsignacionDispositivoResponse {
   fecha_actualizacion: string;
 }
 
-export interface CredencialDispositivoResponse {
-  device_id: string;
-  device_token: string;
-}
-
 export interface CrearModuloRequest {
   id_dispositivo: number;
   numero_modulo: number;

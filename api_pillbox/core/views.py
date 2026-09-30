@@ -432,14 +432,6 @@ class DispositivoViewSet(viewsets.ModelViewSet):
         codigo, expira_en = _crear_codigo_enrolamiento(dispositivo)
         return Response(_respuesta_enrolamiento(dispositivo, codigo, expira_en), status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=['post'], url_path='generar-credencial')
-    def generar_credencial(self, request, pk=None):
-        dispositivo = self.get_object()
-        token = secrets.token_urlsafe(32)
-        dispositivo.token_dispositivo_hash = make_password(token)
-        dispositivo.save(update_fields=['token_dispositivo_hash'])
-        return Response({'device_id': str(dispositivo.identificador), 'device_token': token})
-
 
 class MedicamentoViewSet(viewsets.ModelViewSet):
     serializer_class = MedicamentoSerializer

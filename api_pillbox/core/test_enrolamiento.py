@@ -139,3 +139,7 @@ class EnrolamientoTests(TestCase):
     def test_limite_de_peticiones_por_minuto(self):
         codigos = [self.enrolar('x').status_code for _ in range(12)]
         self.assertIn(429, codigos)
+
+    def test_generar_credencial_ya_no_existe(self):
+        dispositivo_id = self.reclamar().data['dispositivo']['id']
+        self.assertEqual(self.client.post(f'/api/dispositivos/{dispositivo_id}/generar-credencial/').status_code, 404)
