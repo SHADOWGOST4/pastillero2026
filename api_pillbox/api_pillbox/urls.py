@@ -31,6 +31,7 @@ urlpatterns = [
     path('api/notificaciones/webpush/unsubscribe/', web_push_unsubscribe, name='web_push_unsubscribe'),
     path('api/notificaciones/fcm/subscribe/', fcm_subscribe, name='fcm_subscribe'),
     path('api/notificaciones/fcm/unsubscribe/', fcm_unsubscribe, name='fcm_unsubscribe'),
+    path('api/iot/enrolar/', iot_enrolar, name='iot_enrolar'),
     path('api/iot/heartbeat/', iot_heartbeat, name='iot_heartbeat'),
     path('api/iot/configuracion/', iot_configuracion, name='iot_configuracion'),
     path('api/iot/tomas/confirmar/', iot_confirmar_toma, name='iot_confirmar_toma'),

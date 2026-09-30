@@ -1,5 +1,8 @@
 /* ESP32 MVP: un compartimiento, LED GPIO 18, botón GPIO 27 y buzzer GPIO 23.
- * Instala ArduinoJson 7 desde el administrador de bibliotecas.
+ * Requiere el core "esp32 by Espressif" 3.3 o superior y ArduinoJson 7.
+ *
+ * Configuración: sin credenciales (o tras mantener el botón 5 s) el ESP32 anuncia BLE y espera a la app
+ * (ver aprovisionamiento.cpp). Con credenciales guardadas opera como pastillero.
  */
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
@@ -7,6 +10,7 @@
 #include <ArduinoJson.h>
 #include <time.h>
 #include "secrets.h"
+#include "aprovisionamiento.h"
 
 constexpr uint8_t LED_PIN = 18, BUTTON_PIN = 27, BUZZER_PIN = 23;
 constexpr unsigned long HEARTBEAT_MS = 30000, CONFIG_MS = 15000;
@@ -19,6 +23,13 @@ unsigned long ultimoEstadoAlarma = 0;
 long ultimaClaveRevisada = -1, ultimaConfirmada = -1, claveAlarma = -1;
 String firmaConfiguracion = "";
 String tomaConfirmadaProgramada = "";
+
+enum class Modo { OPERACION, CONFIGURACION, SIN_IDENTIDAD };
+Modo modo = Modo::CONFIGURACION;
+Credenciales cred;
+IdentidadFabrica identidad;
+constexpr unsigned long RESET_MS = 5000;
+unsigned long inicioPulsacion = 0, ledFijoHasta = 0;
 
 void setAlarma(bool activa) {
   alarma = activa;
@@ -43,8 +54,8 @@ void apagarAlarmaSiLaConfirmoLaWeb() {
 
 bool conectarWifi() {
   if (WiFi.status() == WL_CONNECTED) return true;
-  Serial.printf("[WIFI] Conectando a %s...\n", WIFI_SSID);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.println("[WIFI] Conectando con la red guardada...");
+  WiFi.begin();  // usa la red que dejó el aprovisionamiento
   unsigned long inicio = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - inicio < 10000) delay(250);
   bool conectado = WiFi.status() == WL_CONNECTED;
@@ -54,13 +65,13 @@ bool conectarWifi() {
 }
 
 bool abrir(HTTPClient &http, const String &ruta) {
-  return conectarWifi() && http.begin(tls, String(API_BASE_URL) + ruta);
+  return conectarWifi() && http.begin(tls, cred.apiUrl + ruta);
 }
 
 void headers(HTTPClient &http) {
   http.addHeader("Content-Type", "application/json");
-  http.addHeader("X-Device-Id", DEVICE_ID);
-  http.addHeader("X-Device-Token", DEVICE_TOKEN);
+  http.addHeader("X-Device-Id", cred.deviceId);
+  http.addHeader("X-Device-Token", cred.token);
   http.addHeader("X-Tunnel-Skip-AntiPhishing-Page", "true");
 }
 
@@ -170,10 +181,60 @@ void revisarHorario() {
   }
 }
 
-void setup() {
-  pinMode(LED_PIN, OUTPUT); pinMode(BUZZER_PIN, OUTPUT); pinMode(BUTTON_PIN, INPUT_PULLUP); setAlarma(false);
-  Serial.begin(115200); WiFi.mode(WIFI_STA); tls.setCACert(ROOT_CA); conectarWifi();
-  Serial.println("\n[INICIO] Pastillero ESP32 MVP iniciado.");
+void parpadear(int veces, unsigned long ms) {
+  for (int i = 0; i < veces; i++) {
+    digitalWrite(LED_PIN, HIGH); delay(ms);
+    digitalWrite(LED_PIN, LOW); delay(ms);
+  }
+}
+
+// Patrones del LED durante la configuración (no bloqueantes).
+void actualizarLedConfiguracion() {
+  unsigned long t = millis();
+  bool encendido = false;
+  if (t < ledFijoHasta) {
+    encendido = true;                                   // conexión lograda: fijo
+  } else if (modo == Modo::SIN_IDENTIDAD) {
+    encendido = (t % 2000) < 100 || ((t % 2000) > 200 && (t % 2000) < 300);  // doble destello: falta identidad de fábrica
+  } else {
+    switch (estadoAprovisionamiento()) {
+      case EstadoProv::ESPERANDO: encendido = (t % 2000) < 1000; break;                  // parpadeo lento
+      case EstadoProv::CONECTANDO:
+      case EstadoProv::ENROLANDO: encendido = (t % 400) < 200; break;                    // parpadeo rápido
+      case EstadoProv::ERROR_WIFI:
+      case EstadoProv::ERROR_ENROLAMIENTO: {                                             // 3 destellos y pausa
+        unsigned long f = t % 1600;
+        encendido = f < 900 && (f % 300) < 150;
+        break;
+      }
+      default: break;                                                                    // expirado / listo: apagado
+    }
+  }
+  digitalWrite(LED_PIN, encendido ? HIGH : LOW);
+}
+
+// Mantener el botón 5 s borra Wi-Fi y token y vuelve al modo configuración.
+void reiniciarEnModoConfiguracion(bool reiniciar) {
+  Serial.println("[CONFIG] Restableciendo configuracion.");
+  setAlarma(false);
+  parpadear(3, 100);
+  restablecerConfiguracion();
+  if (reiniciar) { delay(200); ESP.restart(); }
+}
+
+void revisarPulsacionLarga() {
+  if (digitalRead(BUTTON_PIN) == LOW) {
+    if (!inicioPulsacion) inicioPulsacion = millis();
+    else if (millis() - inicioPulsacion >= RESET_MS) reiniciarEnModoConfiguracion(true);
+  } else {
+    inicioPulsacion = 0;
+  }
+}
+
+void iniciarOperacion() {
+  modo = Modo::OPERACION;
+  tls.setCACert(ROOT_CA);
+  Serial.println("[INICIO] Pastillero en operacion normal.");
   configTime(-5*3600, 0, "pool.ntp.org", "time.nist.gov");
   Serial.println("[NTP] Sincronizando hora antes de conectar por HTTPS...");
   struct tm horaNtp;
@@ -187,7 +248,51 @@ void setup() {
   ultimoHeartbeat = millis() - HEARTBEAT_MS; ultimaConfig = millis() - CONFIG_MS;
 }
 
+void setup() {
+  pinMode(LED_PIN, OUTPUT); pinMode(BUZZER_PIN, OUTPUT); pinMode(BUTTON_PIN, INPUT_PULLUP); setAlarma(false);
+  Serial.begin(115200); WiFi.mode(WIFI_STA);
+  Serial.println("\n[INICIO] Pastillero ESP32 iniciado.");
+
+  // Botón mantenido al encender: mismo efecto que la pulsación larga, sin reiniciar de nuevo.
+  if (digitalRead(BUTTON_PIN) == LOW) {
+    unsigned long inicio = millis();
+    while (digitalRead(BUTTON_PIN) == LOW && millis() - inicio < RESET_MS) delay(20);
+    if (digitalRead(BUTTON_PIN) == LOW) reiniciarEnModoConfiguracion(false);
+  }
+
+  if (!cargarIdentidadFabrica(identidad)) {
+    modo = Modo::SIN_IDENTIDAD;
+    Serial.println("[ERROR] Falta la identidad de fabrica en NVS (device_id, ble_name, salt, verifier).");
+    return;
+  }
+  if (cargarCredenciales(cred) && hayWifiGuardado()) {
+    iniciarOperacion();
+  } else {
+    modo = Modo::CONFIGURACION;
+    iniciarAprovisionamiento(identidad);
+  }
+}
+
 void loop() {
+  revisarPulsacionLarga();
+
+  if (modo != Modo::OPERACION) {
+    if (modo == Modo::CONFIGURACION) {
+      procesarAprovisionamiento(ROOT_CA);
+      if (estadoAprovisionamiento() == EstadoProv::LISTO && cargarCredenciales(cred)) {
+        ledFijoHasta = millis() + 3000;
+        iniciarOperacion();
+        return;
+      }
+    }
+    actualizarLedConfiguracion();
+    delay(10);
+    return;
+  }
+
+  if (millis() < ledFijoHasta) digitalWrite(LED_PIN, HIGH);
+  else if (!alarma) digitalWrite(LED_PIN, LOW);
+
   unsigned long ahora = millis();
   if (ahora-ultimoHeartbeat >= HEARTBEAT_MS) { ultimoHeartbeat=ahora; heartbeat(); }
   if (ahora-ultimaConfig >= CONFIG_MS) { ultimaConfig=ahora; obtenerConfiguracion(); }

@@ -46,6 +46,35 @@ class Dispositivo(models.Model):
         return self.nombre
 
 
+class DispositivoFabrica(models.Model):
+    """Identificador de un ESP32 fabricado y aún no reclamado por ningún usuario.
+
+    El QR de la placa contiene este UUID. Al escanearlo, la app lo reclama y se
+    crea el `Dispositivo` del usuario; sin registro aquí nadie puede reclamarlo.
+    """
+    identificador = models.UUIDField(unique=True)
+    creado_en = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return str(self.identificador)
+
+
+class EnrolamientoDispositivo(models.Model):
+    """Código temporal de un solo uso para que el ESP32 obtenga su token final."""
+    VIGENCIA_MINUTOS = 10
+    MAX_INTENTOS = 5
+
+    dispositivo = models.ForeignKey(Dispositivo, on_delete=models.CASCADE, related_name='enrolamientos')
+    codigo_hash = models.CharField(max_length=64)
+    creado_en = models.DateTimeField(default=timezone.now)
+    expira_en = models.DateTimeField()
+    usado_en = models.DateTimeField(null=True, blank=True)
+    intentos_fallidos = models.PositiveSmallIntegerField(default=0)
+
+    def __str__(self):
+        return f"Enrolamiento de {self.dispositivo.nombre}"
+
+
 class Medicamento(models.Model):
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(blank=True)

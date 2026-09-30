@@ -30,3 +30,8 @@ una carpeta fuera del repo — ver conversación/README de deploy).
   Esto sobreescribe `android/app/src/main/res/mipmap-*` (íconos) y
   `drawable*/splash.png` (splash screen). Después, `./gradlew assembleDebug`
   como siempre.
+
+- **Plugin BLE (`plugins/capacitor-esp-provisioning`)**: para conectar el ESP32 la app usa un plugin
+  nativo propio. Después de `npm install` y `npx cap sync android`, añade JitPack a
+  `allprojects.repositories` del `build.gradle` raíz del proyecto Android
+  (`maven { url 'https://jitpack.io' }`). Detalles en el README del plugin.

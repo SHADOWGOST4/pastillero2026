@@ -1,4 +1,8 @@
+import hashlib
+import hmac
 import json
+import secrets
+import uuid
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -12,17 +16,20 @@ from django.utils import timezone
 from django.utils.html import escape
 
 from rest_framework import serializers, status, viewsets
-from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.decorators import api_view, permission_classes, action, throttle_classes
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated, SAFE_METHODS
 from rest_framework.response import Response
+from rest_framework.throttling import SimpleRateThrottle
 from rest_framework_simplejwt.views import TokenViewBase
 
 from . import restablecer_contrasena, verificacion, vinculaciones
 from .inventory import calcular_cobertura_medicamento
 from .models import (
     Dispositivo,
+    DispositivoFabrica,
+    EnrolamientoDispositivo,
     EventoDispositivo,
     FcmSubscription,
     Horario,
@@ -394,9 +401,39 @@ class DispositivoViewSet(viewsets.ModelViewSet):
         serializer.save(dispositivo=dispositivo)
         return Response(serializer.data, status=status.HTTP_200_OK if asignacion else status.HTTP_201_CREATED)
 
+    @action(detail=False, methods=['post'], url_path='reclamar')
+    def reclamar(self, request):
+        """Vincula al usuario el ESP32 cuyo QR escaneó y devuelve un código de enrolamiento."""
+        try:
+            identificador = uuid.UUID(str(request.data.get('device_id', '')))
+        except ValueError:
+            return Response({'detail': 'device_id inválido.'}, status=status.HTTP_400_BAD_REQUEST)
+        nombre = str(request.data.get('nombre') or 'Mi pastillero').strip()[:100] or 'Mi pastillero'
+        with transaction.atomic():
+            dispositivo = Dispositivo.objects.filter(identificador=identificador).first()
+            if dispositivo is None:
+                if not DispositivoFabrica.objects.filter(identificador=identificador).exists():
+                    return Response({'detail': DISPOSITIVO_NO_DISPONIBLE}, status=status.HTTP_404_NOT_FOUND)
+                dispositivo = Dispositivo.objects.create(
+                    nombre=nombre, identificador=identificador, id_usuario=request.user,
+                )
+            elif dispositivo.id_usuario_id != request.user.id:
+                return Response({'detail': DISPOSITIVO_NO_DISPONIBLE}, status=status.HTTP_404_NOT_FOUND)
+            codigo, expira_en = _crear_codigo_enrolamiento(dispositivo)
+        return Response({
+            'dispositivo': DispositivoSerializer(dispositivo).data,
+            **_respuesta_enrolamiento(dispositivo, codigo, expira_en),
+        }, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='enrolamiento')
+    def enrolamiento(self, request, pk=None):
+        """Genera un nuevo código temporal (p. ej. al cambiar de red Wi-Fi o si venció)."""
+        dispositivo = self.get_object()
+        codigo, expira_en = _crear_codigo_enrolamiento(dispositivo)
+        return Response(_respuesta_enrolamiento(dispositivo, codigo, expira_en), status=status.HTTP_201_CREATED)
+
     @action(detail=True, methods=['post'], url_path='generar-credencial')
     def generar_credencial(self, request, pk=None):
-        import secrets
         dispositivo = self.get_object()
         token = secrets.token_urlsafe(32)
         dispositivo.token_dispositivo_hash = make_password(token)
@@ -758,6 +795,36 @@ def fcm_unsubscribe(request):
     return Response({'ok': True, 'deleted': deleted > 0}, status=status.HTTP_200_OK)
 
 
+DISPOSITIVO_NO_DISPONIBLE = 'Dispositivo no disponible.'
+ENROLAMIENTO_INVALIDO = 'Código de enrolamiento inválido o vencido.'
+
+
+def _hash_codigo(codigo):
+    # El código ya tiene alta entropía y vive minutos: SHA-256 basta y permite comparar rápido.
+    return hashlib.sha256(codigo.encode()).hexdigest()
+
+
+def _crear_codigo_enrolamiento(dispositivo):
+    ahora = timezone.now()
+    with transaction.atomic():
+        # Solo un código pendiente a la vez: al pedir uno nuevo, los anteriores dejan de servir.
+        dispositivo.enrolamientos.filter(usado_en__isnull=True).update(usado_en=ahora)
+        codigo = secrets.token_urlsafe(24)
+        expira_en = ahora + timedelta(minutes=EnrolamientoDispositivo.VIGENCIA_MINUTOS)
+        EnrolamientoDispositivo.objects.create(
+            dispositivo=dispositivo, codigo_hash=_hash_codigo(codigo), expira_en=expira_en,
+        )
+    return codigo, expira_en
+
+
+def _respuesta_enrolamiento(dispositivo, codigo, expira_en):
+    return {
+        'device_id': str(dispositivo.identificador),
+        'enrollment_code': codigo,
+        'expira_en': expira_en.isoformat(),
+    }
+
+
 def autenticar_dispositivo(request):
     identificador = request.headers.get('X-Device-Id', '')
     token = request.headers.get('X-Device-Token', '')
@@ -921,3 +988,50 @@ def proximos_horarios(request):
         del item['_prox_dt']
 
     return Response(resultado, status=status.HTTP_200_OK)
+
+
+class EnrolarThrottle(SimpleRateThrottle):
+    scope = 'iot_enrolar'
+
+    def get_cache_key(self, request, view):
+        return self.cache_format % {'scope': self.scope, 'ident': self.get_ident(request)}
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@throttle_classes([EnrolarThrottle])
+def iot_enrolar(request):
+    """El ESP32 canjea el código temporal por su token definitivo (una sola vez)."""
+    codigo = request.data.get('enrollment_code')
+    if not isinstance(codigo, str) or not codigo:
+        return Response({'detail': ENROLAMIENTO_INVALIDO}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        identificador = uuid.UUID(str(request.data.get('device_id', '')))
+    except ValueError:
+        return Response({'detail': ENROLAMIENTO_INVALIDO}, status=status.HTTP_400_BAD_REQUEST)
+    ahora = timezone.now()
+    with transaction.atomic():
+        enrolamiento = (
+            EnrolamientoDispositivo.objects.select_for_update()
+            .filter(
+                dispositivo__identificador=identificador,
+                usado_en__isnull=True,
+                expira_en__gt=ahora,
+                intentos_fallidos__lt=EnrolamientoDispositivo.MAX_INTENTOS,
+            )
+            .select_related('dispositivo')
+            .order_by('-creado_en')
+            .first()
+        )
+        if enrolamiento is not None and hmac.compare_digest(enrolamiento.codigo_hash, _hash_codigo(codigo)):
+            token = secrets.token_urlsafe(32)
+            dispositivo = enrolamiento.dispositivo
+            dispositivo.token_dispositivo_hash = make_password(token)
+            dispositivo.save(update_fields=['token_dispositivo_hash'])
+            enrolamiento.usado_en = ahora
+            enrolamiento.save(update_fields=['usado_en'])
+            return Response({'device_token': token})
+        if enrolamiento is not None:
+            enrolamiento.intentos_fallidos += 1
+            enrolamiento.save(update_fields=['intentos_fallidos'])
+    return Response({'detail': ENROLAMIENTO_INVALIDO}, status=status.HTTP_400_BAD_REQUEST)

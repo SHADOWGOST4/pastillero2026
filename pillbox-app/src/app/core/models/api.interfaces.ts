@@ -321,3 +321,13 @@ export interface PaginatedResponse<T> {
   results: T[];
   page_size?: number;
 }
+
+export interface EnrolamientoResponse {
+  device_id: string;
+  enrollment_code: string;
+  expira_en: string;
+}
+
+export interface ReclamarDispositivoResponse extends EnrolamientoResponse {
+  dispositivo: DispositivoResponse;
+}

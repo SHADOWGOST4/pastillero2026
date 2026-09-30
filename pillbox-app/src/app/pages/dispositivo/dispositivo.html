@@ -5,11 +5,21 @@
       <h1>Mi pastillero</h1>
       <p class="page-intro">Consulta el estado de tu dispositivo inteligente.</p>
     </div>
+    <button type="button" class="btn btn-primary refresh-button" (click)="asistenteAbierto = true" *ngIf="!asistenteAbierto">
+      <span class="material-icons" aria-hidden="true">bluetooth_searching</span>
+      Conectar ESP32
+    </button>
     <button type="button" class="btn btn-primary refresh-button" (click)="cargarDispositivos()">
       <span class="material-icons" aria-hidden="true">refresh</span>
       Actualizar estado
     </button>
   </header>
+
+  <app-conectar-esp32
+    *ngIf="asistenteAbierto"
+    (conectado)="onDispositivoConectado()"
+    (cancelado)="asistenteAbierto = false"
+  ></app-conectar-esp32>
 
   <section class="form-card" [class.form-card-editing]="isEditMode">
     <div class="section-header">

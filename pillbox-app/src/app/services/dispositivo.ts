@@ -8,6 +8,8 @@ import {
   CredencialDispositivoResponse,
   CrearDispositivoRequest,
   DispositivoResponse,
+  EnrolamientoResponse,
+  ReclamarDispositivoResponse,
 } from '../core/models/api.interfaces';
 
 @Injectable({
@@ -48,5 +50,13 @@ export class DispositivoService {
 
   generarCredencial(id: number): Observable<CredencialDispositivoResponse> {
     return this.http.post<CredencialDispositivoResponse>(`${this.apiUrl}${id}/generar-credencial/`, {});
+  }
+
+  reclamar(device_id: string, nombre?: string): Observable<ReclamarDispositivoResponse> {
+    return this.http.post<ReclamarDispositivoResponse>(`${this.apiUrl}reclamar/`, { device_id, nombre });
+  }
+
+  crearEnrolamiento(id: number): Observable<EnrolamientoResponse> {
+    return this.http.post<EnrolamientoResponse>(`${this.apiUrl}${id}/enrolamiento/`, {});
   }
 }
