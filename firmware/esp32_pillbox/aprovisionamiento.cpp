@@ -14,7 +14,10 @@ constexpr char NS_FABRICA[] = "factory";
 constexpr char NS_CONFIG[] = "pillbox";
 constexpr char ENDPOINT_DATOS[] = "custom-data";
 constexpr unsigned long TIEMPO_MAXIMO_MS = 10UL * 60UL * 1000UL;
-constexpr int INTENTOS_ENROLAMIENTO = 3;
+// El BLE retiene memoria hasta que el administrador de aprovisionamiento se detiene; mientras tanto el
+// TLS puede fallar con "Memory allocation failed". Se reintenta ~40 s para esperar a que se libere.
+constexpr int INTENTOS_ENROLAMIENTO = 8;
+constexpr unsigned long PAUSA_ENROLAMIENTO_MS = 5000;
 
 // La API de protocomm conserva estos punteros mientras dura el aprovisionamiento.
 IdentidadFabrica identidad;
@@ -83,6 +86,7 @@ bool sincronizarHora() {
 
 // Canjea el código temporal por el token definitivo y lo guarda en NVS.
 bool enrolar(const char *rootCa) {
+  Serial.printf("[ENROL] Memoria libre: %u, bloque mayor: %u\n", ESP.getFreeHeap(), ESP.getMaxAllocHeap());
   WiFiClientSecure tls;
   tls.setCACert(rootCa);
   HTTPClient http;
@@ -193,7 +197,7 @@ void procesarAprovisionamiento(const char *rootCa) {
     if (sincronizarHora()) {
       for (int i = 0; i < INTENTOS_ENROLAMIENTO && !ok; i++) {
         ok = enrolar(rootCa);
-        if (!ok) delay(3000);
+        if (!ok) delay(PAUSA_ENROLAMIENTO_MS);
       }
     } else {
       Serial.println("[NTP] Sin hora; HTTPS no es posible.");
