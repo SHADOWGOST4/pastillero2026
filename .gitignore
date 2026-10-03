@@ -6,3 +6,6 @@ firmware/esp32_pillbox/secrets.h
 api_pillbox/fabrica_salida/
 pillbox-app/plugins/*/android/build/
 pillbox-app/plugins/*/android/.gradle/
+
+# Identidades de fabrica (contienen el PoP)
+fabrica_salida/
