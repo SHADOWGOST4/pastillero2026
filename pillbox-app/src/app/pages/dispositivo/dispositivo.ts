@@ -44,6 +44,7 @@ export class Dispositivo implements OnInit {
   selectedModuleId: number | null = null;
   selectedMedicationId: number | null = null;
   newModuleNumber: number | null = null;
+  mostrarFormModulo = false;
   horarios: HorarioResponse[] = [];
   asignaciones: Record<number, number | undefined> = {};
   asistenteAbierto = false;
@@ -118,12 +119,37 @@ export class Dispositivo implements OnInit {
     this.selectedMedicationId = null;
     this.moduloErrorMessage = '';
     this.moduloSuccessMessage = '';
+    this.cancelarFormModulo();
   }
 
   get modulosDelDispositivo(): ModuloResponse[] {
     return this.modulos
       .filter((modulo) => modulo.id_dispositivo === this.selectedDeviceId)
       .sort((a, b) => a.numero_modulo - b.numero_modulo);
+  }
+
+  get resumenModulos(): string {
+    const modulos = this.modulosDelDispositivo;
+    const total = modulos.length;
+    if (total === 0) return '0 módulos configurados';
+    const ocupados = modulos.filter((modulo) => modulo.id_medicamento !== null).length;
+    const disponibles = total - ocupados;
+    return [
+      `${total} ${total === 1 ? 'módulo configurado' : 'módulos configurados'}`,
+      `${ocupados} ${ocupados === 1 ? 'ocupado' : 'ocupados'}`,
+      `${disponibles} ${disponibles === 1 ? 'disponible' : 'disponibles'}`,
+    ].join(' · ');
+  }
+
+  abrirFormModulo(): void {
+    this.mostrarFormModulo = true;
+    this.moduloErrorMessage = '';
+    this.moduloSuccessMessage = '';
+  }
+
+  cancelarFormModulo(): void {
+    this.mostrarFormModulo = false;
+    this.newModuleNumber = null;
   }
 
   get medicamentosDisponibles(): MedicamentoResponse[] {
@@ -179,7 +205,7 @@ export class Dispositivo implements OnInit {
     };
     this.moduloService.create(payload).subscribe({
       next: () => {
-        this.newModuleNumber = null;
+        this.cancelarFormModulo();
         this.moduloSuccessMessage = 'Módulo creado correctamente.';
         this.moduloErrorMessage = '';
         this.cargarModulos();
@@ -279,7 +305,7 @@ export class Dispositivo implements OnInit {
     const horarioId = this.asignaciones[dispositivoId];
     if (!horarioId) return;
     this.dispositivoService.asignarHorario(dispositivoId, horarioId).subscribe({
-      next: () => (this.successMessage = 'Horario asignado al ESP32.'),
+      next: () => (this.successMessage = 'Horario asignado al pastillero.'),
       error: (err) => (this.errorMessage = this.extraerError(err, 'No se pudo asignar el horario.')),
     });
   }
