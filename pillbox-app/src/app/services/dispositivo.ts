@@ -5,7 +5,6 @@ import { environment } from '../../environments/environment';
 import {
   ActualizarDispositivoRequest,
   AsignacionDispositivoResponse,
-  CredencialDispositivoResponse,
   CrearDispositivoRequest,
   DispositivoResponse,
   EnrolamientoResponse,
@@ -48,9 +47,6 @@ export class DispositivoService {
     return this.http.put<AsignacionDispositivoResponse>(`${this.apiUrl}${id}/asignacion/`, { id_horario });
   }
 
-  generarCredencial(id: number): Observable<CredencialDispositivoResponse> {
-    return this.http.post<CredencialDispositivoResponse>(`${this.apiUrl}${id}/generar-credencial/`, {});
-  }
 
   reclamar(device_id: string, nombre?: string): Observable<ReclamarDispositivoResponse> {
     return this.http.post<ReclamarDispositivoResponse>(`${this.apiUrl}reclamar/`, { device_id, nombre });

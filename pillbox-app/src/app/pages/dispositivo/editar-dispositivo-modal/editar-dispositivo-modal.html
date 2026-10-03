@@ -1,0 +1,50 @@
+<div *ngIf="visible" class="modal-backdrop" (click)="!busy && closed.emit()">
+  <section
+    class="edit-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="editar-dispositivo-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="edit-modal-header">
+      <span class="modal-icon material-icons" aria-hidden="true">edit</span>
+      <div>
+        <p class="modal-overline">Actualizar dispositivo</p>
+        <h2 id="editar-dispositivo-title">Editar pastillero</h2>
+      </div>
+      <button type="button" class="modal-close" (click)="closed.emit()" [disabled]="busy" aria-label="Cerrar">×</button>
+    </header>
+
+    <form (ngSubmit)="guardar()" novalidate>
+      <div class="edit-modal-body">
+        <label class="form-label" for="editar-dispositivo-nombre">Nombre</label>
+        <input
+          id="editar-dispositivo-nombre"
+          class="form-control"
+          [class.is-invalid]="intentado && !nombreValido"
+          type="text"
+          name="nombre"
+          maxlength="100"
+          autocomplete="off"
+          placeholder="Ej. Pastillero principal"
+          [(ngModel)]="nombre"
+          [disabled]="busy"
+          required
+        />
+        <div class="invalid-feedback" *ngIf="intentado && !nombreValido">El nombre es obligatorio.</div>
+        <small class="field-help">
+          Es lo único que puedes cambiar. La conexión, la IP y la versión las informa el propio ESP32.
+        </small>
+
+        <div *ngIf="error" class="alert alert-danger mt-3 mb-0" role="alert">{{ error }}</div>
+      </div>
+
+      <footer class="edit-modal-footer">
+        <button type="button" class="btn modal-cancel" (click)="closed.emit()" [disabled]="busy">Cancelar</button>
+        <button type="submit" class="btn btn-primary" [disabled]="busy">
+          <span *ngIf="busy" class="modal-spinner" aria-hidden="true"></span>{{ busy ? 'Guardando...' : 'Guardar cambios' }}
+        </button>
+      </footer>
+    </form>
+  </section>
+</div>

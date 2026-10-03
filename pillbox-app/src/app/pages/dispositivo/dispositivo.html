@@ -21,97 +21,14 @@
     (cancelado)="asistenteAbierto = false"
   ></app-conectar-esp32>
 
-  <section class="form-card" [class.form-card-editing]="isEditMode">
-    <div class="section-header">
-      <div>
-        <p class="section-kicker">{{ isEditMode ? 'Actualizar dispositivo' : 'Vinculación' }}</p>
-        <h2>{{ isEditMode ? 'Editar pastillero' : 'Registrar pastillero' }}</h2>
-      </div>
-      <span class="edit-indicator" *ngIf="isEditMode">
-        <span class="material-icons" aria-hidden="true">edit</span>
-        Editando
-      </span>
-    </div>
-
-    <form #dispositivoForm="ngForm" (ngSubmit)="onSubmit()" novalidate>
-      <div class="form-grid">
-        <div class="field">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Nombre</mat-label>
-            <input
-              matInput
-              id="dispositivo-nombre"
-              type="text"
-              [(ngModel)]="form.nombre"
-              #nombre="ngModel"
-              name="nombre"
-              placeholder="Ej. Pastillero principal"
-              required
-            />
-            <mat-hint>Un nombre para identificar tu pastillero.</mat-hint>
-            <mat-error *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)">El nombre es obligatorio.</mat-error>
-          </mat-form-field>
-        </div>
-
-        <div class="field">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>IP detectada (opcional)</mat-label>
-            <input
-              matInput
-              id="dispositivo-ip"
-              type="text"
-              [(ngModel)]="form.ip_esp32"
-              #ip="ngModel"
-              name="ip_esp32"
-              placeholder="Ej. 192.168.1.100"
-              autocomplete="off"
-            />
-            <mat-hint>La conexión real se verifica mediante el latido del ESP32.</mat-hint>
-          </mat-form-field>
-        </div>
-
-        <div class="connection-field">
-          <label class="switch-label" for="dispositivo-estado">Estado de conexión</label>
-          <label class="connection-switch">
-            <input
-              id="dispositivo-estado"
-              type="checkbox"
-              role="switch"
-              [(ngModel)]="form.estado_conexion"
-              name="estado_conexion"
-            />
-            <span class="switch-track" aria-hidden="true"></span>
-            <span>{{ form.estado_conexion ? 'Conectado' : 'Desconectado' }}</span>
-          </label>
-          <small class="field-help">El estado se actualiza automáticamente con el latido del ESP32.</small>
-        </div>
-      </div>
-
-      <div class="form-actions">
-        <button type="button" *ngIf="isEditMode" class="btn btn-outline-secondary" (click)="resetForm()">Cancelar</button>
-        <button type="submit" class="btn btn-primary save-button" [disabled]="submitting">
-          <span class="material-icons" aria-hidden="true" *ngIf="!submitting">save</span>
-          <span class="loading-dot" aria-hidden="true" *ngIf="submitting"></span>
-          {{ submitting ? 'Guardando...' : 'Guardar dispositivo' }}
-        </button>
-      </div>
-    </form>
-
-    <div *ngIf="errorMessage" class="alert alert-danger feedback" role="alert">
-      <span class="material-icons" aria-hidden="true">error_outline</span>
-      <span>{{ errorMessage }}</span>
-    </div>
-    <div *ngIf="successMessage" class="alert alert-success feedback" role="status">
-      <span class="material-icons" aria-hidden="true">check_circle</span>
-      <span>{{ successMessage }}</span>
-    </div>
-    <div *ngIf="credencialGenerada" class="alert alert-warning feedback" role="alert">
-      <div>
-        <strong>Guarda estos datos en <code>firmware/esp32_pillbox/secrets.h</code>.</strong>
-        <textarea class="form-control mt-2" rows="3" readonly>{{ credencialGenerada }}</textarea>
-      </div>
-    </div>
-  </section>
+  <div *ngIf="errorMessage" class="alert alert-danger feedback" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    <span>{{ errorMessage }}</span>
+  </div>
+  <div *ngIf="successMessage" class="alert alert-success feedback" role="status">
+    <span class="material-icons" aria-hidden="true">check_circle</span>
+    <span>{{ successMessage }}</span>
+  </div>
 
   <section class="devices-section">
     <div class="section-header list-header">
@@ -130,10 +47,10 @@
     <div *ngIf="!loading && dispositivos.length === 0" class="state-message empty-state">
       <span class="empty-icon material-icons" aria-hidden="true">devices</span>
       <h3>No tienes un pastillero conectado</h3>
-      <p>Registra tu dispositivo para consultar aquí su estado y dirección de conexión.</p>
-      <button type="button" class="btn btn-primary" (click)="resetForm()">
-        <span class="material-icons" aria-hidden="true">add_link</span>
-        Registrar pastillero
+      <p>Conecta tu dispositivo escaneando el código QR de la placa para consultar aquí su estado.</p>
+      <button type="button" class="btn btn-primary" (click)="asistenteAbierto = true">
+        <span class="material-icons" aria-hidden="true">bluetooth_searching</span>
+        Conectar ESP32
       </button>
     </div>
 
@@ -183,10 +100,6 @@
           <button type="button" class="btn btn-sm action-button action-edit" (click)="editarDispositivo(dispositivo)">
             <span class="material-icons" aria-hidden="true">edit</span>
             Editar
-          </button>
-          <button type="button" class="btn btn-sm action-button action-view" (click)="generarCredencial(dispositivo.id)">
-            <span class="material-icons" aria-hidden="true">key</span>
-            Credencial
           </button>
           <button type="button" class="btn btn-sm action-button action-view" (click)="seleccionarDispositivo(dispositivo.id)">
             <span class="material-icons" aria-hidden="true">view_module</span>
@@ -294,4 +207,13 @@
   variant="device"
   (closed)="cancelarEliminacion()"
   (confirmed)="confirmarEliminacion()"
+/>
+
+<app-editar-dispositivo-modal
+  [visible]="dispositivoEnEdicion !== null"
+  [dispositivo]="dispositivoEnEdicion"
+  [busy]="guardandoEdicion"
+  [error]="errorEdicion"
+  (closed)="cerrarEdicion()"
+  (saved)="guardarEdicion($event)"
 />
