@@ -74,6 +74,7 @@
             <th>Fecha programada</th>
             <th>Fecha realizada</th>
             <th>Estado</th>
+            <th>Confirmación</th>
           </tr>
         </thead>
         <tbody>
@@ -96,6 +97,16 @@
                 <span class="material-icons" aria-hidden="true">{{ registro.fecha_hora_real ? 'check' : 'schedule' }}</span>
                 {{ registro.fecha_hora_real ? 'Realizada' : 'Pendiente' }}
               </span>
+            </td>
+            <td>
+              <ng-container *ngIf="descripcionMetodo(registro) as metodo">
+                <span class="method-badge" [ngClass]="'method-' + metodo.nivel">
+                  <span class="material-icons" aria-hidden="true">{{ metodo.icono }}</span>
+                  {{ metodo.texto }}
+                </span>
+                <small class="method-module" *ngIf="registro.modulo_numero">Módulo {{ registro.modulo_numero }}</small>
+              </ng-container>
+              <span *ngIf="!registro.metodo_confirmacion" class="muted">—</span>
             </td>
           </tr>
         </tbody>
@@ -123,6 +134,18 @@
           <div>
             <dt>Fecha realizada</dt>
             <dd>{{ registro.fecha_hora_real ? (registro.fecha_hora_real | date: 'dd/MM/yyyy HH:mm') : 'Pendiente' }}</dd>
+          </div>
+          <div *ngIf="registro.metodo_confirmacion">
+            <dt>Confirmación</dt>
+            <dd>
+              <ng-container *ngIf="descripcionMetodo(registro) as metodo">
+                <span class="method-badge" [ngClass]="'method-' + metodo.nivel">
+                  <span class="material-icons" aria-hidden="true">{{ metodo.icono }}</span>
+                  {{ metodo.texto }}
+                </span>
+                <small class="method-module" *ngIf="registro.modulo_numero">Módulo {{ registro.modulo_numero }}</small>
+              </ng-container>
+            </dd>
           </div>
         </dl>
       </article>

@@ -1,0 +1,104 @@
+.module-card {
+  display: flex;
+  min-height: 9rem;
+  flex-direction: column;
+  padding: 1rem;
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius-md);
+  background: #eff6ff;
+}
+
+.module-card.module-occupied {
+  border-color: #bbf7d0;
+  background: var(--success-soft);
+}
+
+.module-card.module-offline {
+  border-style: dashed;
+  opacity: 0.8;
+}
+
+.module-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.module-connection {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  color: var(--success);
+  background: #dcfce7;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.module-connection.is-offline {
+  color: var(--text-secondary);
+  background: #e2e8f0;
+}
+
+.status-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.module-note {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0.4rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.module-note .material-icons {
+  font-size: 1rem;
+}
+
+.module-medication {
+  flex: 1;
+  margin: 0.6rem 0 0;
+  color: var(--text-primary);
+}
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 0;
+  margin-top: 0.75rem;
+  border: 1px solid;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.action-assign {
+  border-color: #2563eb;
+  background: #2563eb;
+}
+
+.action-assign:hover,
+.action-assign:focus-visible {
+  border-color: #1d4ed8;
+  background: #1d4ed8;
+}
+
+.action-unassign {
+  border-color: #dc2626;
+  background: #dc2626;
+}
+
+.action-unassign:hover,
+.action-unassign:focus-visible {
+  border-color: #b91c1c;
+  background: #b91c1c;
+}

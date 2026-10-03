@@ -12,9 +12,10 @@ const DISPOSITIVO: DispositivoResponse = {
   ultimo_latido: null, version_firmware: '', rssi: null, id_usuario: 1,
 };
 
-const modulo = (id: number, medicamento: string | null): ModuloResponse => ({
+const modulo = (id: number, medicamento: string | null, detectado = true): ModuloResponse => ({
   id, id_dispositivo: 3, dispositivo_nombre: 'Mi pastillero', numero_modulo: id,
   id_medicamento: medicamento ? id : null, medicamento_nombre: medicamento,
+  detectado, ultimo_visto: null, tapa_abierta: null,
 });
 
 describe('Dispositivo', () => {
@@ -23,6 +24,7 @@ describe('Dispositivo', () => {
   let modulos: ModuloResponse[];
   let dispositivos: DispositivoResponse[];
   let asignacion: Observable<unknown>;
+  let getEventos: jasmine.Spy;
 
   const texto = () => (fixture.nativeElement as HTMLElement).textContent ?? '';
   const botones = () => Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'));
@@ -38,6 +40,7 @@ describe('Dispositivo', () => {
             getAll: () => of(dispositivos),
             getAsignacion: () => asignacion,
             asignarHorario: () => of({}),
+            getEventos,
           },
         },
         {
@@ -65,6 +68,7 @@ describe('Dispositivo', () => {
     modulos = [];
     dispositivos = [DISPOSITIVO];
     asignacion = of({ id_horario: 9 });
+    getEventos = jasmine.createSpy('getEventos').and.returnValue(of([]));
   });
 
   it('se crea', async () => {
@@ -129,11 +133,77 @@ describe('Dispositivo', () => {
     });
   });
 
+
+  describe('pastillero modular', () => {
+    const tarjetas = () => (fixture.nativeElement as HTMLElement).querySelectorAll('app-modulo-card');
+    const selectorHorario = () => (fixture.nativeElement as HTMLElement).querySelector('#horario-3');
+
+    it('un dispositivo con módulos detectados no pide un horario: salen de cada módulo', async () => {
+      modulos = [modulo(1, 'Ibuprofeno')];
+      await crear();
+      expect(component.esModular(3)).toBeTrue();
+      expect(selectorHorario()).toBeNull();
+      expect(texto()).toContain('Los horarios salen de los medicamentos de cada módulo');
+      expect(texto()).not.toContain('Asignar horario');
+    });
+
+    it('sin módulos detectados conserva el selector de horario del compartimento único', async () => {
+      modulos = [modulo(1, null, false)];
+      await crear();
+      expect(component.esModular(3)).toBeFalse();
+      expect(selectorHorario()).not.toBeNull();
+      expect(texto()).toContain('Asignar horario');
+    });
+
+    it('dibuja una tarjeta por módulo', async () => {
+      modulos = [modulo(1, 'Ibuprofeno'), modulo(2, null)];
+      await crear();
+      expect(tarjetas().length).toBe(2);
+      expect(texto()).toContain('Módulo 1');
+      expect(texto()).toContain('Módulo 2');
+    });
+
+    it('asignar y desasignar siguen funcionando desde la tarjeta', async () => {
+      modulos = [modulo(1, 'Ibuprofeno'), modulo(2, null)];
+      await crear();
+      const botonesTarjeta = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('app-modulo-card button'));
+      (botonesTarjeta.find((b) => b.textContent?.includes('Asignar')) as HTMLButtonElement).click();
+      expect(component.selectedModuleId).toBe(2);
+    });
+
+    it('carga la actividad reciente del dispositivo y la muestra', async () => {
+      getEventos.and.returnValue(of([{
+        id: 1, evento_id: 'x', tipo: 'tapa_abierta', fecha_dispositivo: new Date().toISOString(),
+        fecha_recibido: new Date().toISOString(), modulo: 1, id_registro: null, datos: {},
+      }]));
+      await crear();
+      expect(getEventos).toHaveBeenCalledWith(3, { limit: 10 });
+      expect(texto()).toContain('Actividad reciente');
+      expect(texto()).toContain('Módulo 1 · Tapa abierta');
+    });
+
+    it('si falla la actividad no rompe la pantalla', async () => {
+      getEventos.and.returnValue(throwError(() => ({ status: 500 })));
+      await crear();
+      expect(component.eventos).toEqual([]);
+      expect(component.errorMessage).toBe('');
+      expect(texto()).toContain('Aún no hay actividad');
+    });
+
+    it('"Buscar módulos" vuelve a consultar módulos y actividad', async () => {
+      await crear();
+      getEventos.calls.reset();
+      boton('Buscar módulos')!.click();
+      expect(getEventos).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('módulos', () => {
-    it('sin módulos muestra "0 módulos configurados" y la acción de agregar', async () => {
+    it('sin módulos muestra "0 módulos configurados" y explica cómo se detectan', async () => {
       await crear();
       expect(texto()).toContain('0 módulos configurados');
-      expect(boton('Agregar módulo')).toBeTruthy();
+      expect(texto()).toContain('Conecta un módulo al pastillero');
+      expect(boton('Buscar módulos')).toBeTruthy();
     });
 
     it('con módulos resume cuántos hay, ocupados y disponibles', async () => {
@@ -149,10 +219,10 @@ describe('Dispositivo', () => {
       expect(component.resumenModulos).toBe('1 módulo configurado · 0 ocupados · 1 disponible');
     });
 
-    it('el formulario de nuevo módulo se abre con el botón y se cierra al cancelar', async () => {
+    it('el alta manual sigue disponible: abre el formulario y se cierra al cancelar', async () => {
       await crear();
       expect((fixture.nativeElement as HTMLElement).querySelector('#nuevo-modulo')).toBeNull();
-      boton('Agregar módulo')!.click();
+      boton('Agregar manualmente')!.click();
       fixture.detectChanges();
       expect((fixture.nativeElement as HTMLElement).querySelector('#nuevo-modulo')).not.toBeNull();
       boton('Cancelar')!.click();

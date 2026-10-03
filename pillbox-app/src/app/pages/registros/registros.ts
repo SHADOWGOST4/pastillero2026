@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { HorarioResponse, RegistroTomaResponse, UsuarioResumenResponse } from '../../core/models/api.interfaces';
+import { DescripcionMetodo, describirMetodo } from '../../core/utils/pastillero';
 import { Horario } from '../../services/horario';
 import { RegistroToma } from '../../services/registro-toma';
 import { CuentaActiva } from '../../services/cuenta-activa';
@@ -104,6 +105,11 @@ export class Registros implements OnDestroy, OnInit {
 
   get tomasPendientes(): number {
     return this.registros.filter((registro) => !registro.fecha_hora_real).length;
+  }
+
+  /** Cómo se confirmó la toma; null si sigue pendiente. */
+  descripcionMetodo(registro: RegistroTomaResponse): DescripcionMetodo | null {
+    return describirMetodo(registro.metodo_confirmacion);
   }
 
   obtenerNombreMedicamento(idHorario: number): string {

@@ -193,12 +193,21 @@ export interface ProximaTomaItem {
   proxima_toma: string;
 }
 
+/** Qué hizo la persona al confirmar: el reed informa de la tapa y el pulsador de lo que ella confirma. */
+export type MetodoConfirmacion = 'APP' | 'COMPLETA' | 'TAPA' | 'BOTON' | 'DISPOSITIVO';
+
 export interface RegistroTomaResponse {
   id: number;
   fecha_hora_programada: string;
   fecha_hora_real: string | null;
   id_horario: number;
   id_usuario: number;
+  origen: 'APP' | 'DISPOSITIVO';
+  metodo_confirmacion: MetodoConfirmacion | null;
+  modulo_numero: number | null;
+  apertura_en: string | null;
+  cierre_en: string | null;
+  boton_en: string | null;
 }
 
 export interface CrearRegistroTomaRequest {
@@ -269,6 +278,21 @@ export interface ModuloResponse {
   numero_modulo: number;
   id_medicamento: number | null;
   medicamento_nombre: string | null;
+  /** Lo informa la placa: el módulo está conectado al bus. */
+  detectado: boolean;
+  ultimo_visto: string | null;
+  tapa_abierta: boolean | null;
+}
+
+export interface EventoDispositivoResponse {
+  id: number;
+  evento_id: string;
+  tipo: string;
+  fecha_dispositivo: string;
+  fecha_recibido: string;
+  modulo: number | null;
+  id_registro: number | null;
+  datos: Record<string, unknown>;
 }
 
 export interface UsuarioResumenResponse {

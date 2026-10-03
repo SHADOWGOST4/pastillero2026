@@ -1,0 +1,16 @@
+<section class="actividad" aria-label="Actividad reciente del pastillero">
+  <h3 class="actividad-titulo">Actividad reciente</h3>
+
+  <p *ngIf="cargando && eventos.length === 0" class="actividad-vacia">Consultando la actividad...</p>
+  <p *ngIf="!cargando && eventos.length === 0" class="actividad-vacia">
+    Aún no hay actividad. Aparecerá aquí cuando la placa informe la tapa, el botón o los módulos.
+  </p>
+
+  <ul *ngIf="eventos.length > 0" class="actividad-lista">
+    <li *ngFor="let evento of eventos" [class.es-aviso]="esAviso(evento)">
+      <span class="material-icons" aria-hidden="true">{{ descripcion(evento).icono }}</span>
+      <span class="actividad-texto">{{ descripcion(evento).texto }}</span>
+      <time class="actividad-hora" [attr.datetime]="evento.fecha_dispositivo">{{ hace(evento) }}</time>
+    </li>
+  </ul>
+</section>

@@ -387,3 +387,35 @@
   }
 
 }
+
+.method-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  color: #475569;
+  background: #f1f5f9;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.method-badge .material-icons {
+  font-size: 1rem;
+}
+
+.method-ok {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.method-aviso {
+  color: #b45309;
+  background: var(--warning-soft);
+}
+
+.method-module {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--text-secondary);
+}

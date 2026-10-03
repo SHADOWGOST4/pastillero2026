@@ -70,7 +70,7 @@
           </span>
         </div>
 
-        <div class="device-details">
+        <div class="device-details" *ngIf="!esModular(dispositivo.id); else horariosPorModulo">
           <label class="form-label" [attr.for]="'horario-' + dispositivo.id">Horario del pastillero</label>
           <div class="schedule-row">
             <select class="form-select form-select-sm" [id]="'horario-' + dispositivo.id" [(ngModel)]="asignaciones[dispositivo.id]" [name]="'horario-' + dispositivo.id">
@@ -80,6 +80,11 @@
             <button type="button" class="btn btn-sm action-button action-assign" (click)="asignarHorario(dispositivo.id)">Asignar horario</button>
           </div>
         </div>
+        <ng-template #horariosPorModulo>
+          <div class="device-details">
+            <p class="modular-nota">Los horarios salen de los medicamentos de cada módulo.</p>
+          </div>
+        </ng-template>
 
         <div class="device-actions">
           <button type="button" class="btn btn-sm action-button action-edit" (click)="editarDispositivo(dispositivo)">
@@ -106,9 +111,9 @@
           <h2>Módulos del pastillero</h2>
           <p class="modules-summary" *ngIf="!modulosLoading">{{ resumenModulos }}</p>
         </div>
-        <button type="button" class="btn btn-sm action-button action-add" *ngIf="!mostrarFormModulo" (click)="abrirFormModulo()">
-          <span class="material-icons" aria-hidden="true">add</span>
-          Agregar módulo
+        <button type="button" class="btn btn-sm action-button action-view" (click)="buscarModulos()" [disabled]="modulosLoading">
+          <span class="material-icons" aria-hidden="true">sensors</span>
+          Buscar módulos
         </button>
       </div>
 
@@ -128,40 +133,27 @@
           </div>
         </form>
 
+        <button type="button" class="link-button" *ngIf="!mostrarFormModulo" (click)="abrirFormModulo()">
+          Agregar manualmente
+        </button>
+
         <div *ngIf="modulosLoading" class="state-message loading-state">
           <span class="spinner" aria-hidden="true"></span>
           <span>Cargando módulos...</span>
         </div>
 
         <p *ngIf="!modulosLoading && !moduloErrorMessage && modulosDelDispositivo.length === 0" class="modules-empty">
-          Aún no hay módulos. Agrega el primero para empezar a configurar tu pastillero.
+          Aún no hay módulos. Conecta un módulo al pastillero y aparecerá aquí en unos segundos.
         </p>
 
         <div *ngIf="!modulosLoading && modulosDelDispositivo.length > 0" class="modules-grid">
-          <article class="module-card" *ngFor="let modulo of modulosDelDispositivo"
-            [class.module-occupied]="modulo.id_medicamento !== null">
-            <div class="module-card-heading">
-              <strong>Módulo {{ modulo.numero_modulo }}</strong>
-              <span class="module-status">
-                {{ modulo.id_medicamento === null ? 'Disponible' : 'Ocupado' }}
-              </span>
-            </div>
-            <p class="module-medication">
-              {{ modulo.medicamento_nombre || 'Sin medicamento asignado' }}
-            </p>
-            <button *ngIf="modulo.id_medicamento === null" type="button"
-              class="btn btn-sm action-button action-assign"
-              (click)="seleccionarModuloParaAsignar(modulo)">
-              <span class="material-icons" aria-hidden="true">add_link</span>
-              Asignar
-            </button>
-            <button *ngIf="modulo.id_medicamento !== null" type="button"
-              class="btn btn-sm action-button action-unassign"
-              (click)="desasignarMedicamento(modulo)">
-              <span class="material-icons" aria-hidden="true">link_off</span>
-              Desasignar
-            </button>
-          </article>
+          <app-modulo-card
+            *ngFor="let modulo of modulosDelDispositivo"
+            [modulo]="modulo"
+            [horarios]="horarios"
+            (asignar)="seleccionarModuloParaAsignar($event)"
+            (desasignar)="desasignarMedicamento($event)"
+          ></app-modulo-card>
         </div>
 
         <form class="module-assignment-form" *ngIf="selectedModuleId !== null" (ngSubmit)="asignarMedicamento()">
@@ -178,6 +170,8 @@
             Confirmar asignación
           </button>
         </form>
+
+        <app-actividad-dispositivo [eventos]="eventos" [cargando]="eventosLoading"></app-actividad-dispositivo>
 
         <div *ngIf="moduloErrorMessage" class="alert alert-danger feedback" role="alert">
           <span class="material-icons" aria-hidden="true">error_outline</span>

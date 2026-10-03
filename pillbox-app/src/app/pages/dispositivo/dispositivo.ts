@@ -5,6 +5,7 @@ import {
   DispositivoResponse,
   ActualizarModuloRequest,
   CrearModuloRequest,
+  EventoDispositivoResponse,
   MedicamentoResponse,
   ModuloResponse,
   HorarioResponse,
@@ -14,13 +15,23 @@ import { Horario } from '../../services/horario';
 import { Medicamento } from '../../services/medicamento';
 import { ModuloService } from '../../services/modulo';
 import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
+import { ActividadDispositivo } from './actividad-dispositivo/actividad-dispositivo';
 import { ConectarEsp32 } from './conectar-esp32/conectar-esp32';
 import { EditarDispositivoModal } from './editar-dispositivo-modal/editar-dispositivo-modal';
+import { ModuloCard } from './modulo-card/modulo-card';
 
 @Component({
   selector: 'app-dispositivo',
   standalone: true,
-  imports: [CommonModule, FormsModule, ConfirmModal, ConectarEsp32, EditarDispositivoModal],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ConfirmModal,
+    ConectarEsp32,
+    EditarDispositivoModal,
+    ModuloCard,
+    ActividadDispositivo,
+  ],
   templateUrl: './dispositivo.html',
   styleUrl: './dispositivo.css',
 })
@@ -45,6 +56,8 @@ export class Dispositivo implements OnInit {
   selectedMedicationId: number | null = null;
   newModuleNumber: number | null = null;
   mostrarFormModulo = false;
+  eventos: EventoDispositivoResponse[] = [];
+  eventosLoading = false;
   horarios: HorarioResponse[] = [];
   asignaciones: Record<number, number | undefined> = {};
   asistenteAbierto = false;
@@ -78,6 +91,7 @@ export class Dispositivo implements OnInit {
         this.loading = false;
         this.cargarMedicamentos();
         this.cargarModulos();
+        this.cargarEventos();
       },
       error: (err) => {
         this.loading = false;
@@ -113,6 +127,38 @@ export class Dispositivo implements OnInit {
     });
   }
 
+  cargarEventos(): void {
+    const id = this.selectedDeviceId;
+    if (id === null) {
+      this.eventos = [];
+      return;
+    }
+    this.eventosLoading = true;
+    this.dispositivoService.getEventos(id, { limit: 10 }).subscribe({
+      next: (eventos) => {
+        this.eventos = eventos;
+        this.eventosLoading = false;
+      },
+      // La actividad es un extra: si falla se muestra vacía, sin tapar el resto de la pantalla.
+      error: () => {
+        this.eventos = [];
+        this.eventosLoading = false;
+      },
+    });
+  }
+
+  /** La placa informa los módulos en su latido: volver a consultar es lo único que hace falta. */
+  buscarModulos(): void {
+    this.moduloSuccessMessage = '';
+    this.cargarModulos();
+    this.cargarEventos();
+  }
+
+  /** Un dispositivo con módulos detectados toma los horarios de los medicamentos de cada módulo. */
+  esModular(dispositivoId: number): boolean {
+    return this.modulos.some((modulo) => modulo.id_dispositivo === dispositivoId && modulo.detectado);
+  }
+
   seleccionarDispositivo(id: number): void {
     this.selectedDeviceId = id;
     this.selectedModuleId = null;
@@ -120,6 +166,7 @@ export class Dispositivo implements OnInit {
     this.moduloErrorMessage = '';
     this.moduloSuccessMessage = '';
     this.cancelarFormModulo();
+    this.cargarEventos();
   }
 
   get modulosDelDispositivo(): ModuloResponse[] {

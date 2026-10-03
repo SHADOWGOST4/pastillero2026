@@ -28,7 +28,6 @@
 .action-assign,
 .action-confirm,
 .action-add,
-.action-unassign,
 .action-view {
   border-width: 1px;
   border-style: solid;
@@ -63,17 +62,6 @@
   border-color: #94a3b8;
   color: #1e293b;
   background: #e2e8f0;
-}
-.action-unassign {
-  border-color: #dc2626;
-  color: #fff;
-  background: #dc2626;
-}
-.action-unassign:hover,
-.action-unassign:focus-visible {
-  border-color: #b91c1c;
-  color: #fff;
-  background: #b91c1c;
 }
 .devices-section {
   width: 100%;
@@ -179,35 +167,6 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 0.85rem;
-}
-.module-card {
-  display: flex;
-  min-height: 9rem;
-  flex-direction: column;
-  padding: 1rem;
-  border: 1px solid #bfdbfe;
-  border-radius: var(--radius-md);
-  background: #eff6ff;
-}
-.module-card.module-occupied {
-  border-color: #bbf7d0;
-  background: var(--success-soft);
-}
-.module-card-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-.module-status {
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-.module-medication {
-  flex: 1;
-  margin: 0.75rem 0;
-  color: var(--text-primary);
 }
 .module-assignment-form,
 .module-create-form {
@@ -452,4 +411,25 @@
 .schedule-row .btn {
     width: 100%;
   }
+}
+
+.modular-nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.link-button {
+  margin-top: 0.75rem;
+  padding: 0.25rem 0;
+  border: 0;
+  color: var(--primary);
+  background: transparent;
+  font-size: 0.82rem;
+  text-decoration: underline;
+}
+
+.modules-body app-actividad-dispositivo {
+  display: block;
+  margin-top: 1.25rem;
 }
