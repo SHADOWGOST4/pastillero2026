@@ -1,6 +1,6 @@
 <section class="conectar-card" aria-live="polite">
   <div class="conectar-header">
-    <h2>Conectar pastillero</h2>
+    <h2>Conectar dispositivo</h2>
     <button type="button" class="btn btn-sm btn-outline-secondary" *ngIf="etapa !== 'progreso' && etapa !== 'exito'" (click)="cancelar()">
       Cancelar
     </button>
@@ -23,43 +23,28 @@
     </div>
   </div>
 
-  <form *ngIf="etapa === 'wifi'" (ngSubmit)="conectar()" novalidate>
-    <p>Indica la red Wi‑Fi a la que se conectará el pastillero (debe ser de 2.4 GHz).</p>
-    <div class="mb-3">
-      <label for="wifi-ssid">Nombre de la red</label>
-      <input id="wifi-ssid" class="form-control" [(ngModel)]="ssid" name="ssid" autocomplete="off" required />
-    </div>
-    <div class="mb-3">
-      <label for="wifi-password">Contraseña</label>
-      <div class="input-group">
-        <input
-          id="wifi-password"
-          class="form-control"
-          [type]="mostrarPassword ? 'text' : 'password'"
-          [(ngModel)]="password"
-          name="password"
-          autocomplete="off"
-          required
-        />
-        <button
-          type="button"
-          class="btn btn-outline-secondary"
-          (click)="mostrarPassword = !mostrarPassword"
-          [attr.aria-label]="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
-        >
-          <span class="material-icons" aria-hidden="true">{{ mostrarPassword ? 'visibility_off' : 'visibility' }}</span>
-        </button>
-      </div>
-    </div>
-    <button type="submit" class="btn btn-primary" [disabled]="!wifiValido">Conectar</button>
-  </form>
+  <div *ngIf="etapa === 'wifi'" class="qr-detectado">
+    <span class="material-icons" aria-hidden="true">check_circle</span>
+    <p class="qr-titulo">Pastillero detectado</p>
+    <p class="qr-nombre">{{ qr?.nombreBle }}</p>
+    <p class="qr-ayuda">Ahora indica la red Wi‑Fi a la que se conectará (debe ser de 2,4 GHz).</p>
+    <button type="button" class="btn btn-primary" (click)="abrirWifi()">
+      <span class="material-icons" aria-hidden="true">wifi</span>
+      Configurar Wi‑Fi
+    </button>
+  </div>
 
-  <ol *ngIf="etapa === 'progreso'" class="progreso">
-    <li *ngFor="let paso of pasos; let i = index" [class.hecho]="i < pasoActual" [class.actual]="i === pasoActual">
-      <span class="material-icons" aria-hidden="true">{{ i < pasoActual ? 'check_circle' : i === pasoActual ? 'sync' : 'radio_button_unchecked' }}</span>
-      {{ paso.texto }}
-    </li>
-  </ol>
+  <div *ngIf="etapa === 'progreso'" class="progreso-panel">
+    <app-conexion-spinner></app-conexion-spinner>
+    <p class="progreso-titulo">{{ pasos[pasoActual]?.texto || 'Preparando la conexión' }}…</p>
+    <p class="progreso-ayuda">No cierres la app ni te alejes del pastillero.</p>
+    <ol class="progreso">
+      <li *ngFor="let paso of pasos; let i = index" [class.hecho]="i < pasoActual" [class.actual]="i === pasoActual">
+        <span class="material-icons" aria-hidden="true">{{ i < pasoActual ? 'check_circle' : i === pasoActual ? 'sync' : 'radio_button_unchecked' }}</span>
+        {{ paso.texto }}
+      </li>
+    </ol>
+  </div>
 
   <div *ngIf="etapa === 'exito'" class="resultado ok">
     <span class="material-icons" aria-hidden="true">check_circle</span>
@@ -74,3 +59,10 @@
 
   <div *ngIf="mensajeError && etapa !== 'error'" class="alert alert-danger mt-3" role="alert">{{ mensajeError }}</div>
 </section>
+
+<app-configurar-wifi-modal
+  [visible]="wifiModalAbierto"
+  [ssidInicial]="ssid"
+  (closed)="wifiModalAbierto = false"
+  (submitted)="usarWifi($event)"
+></app-configurar-wifi-modal>

@@ -54,3 +54,69 @@
   font-size: 3rem;
   color: #198754;
 }
+
+.conectar-card .btn .material-icons {
+  margin-right: 0.3rem;
+  font-size: 1.15rem;
+  vertical-align: middle;
+}
+
+.qr-detectado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.25rem 0;
+  text-align: center;
+}
+
+.qr-detectado > .material-icons {
+  font-size: 2.5rem;
+  color: var(--success);
+}
+
+.qr-titulo {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.qr-nombre {
+  margin: 0.15rem 0 0;
+  color: var(--text-secondary);
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+
+.qr-ayuda {
+  max-width: 26rem;
+  margin: 0.75rem 0 1rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.progreso-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.progreso-titulo {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.progreso-ayuda {
+  margin: 0.25rem 0 1rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.progreso-panel .progreso {
+  align-self: stretch;
+  max-width: 22rem;
+  margin: 0 auto;
+}
