@@ -70,22 +70,6 @@
           </span>
         </div>
 
-        <div class="device-details" *ngIf="!esModular(dispositivo.id); else horariosPorModulo">
-          <label class="form-label" [attr.for]="'horario-' + dispositivo.id">Horario del pastillero</label>
-          <div class="schedule-row">
-            <select class="form-select form-select-sm" [id]="'horario-' + dispositivo.id" [(ngModel)]="asignaciones[dispositivo.id]" [name]="'horario-' + dispositivo.id">
-              <option [ngValue]="undefined">Sin asignar</option>
-              <option *ngFor="let horario of horarios" [ngValue]="horario.id">{{ horario.medicamento_nombre }} · {{ horario.hora_toma }}</option>
-            </select>
-            <button type="button" class="btn btn-sm action-button action-assign" (click)="asignarHorario(dispositivo.id)">Asignar horario</button>
-          </div>
-        </div>
-        <ng-template #horariosPorModulo>
-          <div class="device-details">
-            <p class="modular-nota">Los horarios salen de los medicamentos de cada módulo.</p>
-          </div>
-        </ng-template>
-
         <div class="device-actions">
           <button type="button" class="btn btn-sm action-button action-edit" (click)="editarDispositivo(dispositivo)">
             <span class="material-icons" aria-hidden="true">edit</span>

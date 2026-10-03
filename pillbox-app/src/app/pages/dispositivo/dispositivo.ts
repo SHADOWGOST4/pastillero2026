@@ -59,7 +59,6 @@ export class Dispositivo implements OnInit {
   eventos: EventoDispositivoResponse[] = [];
   eventosLoading = false;
   horarios: HorarioResponse[] = [];
-  asignaciones: Record<number, number | undefined> = {};
   asistenteAbierto = false;
 
 
@@ -82,7 +81,6 @@ export class Dispositivo implements OnInit {
     this.dispositivoService.getAll().subscribe({
       next: (data) => {
         this.dispositivos = data;
-        data.forEach((dispositivo) => this.cargarAsignacion(dispositivo.id));
         if (!data.some((dispositivo) => dispositivo.id === this.selectedDeviceId)) {
           this.selectedDeviceId = data.length > 0 ? data[0].id : null;
           this.selectedModuleId = null;
@@ -152,11 +150,6 @@ export class Dispositivo implements OnInit {
     this.moduloSuccessMessage = '';
     this.cargarModulos();
     this.cargarEventos();
-  }
-
-  /** Un dispositivo con módulos detectados toma los horarios de los medicamentos de cada módulo. */
-  esModular(dispositivoId: number): boolean {
-    return this.modulos.some((modulo) => modulo.id_dispositivo === dispositivoId && modulo.detectado);
   }
 
   seleccionarDispositivo(id: number): void {
@@ -348,30 +341,10 @@ export class Dispositivo implements OnInit {
     });
   }
 
-  asignarHorario(dispositivoId: number): void {
-    const horarioId = this.asignaciones[dispositivoId];
-    if (!horarioId) return;
-    this.dispositivoService.asignarHorario(dispositivoId, horarioId).subscribe({
-      next: () => (this.successMessage = 'Horario asignado al pastillero.'),
-      error: (err) => (this.errorMessage = this.extraerError(err, 'No se pudo asignar el horario.')),
-    });
-  }
-
   onDispositivoConectado(): void {
     this.asistenteAbierto = false;
     this.successMessage = 'Pastillero conectado correctamente.';
     this.cargarDispositivos();
-  }
-
-  private cargarAsignacion(dispositivoId: number): void {
-    this.dispositivoService.getAsignacion(dispositivoId).subscribe({
-      next: (asignacion) => (this.asignaciones[dispositivoId] = asignacion.id_horario),
-      // 404 = el dispositivo aún no tiene horario: el selector queda en "Sin asignar".
-      error: (err) => {
-        if (err?.status === 404) this.asignaciones[dispositivoId] = undefined;
-        else this.errorMessage = this.extraerError(err, 'No se pudo cargar el horario del dispositivo.');
-      },
-    });
   }
 
   private extraerError(error: any, fallback: string): string {
