@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { DispositivoResponse, HorarioResponse, ModuloResponse } from '../../core/models/api.interfaces';
 import { DispositivoService } from '../../services/dispositivo';
 import { Horario } from '../../services/horario';
@@ -22,6 +22,7 @@ describe('Dispositivo', () => {
   let fixture: ComponentFixture<Dispositivo>;
   let modulos: ModuloResponse[];
   let dispositivos: DispositivoResponse[];
+  let asignacion: Observable<unknown>;
 
   const texto = () => (fixture.nativeElement as HTMLElement).textContent ?? '';
   const botones = () => Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'));
@@ -35,7 +36,7 @@ describe('Dispositivo', () => {
           provide: DispositivoService,
           useValue: {
             getAll: () => of(dispositivos),
-            getAsignacion: () => of({ id_horario: 9 }),
+            getAsignacion: () => asignacion,
             asignarHorario: () => of({}),
           },
         },
@@ -63,6 +64,7 @@ describe('Dispositivo', () => {
   beforeEach(() => {
     modulos = [];
     dispositivos = [DISPOSITIVO];
+    asignacion = of({ id_horario: 9 });
   });
 
   it('se crea', async () => {
@@ -107,6 +109,23 @@ describe('Dispositivo', () => {
       boton('Desvincular dispositivo')!.click();
       expect(component.modalEliminarAbierto).toBeTrue();
       expect(component.dispositivoPendienteEliminar).toBe(3);
+    });
+  });
+
+  describe('horario asignado', () => {
+    it('un 404 significa "sin horario": el selector queda en "Sin asignar" y no hay error', async () => {
+      asignacion = throwError(() => ({ status: 404 }));
+      await crear();
+      const select = (fixture.nativeElement as HTMLElement).querySelector('#horario-3') as HTMLSelectElement;
+      expect(component.asignaciones[3]).toBeUndefined();
+      expect(select.options[select.selectedIndex].textContent).toContain('Sin asignar');
+      expect(component.errorMessage).toBe('');
+    });
+
+    it('cualquier otro error sí se muestra', async () => {
+      asignacion = throwError(() => ({ status: 500 }));
+      await crear();
+      expect(component.errorMessage).toContain('No se pudo cargar el horario');
     });
   });
 

@@ -319,6 +319,11 @@ export class Dispositivo implements OnInit {
   private cargarAsignacion(dispositivoId: number): void {
     this.dispositivoService.getAsignacion(dispositivoId).subscribe({
       next: (asignacion) => (this.asignaciones[dispositivoId] = asignacion.id_horario),
+      // 404 = el dispositivo aún no tiene horario: el selector queda en "Sin asignar".
+      error: (err) => {
+        if (err?.status === 404) this.asignaciones[dispositivoId] = undefined;
+        else this.errorMessage = this.extraerError(err, 'No se pudo cargar el horario del dispositivo.');
+      },
     });
   }
 
