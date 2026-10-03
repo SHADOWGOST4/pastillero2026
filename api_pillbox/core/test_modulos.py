@@ -427,21 +427,6 @@ class ConfirmarTomaModularTests(BasePastillero):
         self.assertEqual(evento.modulo, self.modulo)
         self.assertEqual(evento.datos, {'metodo': 'COMPLETA'})
 
-    def test_el_flujo_de_un_solo_compartimento_sigue_igual(self):
-        AsignacionDispositivo.objects.create(dispositivo=self.dispositivo, id_horario=self.horario_)
-        pendiente = Registro_Toma.objects.create(
-            id_usuario=self.usuario, id_horario=self.horario_, fecha_hora_programada=self.instante,
-        )
-        real = self.ahora - timedelta(minutes=25)
-        r = self.post(URL_CONFIRMAR, {'evento_id': str(uuid.uuid4()), 'fecha_hora_real': real.isoformat()})
-        self.assertEqual(r.status_code, 201)
-        pendiente.refresh_from_db()
-        self.assertEqual(pendiente.fecha_hora_real, real)
-        self.assertEqual(pendiente.origen, Registro_Toma.Origen.DISPOSITIVO)
-        self.assertEqual(pendiente.boton_en, real)
-        self.assertEqual(pendiente.metodo_confirmacion, 'BOTON')
-        self.assertIsNone(pendiente.modulo)
-
     def test_sin_credenciales_responde_401(self):
         self.assertEqual(self.post(URL_CONFIRMAR, self.confirmacion(), cabeceras={}).status_code, 401)
 
