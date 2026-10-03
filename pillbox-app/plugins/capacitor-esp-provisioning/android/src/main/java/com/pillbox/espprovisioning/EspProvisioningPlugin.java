@@ -15,6 +15,7 @@ import com.espressif.provisioning.ESPProvisionManager;
 import com.espressif.provisioning.listeners.BleScanListener;
 import com.espressif.provisioning.listeners.ProvisionListener;
 import com.espressif.provisioning.listeners.ResponseListener;
+import com.espressif.provisioning.transport.BLETransport;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
@@ -23,6 +24,7 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -194,8 +196,31 @@ public class EspProvisioningPlugin extends Plugin {
             }
         }
 
+        /**
+         * El core Arduino-ESP32 3.3 cifra con nonce incremental (parche 1 de Security 2) pero no anuncia
+         * "sec_patch_ver" en proto-ver, y la librería asume entonces el parche 0: el primer mensaje cifrado
+         * funciona y el siguiente falla al descifrar. Se fija el parche 1 antes de abrir la sesión.
+         */
+        private void forzarParcheSeguridad() {
+            try {
+                for (Field campo : ESPDevice.class.getDeclaredFields()) {
+                    campo.setAccessible(true);
+                    Object valor = campo.get(dispositivo);
+                    if (!(valor instanceof BLETransport)) continue;
+                    BLETransport ble = (BLETransport) valor;
+                    JSONObject info = new JSONObject(ble.versionInfo);
+                    JSONObject prov = info.getJSONObject("prov");
+                    if (prov.has("sec_patch_ver")) return;
+                    prov.put("sec_patch_ver", 1);
+                    ble.versionInfo = info.toString();
+                    return;
+                }
+            } catch (ReflectiveOperationException | JSONException | RuntimeException ignorada) {}
+        }
+
         private void abrirSesion() {
             paso("enviando");
+            forzarParcheSeguridad();
             // Con Security 2 un PoP incorrecto hace fallar aquí, antes de enviar nada.
             dispositivo.initSession(new ResponseListener() {
                 @Override
