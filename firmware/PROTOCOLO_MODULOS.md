@@ -192,8 +192,19 @@ Con la clave `modulo` confirma la toma de ese módulo. Sin ella es el flujo ante
 
 ## Compatibilidad
 
-El firmware actual sigue funcionando sin cambios: no envía `modulos`, no envía `modulo` al confirmar y el servidor le
-sigue respondiendo igual (la confirmación del flujo anterior ahora también guarda `origen = DISPOSITIVO` y `boton_en`).
+El firmware de un solo compartimento sigue funcionando sin cambios: no envía `modulos` ni `modulo` al confirmar, y el servidor
+le responde con el mismo formato de siempre. Lo que cambia es **de dónde sale su horario**, porque los horarios son de los
+medicamentos de cada módulo y la app ya no asigna un horario al dispositivo:
+
+- `GET /api/iot/configuracion/` le entrega `activo`, `version` y `horario` con el del **primer módulo que tenga medicamento
+  con horarios**: el de menor número y, dentro del medicamento, el de hora más temprana. La regla es determinista a propósito,
+  porque el firmware reinicia la alarma si cambia lo que recibe. Con varios horarios, esa placa solo ejecuta uno.
+- `version` vale `modulo-N-horario-ID`: estable entre consultas y distinta si cambia el módulo o el horario elegido.
+- Si ningún módulo tiene horarios, se usa la asignación manual de un horario al dispositivo (si existe). Si hay las dos, mandan
+  los módulos.
+- `POST /api/iot/tomas/confirmar/` sin `modulo` confirma esa misma toma, crea el registro si la app no lo había creado y guarda
+  el botón como única evidencia (`BOTON`). El módulo **no** se marca como detectado: esa placa no informa módulos.
+- Un dispositivo sin módulos conserva el comportamiento anterior (horario asignado y toma pendiente).
 
 ## Para la app
 

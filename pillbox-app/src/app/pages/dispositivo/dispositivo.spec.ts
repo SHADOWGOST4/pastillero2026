@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Observable, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { DispositivoResponse, HorarioResponse, ModuloResponse } from '../../core/models/api.interfaces';
 import { DispositivoService } from '../../services/dispositivo';
 import { Horario } from '../../services/horario';
@@ -23,8 +23,9 @@ describe('Dispositivo', () => {
   let fixture: ComponentFixture<Dispositivo>;
   let modulos: ModuloResponse[];
   let dispositivos: DispositivoResponse[];
-  let asignacion: Observable<unknown>;
   let getEventos: jasmine.Spy;
+  let getAsignacion: jasmine.Spy;
+  let asignarHorario: jasmine.Spy;
 
   const texto = () => (fixture.nativeElement as HTMLElement).textContent ?? '';
   const botones = () => Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'));
@@ -38,8 +39,8 @@ describe('Dispositivo', () => {
           provide: DispositivoService,
           useValue: {
             getAll: () => of(dispositivos),
-            getAsignacion: () => asignacion,
-            asignarHorario: () => of({}),
+            getAsignacion,
+            asignarHorario,
             getEventos,
           },
         },
@@ -67,8 +68,9 @@ describe('Dispositivo', () => {
   beforeEach(() => {
     modulos = [];
     dispositivos = [DISPOSITIVO];
-    asignacion = of({ id_horario: 9 });
     getEventos = jasmine.createSpy('getEventos').and.returnValue(of([]));
+    getAsignacion = jasmine.createSpy('getAsignacion').and.returnValue(of({ id_horario: 9 }));
+    asignarHorario = jasmine.createSpy('asignarHorario').and.returnValue(of({}));
   });
 
   it('se crea', async () => {
@@ -91,13 +93,15 @@ describe('Dispositivo', () => {
       expect(texto()).toContain('Mi pastillero');
     });
 
-    it('usa "Horario del pastillero" y conserva el horario asignado en el selector', () => {
-      expect(texto()).toContain('Horario del pastillero');
-      expect(texto()).not.toContain('Horario activo');
-      expect(boton('Asignar horario')).toBeTruthy();
-      const select = (fixture.nativeElement as HTMLElement).querySelector('#horario-3') as HTMLSelectElement;
-      expect(component.asignaciones[3]).toBe(9);
-      expect(select.options[select.selectedIndex].textContent).toContain('Ibuprofeno');
+    it('la tarjeta no muestra horario: los horarios son de los medicamentos de cada módulo', () => {
+      expect(texto()).not.toContain('Horario del pastillero');
+      expect(texto()).not.toContain('Asignar horario');
+      expect((fixture.nativeElement as HTMLElement).querySelector('select')).toBeNull();
+    });
+
+    it('ya no consulta la asignación de horario del dispositivo', () => {
+      expect(getAsignacion).not.toHaveBeenCalled();
+      expect(asignarHorario).not.toHaveBeenCalled();
     });
 
     it('mantiene Editar y Ver módulos, y desvincular es un enlace secundario', () => {
@@ -116,44 +120,8 @@ describe('Dispositivo', () => {
     });
   });
 
-  describe('horario asignado', () => {
-    it('un 404 significa "sin horario": el selector queda en "Sin asignar" y no hay error', async () => {
-      asignacion = throwError(() => ({ status: 404 }));
-      await crear();
-      const select = (fixture.nativeElement as HTMLElement).querySelector('#horario-3') as HTMLSelectElement;
-      expect(component.asignaciones[3]).toBeUndefined();
-      expect(select.options[select.selectedIndex].textContent).toContain('Sin asignar');
-      expect(component.errorMessage).toBe('');
-    });
-
-    it('cualquier otro error sí se muestra', async () => {
-      asignacion = throwError(() => ({ status: 500 }));
-      await crear();
-      expect(component.errorMessage).toContain('No se pudo cargar el horario');
-    });
-  });
-
-
   describe('pastillero modular', () => {
     const tarjetas = () => (fixture.nativeElement as HTMLElement).querySelectorAll('app-modulo-card');
-    const selectorHorario = () => (fixture.nativeElement as HTMLElement).querySelector('#horario-3');
-
-    it('un dispositivo con módulos detectados no pide un horario: salen de cada módulo', async () => {
-      modulos = [modulo(1, 'Ibuprofeno')];
-      await crear();
-      expect(component.esModular(3)).toBeTrue();
-      expect(selectorHorario()).toBeNull();
-      expect(texto()).toContain('Los horarios salen de los medicamentos de cada módulo');
-      expect(texto()).not.toContain('Asignar horario');
-    });
-
-    it('sin módulos detectados conserva el selector de horario del compartimento único', async () => {
-      modulos = [modulo(1, null, false)];
-      await crear();
-      expect(component.esModular(3)).toBeFalse();
-      expect(selectorHorario()).not.toBeNull();
-      expect(texto()).toContain('Asignar horario');
-    });
 
     it('dibuja una tarjeta por módulo', async () => {
       modulos = [modulo(1, 'Ibuprofeno'), modulo(2, null)];

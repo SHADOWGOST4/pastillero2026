@@ -29,6 +29,7 @@ from .inventory import calcular_cobertura_medicamento
 from .modulos import (
     configuracion_modulos,
     confirmar_toma_modular,
+    horario_de_los_modulos,
     parsear_informe_modulos,
     registrar_evento,
     sincronizar_modulos,
@@ -880,12 +881,20 @@ def iot_configuracion(request):
         return Response({'detail': 'Credenciales de dispositivo inválidas.'}, status=status.HTTP_401_UNAUTHORIZED)
     # `activo`, `version` y `horario` son el contrato del firmware de un solo compartimento; `modulos` es el nuevo.
     modulos = configuracion_modulos(dispositivo)
-    asignacion = getattr(dispositivo, 'asignacion', None)
-    if not asignacion:
-        return Response({'activo': False, 'timezone': 'America/Bogota', 'modulos': modulos})
-    horario = asignacion.id_horario
-    if not horario.activo or horario.eliminado:
-        return Response({'activo': False, 'timezone': 'America/Bogota', 'modulos': modulos})
+    # Los horarios son de los medicamentos de cada módulo. Un firmware de un solo compartimento recibe el del primer
+    # módulo; la asignación manual de un horario al dispositivo solo vale si ningún módulo tiene uno.
+    heredado = horario_de_los_modulos(dispositivo)
+    if heredado is not None:
+        modulo, horario = heredado
+        version = f'modulo-{modulo.numero_modulo}-horario-{horario.id}'
+    else:
+        asignacion = getattr(dispositivo, 'asignacion', None)
+        if not asignacion:
+            return Response({'activo': False, 'timezone': 'America/Bogota', 'modulos': modulos})
+        horario = asignacion.id_horario
+        if not horario.activo or horario.eliminado:
+            return Response({'activo': False, 'timezone': 'America/Bogota', 'modulos': modulos})
+        version = asignacion.fecha_actualizacion.isoformat()
     ultima_confirmada = Registro_Toma.objects.filter(
         id_horario=horario,
         id_usuario=dispositivo.id_usuario,
@@ -897,7 +906,7 @@ def iot_configuracion(request):
         timezone.localtime(ultima_confirmada.fecha_hora_programada).strftime('%Y-%m-%dT%H:%M')
         if ultima_confirmada else None
     )
-    return Response({'activo': True, 'version': asignacion.fecha_actualizacion.isoformat(), 'timezone': 'America/Bogota',
+    return Response({'activo': True, 'version': version, 'timezone': 'America/Bogota',
                      'ultima_toma_confirmada_programada': toma_confirmada_programada, 'horario': {
         'id': horario.id, 'hora_toma': horario.hora_toma.strftime('%H:%M:%S'), 'frecuencia': horario.frecuencia,
         'medicamento': horario.id_medicamento.nombre,
@@ -915,6 +924,16 @@ def iot_confirmar_toma(request):
         registro, duplicado = confirmar_toma_modular(dispositivo, request.data)
         return Response(
             {'ok': True, 'duplicado': duplicado, 'registro_id': registro.id, 'metodo': registro.metodo_confirmacion},
+            status=status.HTTP_200_OK if duplicado else status.HTTP_201_CREATED,
+        )
+    heredado = horario_de_los_modulos(dispositivo) if isinstance(request.data, dict) else None
+    if heredado is not None:
+        # Firmware de un solo compartimento: el horario sale de los módulos y solo trae el botón como evidencia.
+        modulo, horario = heredado
+        datos = {**request.data, 'modulo': modulo.numero_modulo, 'evidencia': {'boton_en': request.data.get('fecha_hora_real')}}
+        registro, duplicado = confirmar_toma_modular(dispositivo, datos, solo_horario=horario, modulo_existente=modulo)
+        return Response(
+            {'ok': True, 'duplicado': duplicado, 'registro_id': registro.id},
             status=status.HTTP_200_OK if duplicado else status.HTTP_201_CREATED,
         )
     asignacion = getattr(dispositivo, 'asignacion', None)

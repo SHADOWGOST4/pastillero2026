@@ -131,6 +131,26 @@ def asegurar_modulo(dispositivo, numero, visto_en):
     return modulo
 
 
+def horario_de_los_modulos(dispositivo):
+    """El horario que debe ejecutar un firmware de UN solo compartimento, tomado de los módulos.
+
+    Es el primer horario activo (el de hora más temprana) del módulo de menor número que tenga medicamento con
+    horarios. La regla es determinista a propósito: el firmware reinicia la alarma si cambia lo que recibe, así que
+    elegir "el más próximo" la reiniciaría a cada rato. Devuelve (modulo, horario) o None.
+    """
+    modulos = (
+        dispositivo.modulos
+        .filter(id_medicamento__isnull=False, id_medicamento__id_usuario=dispositivo.id_usuario)
+        .select_related('id_medicamento')
+        .order_by('numero_modulo')
+    )
+    for modulo in modulos:
+        horario = modulo.id_medicamento.horarios.filter(activo=True, eliminado=False).order_by('hora_toma', 'id').first()
+        if horario is not None:
+            return modulo, horario
+    return None
+
+
 def configuracion_modulos(dispositivo):
     """Lo que la placa necesita saber de cada módulo: su medicamento y los horarios de ese medicamento."""
     resultado = []
@@ -217,14 +237,15 @@ def parsear_evidencia(crudo):
     return evidencia
 
 
-def _horario_y_hora_de_la_toma(dispositivo, modulo, fecha_real, programada):
+def _horario_y_hora_de_la_toma(dispositivo, modulo, fecha_real, programada, solo_horario=None):
     medicamento = modulo.id_medicamento
     if medicamento is None:
         raise ConflictoToma('El módulo no tiene un medicamento asignado.')
     if medicamento.id_usuario_id != dispositivo.id_usuario_id:
         raise ConflictoToma('El medicamento del módulo no pertenece al dueño del dispositivo.')
+    horarios = [solo_horario] if solo_horario is not None else medicamento.horarios.filter(activo=True, eliminado=False)
     candidatos = []
-    for horario in medicamento.horarios.filter(activo=True, eliminado=False):
+    for horario in horarios:
         instante = horario.ultima_toma_programada(fecha_real)
         if instante is not None and fecha_real - instante <= VENTANA_CONFIRMACION:
             candidatos.append((instante, horario))
@@ -238,11 +259,14 @@ def _horario_y_hora_de_la_toma(dispositivo, modulo, fecha_real, programada):
 
 
 @transaction.atomic
-def confirmar_toma_modular(dispositivo, payload, ahora=None):
+def confirmar_toma_modular(dispositivo, payload, ahora=None, solo_horario=None, modulo_existente=None):
     """Confirma la toma de un módulo y guarda la evidencia. Devuelve (registro, ya_confirmada).
 
     A diferencia del flujo anterior, no exige que la app haya creado el registro: el servidor sabe a qué
     instante correspondía la toma y la crea él mismo, una sola vez por la restricción única del modelo.
+
+    `solo_horario` y `modulo_existente` los usa el firmware de un solo compartimento: la toma se limita al horario
+    que se le entregó y el módulo no se marca como detectado, porque esa placa no informa módulos.
     """
     ahora = ahora or timezone.now()
     evento_id = parsear_uuid(payload.get('evento_id'))
@@ -261,8 +285,8 @@ def confirmar_toma_modular(dispositivo, payload, ahora=None):
             raise ConflictoToma('evento_id ya se usó en un evento que no es una toma.')
         return previo.id_registro, True
 
-    modulo = asegurar_modulo(dispositivo, numero, min(fecha_real, ahora))
-    instante, horario = _horario_y_hora_de_la_toma(dispositivo, modulo, fecha_real, programada)
+    modulo = modulo_existente or asegurar_modulo(dispositivo, numero, min(fecha_real, ahora))
+    instante, horario = _horario_y_hora_de_la_toma(dispositivo, modulo, fecha_real, programada, solo_horario)
     registro, _ = Registro_Toma.objects.get_or_create(
         id_usuario=dispositivo.id_usuario, id_horario=horario, fecha_hora_programada=instante,
     )

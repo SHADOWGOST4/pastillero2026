@@ -25,7 +25,6 @@
   white-space: nowrap;
 }
 .action-edit,
-.action-assign,
 .action-confirm,
 .action-add,
 .action-view {
@@ -33,7 +32,6 @@
   border-style: solid;
 }
 .action-edit,
-.action-assign,
 .action-confirm,
 .action-add {
   border-color: #2563eb;
@@ -42,8 +40,6 @@
 }
 .action-edit:hover,
 .action-edit:focus-visible,
-.action-assign:hover,
-.action-assign:focus-visible,
 .action-confirm:hover,
 .action-confirm:focus-visible,
 .action-add:hover,
@@ -276,29 +272,6 @@
   border-radius: 50%;
   background: currentColor;
 }
-.device-details {
-  min-width: 0;
-  padding: 0.75rem;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.65);
-}
-.device-details .form-label {
-  margin-bottom: 0.35rem;
-  font-size: 0.82rem;
-}
-.schedule-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.schedule-row .form-select {
-  flex: 1;
-  min-width: 0;
-}
-.schedule-row .btn {
-  flex: none;
-}
 .device-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -403,22 +376,6 @@
     flex: 1;
   }
 }
-@media (max-width: 480px) {
-.schedule-row {
-    align-items: stretch;
-    flex-direction: column;
-  }
-.schedule-row .btn {
-    width: 100%;
-  }
-}
-
-.modular-nota {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-}
-
 .link-button {
   margin-top: 0.75rem;
   padding: 0.25rem 0;
@@ -428,7 +385,6 @@
   font-size: 0.82rem;
   text-decoration: underline;
 }
-
 .modules-body app-actividad-dispositivo {
   display: block;
   margin-top: 1.25rem;
