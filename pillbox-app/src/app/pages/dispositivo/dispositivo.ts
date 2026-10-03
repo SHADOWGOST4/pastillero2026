@@ -5,6 +5,7 @@ import {
   DispositivoResponse,
   ActualizarModuloRequest,
   CrearModuloRequest,
+  EventoDispositivoResponse,
   MedicamentoResponse,
   ModuloResponse,
   HorarioResponse,
@@ -14,13 +15,23 @@ import { Horario } from '../../services/horario';
 import { Medicamento } from '../../services/medicamento';
 import { ModuloService } from '../../services/modulo';
 import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
+import { ActividadDispositivo } from './actividad-dispositivo/actividad-dispositivo';
 import { ConectarEsp32 } from './conectar-esp32/conectar-esp32';
 import { EditarDispositivoModal } from './editar-dispositivo-modal/editar-dispositivo-modal';
+import { ModuloCard } from './modulo-card/modulo-card';
 
 @Component({
   selector: 'app-dispositivo',
   standalone: true,
-  imports: [CommonModule, FormsModule, ConfirmModal, ConectarEsp32, EditarDispositivoModal],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ConfirmModal,
+    ConectarEsp32,
+    EditarDispositivoModal,
+    ModuloCard,
+    ActividadDispositivo,
+  ],
   templateUrl: './dispositivo.html',
   styleUrl: './dispositivo.css',
 })
@@ -44,6 +55,9 @@ export class Dispositivo implements OnInit {
   selectedModuleId: number | null = null;
   selectedMedicationId: number | null = null;
   newModuleNumber: number | null = null;
+  mostrarFormModulo = false;
+  eventos: EventoDispositivoResponse[] = [];
+  eventosLoading = false;
   horarios: HorarioResponse[] = [];
   asignaciones: Record<number, number | undefined> = {};
   asistenteAbierto = false;
@@ -77,6 +91,7 @@ export class Dispositivo implements OnInit {
         this.loading = false;
         this.cargarMedicamentos();
         this.cargarModulos();
+        this.cargarEventos();
       },
       error: (err) => {
         this.loading = false;
@@ -112,18 +127,76 @@ export class Dispositivo implements OnInit {
     });
   }
 
+  cargarEventos(): void {
+    const id = this.selectedDeviceId;
+    if (id === null) {
+      this.eventos = [];
+      return;
+    }
+    this.eventosLoading = true;
+    this.dispositivoService.getEventos(id, { limit: 10 }).subscribe({
+      next: (eventos) => {
+        this.eventos = eventos;
+        this.eventosLoading = false;
+      },
+      // La actividad es un extra: si falla se muestra vacía, sin tapar el resto de la pantalla.
+      error: () => {
+        this.eventos = [];
+        this.eventosLoading = false;
+      },
+    });
+  }
+
+  /** La placa informa los módulos en su latido: volver a consultar es lo único que hace falta. */
+  buscarModulos(): void {
+    this.moduloSuccessMessage = '';
+    this.cargarModulos();
+    this.cargarEventos();
+  }
+
+  /** Un dispositivo con módulos detectados toma los horarios de los medicamentos de cada módulo. */
+  esModular(dispositivoId: number): boolean {
+    return this.modulos.some((modulo) => modulo.id_dispositivo === dispositivoId && modulo.detectado);
+  }
+
   seleccionarDispositivo(id: number): void {
     this.selectedDeviceId = id;
     this.selectedModuleId = null;
     this.selectedMedicationId = null;
     this.moduloErrorMessage = '';
     this.moduloSuccessMessage = '';
+    this.cancelarFormModulo();
+    this.cargarEventos();
   }
 
   get modulosDelDispositivo(): ModuloResponse[] {
     return this.modulos
       .filter((modulo) => modulo.id_dispositivo === this.selectedDeviceId)
       .sort((a, b) => a.numero_modulo - b.numero_modulo);
+  }
+
+  get resumenModulos(): string {
+    const modulos = this.modulosDelDispositivo;
+    const total = modulos.length;
+    if (total === 0) return '0 módulos configurados';
+    const ocupados = modulos.filter((modulo) => modulo.id_medicamento !== null).length;
+    const disponibles = total - ocupados;
+    return [
+      `${total} ${total === 1 ? 'módulo configurado' : 'módulos configurados'}`,
+      `${ocupados} ${ocupados === 1 ? 'ocupado' : 'ocupados'}`,
+      `${disponibles} ${disponibles === 1 ? 'disponible' : 'disponibles'}`,
+    ].join(' · ');
+  }
+
+  abrirFormModulo(): void {
+    this.mostrarFormModulo = true;
+    this.moduloErrorMessage = '';
+    this.moduloSuccessMessage = '';
+  }
+
+  cancelarFormModulo(): void {
+    this.mostrarFormModulo = false;
+    this.newModuleNumber = null;
   }
 
   get medicamentosDisponibles(): MedicamentoResponse[] {
@@ -179,7 +252,7 @@ export class Dispositivo implements OnInit {
     };
     this.moduloService.create(payload).subscribe({
       next: () => {
-        this.newModuleNumber = null;
+        this.cancelarFormModulo();
         this.moduloSuccessMessage = 'Módulo creado correctamente.';
         this.moduloErrorMessage = '';
         this.cargarModulos();
@@ -279,7 +352,7 @@ export class Dispositivo implements OnInit {
     const horarioId = this.asignaciones[dispositivoId];
     if (!horarioId) return;
     this.dispositivoService.asignarHorario(dispositivoId, horarioId).subscribe({
-      next: () => (this.successMessage = 'Horario asignado al ESP32.'),
+      next: () => (this.successMessage = 'Horario asignado al pastillero.'),
       error: (err) => (this.errorMessage = this.extraerError(err, 'No se pudo asignar el horario.')),
     });
   }
@@ -293,6 +366,11 @@ export class Dispositivo implements OnInit {
   private cargarAsignacion(dispositivoId: number): void {
     this.dispositivoService.getAsignacion(dispositivoId).subscribe({
       next: (asignacion) => (this.asignaciones[dispositivoId] = asignacion.id_horario),
+      // 404 = el dispositivo aún no tiene horario: el selector queda en "Sin asignar".
+      error: (err) => {
+        if (err?.status === 404) this.asignaciones[dispositivoId] = undefined;
+        else this.errorMessage = this.extraerError(err, 'No se pudo cargar el horario del dispositivo.');
+      },
     });
   }
 

@@ -35,4 +35,5 @@ urlpatterns = [
     path('api/iot/heartbeat/', iot_heartbeat, name='iot_heartbeat'),
     path('api/iot/configuracion/', iot_configuracion, name='iot_configuracion'),
     path('api/iot/tomas/confirmar/', iot_confirmar_toma, name='iot_confirmar_toma'),
+    path('api/iot/eventos/', iot_evento, name='iot_evento'),
 ]

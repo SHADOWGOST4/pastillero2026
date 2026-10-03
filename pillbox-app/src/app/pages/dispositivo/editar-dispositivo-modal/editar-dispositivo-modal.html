@@ -33,7 +33,7 @@
         />
         <div class="invalid-feedback" *ngIf="intentado && !nombreValido">El nombre es obligatorio.</div>
         <small class="field-help">
-          Es lo único que puedes cambiar. La conexión, la IP y la versión las informa el propio ESP32.
+          Es lo único que puedes cambiar. El estado de conexión lo informa el propio pastillero.
         </small>
 
         <div *ngIf="error" class="alert alert-danger mt-3 mb-0" role="alert">{{ error }}</div>

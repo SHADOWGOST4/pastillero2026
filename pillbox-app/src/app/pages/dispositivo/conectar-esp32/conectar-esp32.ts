@@ -12,6 +12,8 @@ import {
   ProvisioningService,
 } from '../../../services/aprovisionamiento/provisioning.service';
 import { DispositivoService } from '../../../services/dispositivo';
+import { ConfigurarWifiModal, CredencialesWifi } from '../configurar-wifi-modal/configurar-wifi-modal';
+import { ConexionSpinner } from './conexion-spinner';
 
 export type EtapaConexion = 'inicio' | 'wifi' | 'progreso' | 'exito' | 'error';
 
@@ -29,7 +31,7 @@ const PASOS: { id: PasoAprovisionamiento | 'latido'; texto: string }[] = [
 @Component({
   selector: 'app-conectar-esp32',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ConfigurarWifiModal, ConexionSpinner],
   templateUrl: './conectar-esp32.html',
   styleUrl: './conectar-esp32.css',
 })
@@ -42,7 +44,7 @@ export class ConectarEsp32 implements OnDestroy {
   qr: QrDispositivo | null = null;
   ssid = '';
   password = '';
-  mostrarPassword = false;
+  wifiModalAbierto = false;
   qrManual = '';
   pasoActual = 0;
   mensajeError = '';
@@ -90,6 +92,17 @@ export class ConectarEsp32 implements OnDestroy {
     return this.ssid.trim().length > 0 && this.password.length >= 8;
   }
 
+  abrirWifi(): void {
+    this.wifiModalAbierto = true;
+  }
+
+  usarWifi(wifi: CredencialesWifi): void {
+    this.ssid = wifi.ssid;
+    this.password = wifi.password;
+    this.wifiModalAbierto = false;
+    this.conectar();
+  }
+
   conectar(): void {
     if (!this.qr || !this.wifiValido) return;
     this.etapa = 'progreso';
@@ -112,6 +125,7 @@ export class ConectarEsp32 implements OnDestroy {
 
   cancelar(): void {
     this.detener();
+    this.wifiModalAbierto = false;
     this.cancelado.emit();
   }
 

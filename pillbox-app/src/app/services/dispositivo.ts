@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
@@ -8,6 +8,7 @@ import {
   CrearDispositivoRequest,
   DispositivoResponse,
   EnrolamientoResponse,
+  EventoDispositivoResponse,
   ReclamarDispositivoResponse,
 } from '../core/models/api.interfaces';
 
@@ -54,5 +55,13 @@ export class DispositivoService {
 
   crearEnrolamiento(id: number): Observable<EnrolamientoResponse> {
     return this.http.post<EnrolamientoResponse>(`${this.apiUrl}${id}/enrolamiento/`, {});
+  }
+
+  /** Lo que informó la placa (tapa, botón, módulos), del más reciente al más antiguo. */
+  getEventos(id: number, opciones: { modulo?: number; limit?: number } = {}): Observable<EventoDispositivoResponse[]> {
+    let params = new HttpParams();
+    if (opciones.modulo !== undefined) params = params.set('modulo', opciones.modulo);
+    if (opciones.limit !== undefined) params = params.set('limit', opciones.limit);
+    return this.http.get<EventoDispositivoResponse[]>(`${this.apiUrl}${id}/eventos/`, { params });
   }
 }

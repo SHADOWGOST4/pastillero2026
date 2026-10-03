@@ -2,6 +2,9 @@
 
 Conexiones: LED con resistencia 220–330 Ω en GPIO 18 hacia GND; pulsador entre GPIO 27 y GND; buzzer activo en GPIO 23 y GND. Todos comparten GND. Un buzzer de más de 20 mA necesita transistor.
 
+> Este firmware maneja **un solo compartimento**. El diseño del pastillero modular (módulos por I2C, reed y pulsador) y el contrato
+> con la API están en [PROTOCOLO_MODULOS.md](../PROTOCOLO_MODULOS.md).
+
 ## Compilar
 
 1. Arduino IDE con **ESP32 by Espressif Systems 3.3 o superior** (usa la API `network_provisioning`) y **ArduinoJson 7**.

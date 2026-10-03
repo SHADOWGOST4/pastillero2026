@@ -1,0 +1,67 @@
+<div *ngIf="visible" class="modal-backdrop" (click)="closed.emit()">
+  <section
+    class="wifi-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="configurar-wifi-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="wifi-modal-header">
+      <span class="modal-icon material-icons" aria-hidden="true">wifi</span>
+      <div>
+        <p class="modal-overline">Conectar dispositivo</p>
+        <h2 id="configurar-wifi-title">Wi‑Fi del pastillero</h2>
+      </div>
+      <button type="button" class="modal-close" (click)="closed.emit()" aria-label="Cerrar">×</button>
+    </header>
+
+    <form (ngSubmit)="conectar()" novalidate>
+      <div class="wifi-modal-body">
+        <label class="form-label" for="wifi-ssid">Nombre de la red</label>
+        <input
+          id="wifi-ssid"
+          class="form-control"
+          [class.is-invalid]="intentado && !ssidValido"
+          type="text"
+          name="ssid"
+          autocomplete="off"
+          placeholder="Ej. MiCasa"
+          [(ngModel)]="ssid"
+          required
+        />
+        <div class="invalid-feedback" *ngIf="intentado && !ssidValido">Escribe el nombre de la red.</div>
+
+        <label class="form-label mt-3" for="wifi-password">Contraseña</label>
+        <div class="input-group">
+          <input
+            id="wifi-password"
+            class="form-control"
+            [class.is-invalid]="intentado && !passwordValida"
+            [type]="mostrarPassword ? 'text' : 'password'"
+            name="password"
+            autocomplete="off"
+            [(ngModel)]="password"
+            required
+          />
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="mostrarPassword = !mostrarPassword"
+            [attr.aria-label]="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          >
+            <span class="material-icons" aria-hidden="true">{{ mostrarPassword ? 'visibility_off' : 'visibility' }}</span>
+          </button>
+        </div>
+        <div class="invalid-feedback d-block" *ngIf="intentado && !passwordValida">
+          La contraseña debe tener al menos 8 caracteres.
+        </div>
+        <small class="field-help">Debe ser una red de 2,4 GHz.</small>
+      </div>
+
+      <footer class="wifi-modal-footer">
+        <button type="button" class="btn modal-cancel" (click)="closed.emit()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Conectar</button>
+      </footer>
+    </form>
+  </section>
+</div>

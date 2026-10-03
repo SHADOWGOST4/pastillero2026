@@ -15,6 +15,7 @@ from .models import (
     Registro_Toma,
     MovimientoStock,
     AsignacionDispositivo,
+    EventoDispositivo,
     WebPushSubscription,
     VinculacionMonitor,
 )
@@ -126,10 +127,20 @@ class ModuloSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Modulo
-        fields = ['id', 'id_dispositivo', 'dispositivo_nombre', 'numero_modulo', 'id_medicamento', 'medicamento_nombre']
+        fields = [
+            'id', 'id_dispositivo', 'dispositivo_nombre', 'numero_modulo', 'id_medicamento', 'medicamento_nombre',
+            'detectado', 'ultimo_visto', 'tapa_abierta',
+        ]
+        # Lo informa la placa; la app solo lo lee.
+        read_only_fields = ['detectado', 'ultimo_visto', 'tapa_abierta']
         # Desactivar el UniqueTogetherValidator auto-generado por DRF para que
         # la validación personalizada en validate() controle el mensaje de error.
         validators = []
+
+    def validate_numero_modulo(self, value):
+        if not 1 <= value <= Modulo.NUMERO_MAXIMO:
+            raise serializers.ValidationError(f'Debe estar entre 1 y {Modulo.NUMERO_MAXIMO}.')
+        return value
 
     def validate_id_dispositivo(self, value):
         request = self.context.get('request')
@@ -232,9 +243,17 @@ class HorarioSerializer(serializers.ModelSerializer):
 
 
 class RegistroTomaSerializer(serializers.ModelSerializer):
+    metodo_confirmacion = serializers.CharField(read_only=True)
+    modulo_numero = serializers.IntegerField(source='modulo.numero_modulo', read_only=True, default=None)
+
     class Meta:
         model = Registro_Toma
-        fields = ['id', 'fecha_hora_programada', 'fecha_hora_real', 'id_horario', 'id_usuario']
+        fields = [
+            'id', 'fecha_hora_programada', 'fecha_hora_real', 'id_horario', 'id_usuario',
+            'origen', 'metodo_confirmacion', 'modulo_numero', 'apertura_en', 'cierre_en', 'boton_en',
+        ]
+        # La evidencia la fija el pastillero al confirmar; ningún cliente puede escribirla.
+        read_only_fields = ['origen', 'apertura_en', 'cierre_en', 'boton_en']
         extra_kwargs = {
             'id_usuario': {'read_only': True}
         }
@@ -245,6 +264,15 @@ class RegistroTomaSerializer(serializers.ModelSerializer):
             if value.id_medicamento.id_usuario_id != request.user.id:
                 raise serializers.ValidationError('El horario especificado no pertenece a los medicamentos del usuario autenticado.')
         return value
+
+
+class EventoDispositivoSerializer(serializers.ModelSerializer):
+    modulo = serializers.IntegerField(source='modulo.numero_modulo', read_only=True, default=None)
+
+    class Meta:
+        model = EventoDispositivo
+        fields = ['id', 'evento_id', 'tipo', 'fecha_dispositivo', 'fecha_recibido', 'modulo', 'id_registro', 'datos']
+        read_only_fields = fields
 
 
 class WebPushSubscriptionSerializer(serializers.ModelSerializer):

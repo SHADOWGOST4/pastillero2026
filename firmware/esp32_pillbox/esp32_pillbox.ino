@@ -52,15 +52,34 @@ void apagarAlarmaSiLaConfirmoLaWeb() {
   }
 }
 
+// El NTP necesita red: con SNTP iniciado sin Wi-Fi, lwip aborta (udp_new_ip_type) y la placa se reinicia.
+void sincronizarHoraSiHaceFalta() {
+  if (time(nullptr) > 1700000000) return;  // ya hay hora válida
+  configTime(-5*3600, 0, "pool.ntp.org", "time.nist.gov");
+  Serial.println("[NTP] Sincronizando hora antes de conectar por HTTPS...");
+  struct tm horaNtp;
+  if (getLocalTime(&horaNtp, 15000)) {
+    char fechaNtp[32];
+    strftime(fechaNtp, sizeof(fechaNtp), "%Y-%m-%d %H:%M:%S", &horaNtp);
+    Serial.printf("[NTP] Hora sincronizada: %s\n", fechaNtp);
+  } else {
+    Serial.println("[NTP] No se pudo sincronizar; HTTPS puede rechazar el certificado.");
+  }
+}
+
 bool conectarWifi() {
-  if (WiFi.status() == WL_CONNECTED) return true;
+  if (WiFi.status() == WL_CONNECTED) { sincronizarHoraSiHaceFalta(); return true; }
   Serial.println("[WIFI] Conectando con la red guardada...");
   WiFi.begin();  // usa la red que dejó el aprovisionamiento
   unsigned long inicio = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - inicio < 10000) delay(250);
   bool conectado = WiFi.status() == WL_CONNECTED;
-  if (conectado) Serial.printf("[WIFI] Conectado. IP: %s, RSSI: %d dBm\n", WiFi.localIP().toString().c_str(), WiFi.RSSI());
-  else Serial.println("[WIFI] No se pudo conectar.");
+  if (conectado) {
+    Serial.printf("[WIFI] Conectado. IP: %s, RSSI: %d dBm\n", WiFi.localIP().toString().c_str(), WiFi.RSSI());
+    sincronizarHoraSiHaceFalta();
+  } else {
+    Serial.println("[WIFI] No se pudo conectar.");
+  }
   return conectado;
 }
 
@@ -235,16 +254,7 @@ void iniciarOperacion() {
   modo = Modo::OPERACION;
   tls.setCACert(ROOT_CA);
   Serial.println("[INICIO] Pastillero en operacion normal.");
-  configTime(-5*3600, 0, "pool.ntp.org", "time.nist.gov");
-  Serial.println("[NTP] Sincronizando hora antes de conectar por HTTPS...");
-  struct tm horaNtp;
-  if (getLocalTime(&horaNtp, 15000)) {
-    char fechaNtp[32];
-    strftime(fechaNtp, sizeof(fechaNtp), "%Y-%m-%d %H:%M:%S", &horaNtp);
-    Serial.printf("[NTP] Hora sincronizada: %s\n", fechaNtp);
-  } else {
-    Serial.println("[NTP] No se pudo sincronizar; HTTPS puede rechazar el certificado.");
-  }
+  conectarWifi();  // conecta y sincroniza la hora; si falla, se reintenta en cada petición
   ultimoHeartbeat = millis() - HEARTBEAT_MS; ultimaConfig = millis() - CONFIG_MS;
 }
 

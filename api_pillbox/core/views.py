@@ -26,6 +26,13 @@ from rest_framework_simplejwt.views import TokenViewBase
 
 from . import restablecer_contrasena, verificacion, vinculaciones
 from .inventory import calcular_cobertura_medicamento
+from .modulos import (
+    configuracion_modulos,
+    confirmar_toma_modular,
+    parsear_informe_modulos,
+    registrar_evento,
+    sincronizar_modulos,
+)
 from .models import (
     Dispositivo,
     DispositivoFabrica,
@@ -45,6 +52,7 @@ from .serializers import (
     AjustarStockSerializer,
     AsignacionDispositivoSerializer,
     DispositivoSerializer,
+    EventoDispositivoSerializer,
     HorarioSerializer,
     MedicamentoSerializer,
     ModuloSerializer,
@@ -431,6 +439,19 @@ class DispositivoViewSet(viewsets.ModelViewSet):
         dispositivo = self.get_object()
         codigo, expira_en = _crear_codigo_enrolamiento(dispositivo)
         return Response(_respuesta_enrolamiento(dispositivo, codigo, expira_en), status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get'], url_path='eventos')
+    def eventos(self, request, pk=None):
+        """Lo que informó la placa (tapa, botón, módulos conectados), del más reciente al más antiguo."""
+        dispositivo = self.get_object()
+        eventos = dispositivo.eventos.select_related('modulo')
+        try:
+            if request.query_params.get('modulo') is not None:
+                eventos = eventos.filter(modulo__numero_modulo=int(request.query_params['modulo']))
+            limite = min(max(int(request.query_params.get('limit', 50)), 1), 200)
+        except ValueError:
+            return Response({'detail': 'modulo y limit deben ser enteros.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(EventoDispositivoSerializer(eventos[:limite], many=True).data)
 
 
 class MedicamentoViewSet(viewsets.ModelViewSet):
@@ -838,12 +859,16 @@ def iot_heartbeat(request):
     rssi = request.data.get('rssi')
     if rssi is not None and not isinstance(rssi, int):
         return Response({'rssi': 'Debe ser un entero.'}, status=status.HTTP_400_BAD_REQUEST)
+    # Sin la clave `modulos` (firmware anterior) no se toca el estado de los módulos.
+    informe_modulos = parsear_informe_modulos(request.data['modulos']) if 'modulos' in request.data else None
     dispositivo.ultimo_latido = timezone.now()
     dispositivo.estado_conexion = True
     dispositivo.rssi = rssi
     dispositivo.version_firmware = str(request.data.get('firmware_version', dispositivo.version_firmware))[:50]
     dispositivo.ip_esp32 = str(request.data.get('ip', dispositivo.ip_esp32))[:100]
     dispositivo.save(update_fields=['ultimo_latido', 'estado_conexion', 'rssi', 'version_firmware', 'ip_esp32'])
+    if informe_modulos is not None:
+        sincronizar_modulos(dispositivo, informe_modulos, dispositivo.ultimo_latido)
     return Response({'ok': True, 'server_time': timezone.localtime().isoformat()})
 
 
@@ -853,12 +878,14 @@ def iot_configuracion(request):
     dispositivo = autenticar_dispositivo(request)
     if not dispositivo:
         return Response({'detail': 'Credenciales de dispositivo inválidas.'}, status=status.HTTP_401_UNAUTHORIZED)
+    # `activo`, `version` y `horario` son el contrato del firmware de un solo compartimento; `modulos` es el nuevo.
+    modulos = configuracion_modulos(dispositivo)
     asignacion = getattr(dispositivo, 'asignacion', None)
     if not asignacion:
-        return Response({'activo': False, 'timezone': 'America/Bogota'})
+        return Response({'activo': False, 'timezone': 'America/Bogota', 'modulos': modulos})
     horario = asignacion.id_horario
     if not horario.activo or horario.eliminado:
-        return Response({'activo': False, 'timezone': 'America/Bogota'})
+        return Response({'activo': False, 'timezone': 'America/Bogota', 'modulos': modulos})
     ultima_confirmada = Registro_Toma.objects.filter(
         id_horario=horario,
         id_usuario=dispositivo.id_usuario,
@@ -874,7 +901,7 @@ def iot_configuracion(request):
                      'ultima_toma_confirmada_programada': toma_confirmada_programada, 'horario': {
         'id': horario.id, 'hora_toma': horario.hora_toma.strftime('%H:%M:%S'), 'frecuencia': horario.frecuencia,
         'medicamento': horario.id_medicamento.nombre,
-    }})
+    }, 'modulos': modulos})
 
 
 @api_view(['POST'])
@@ -883,6 +910,13 @@ def iot_confirmar_toma(request):
     dispositivo = autenticar_dispositivo(request)
     if not dispositivo:
         return Response({'detail': 'Credenciales de dispositivo inválidas.'}, status=status.HTTP_401_UNAUTHORIZED)
+    if isinstance(request.data, dict) and 'modulo' in request.data:
+        # Pastillero modular: la toma se resuelve por módulo y trae la evidencia de la tapa y del botón.
+        registro, duplicado = confirmar_toma_modular(dispositivo, request.data)
+        return Response(
+            {'ok': True, 'duplicado': duplicado, 'registro_id': registro.id, 'metodo': registro.metodo_confirmacion},
+            status=status.HTTP_200_OK if duplicado else status.HTTP_201_CREATED,
+        )
     asignacion = getattr(dispositivo, 'asignacion', None)
     if not asignacion:
         return Response({'detail': 'El dispositivo no tiene un horario asignado.'}, status=status.HTTP_409_CONFLICT)
@@ -920,6 +954,10 @@ def iot_confirmar_toma(request):
             dispositivo.id_usuario,
             fecha_real,
         )
+        # Firmware de un solo compartimento: solo tiene el botón, así que esa es toda su evidencia.
+        registro.origen = Registro_Toma.Origen.DISPOSITIVO
+        registro.boton_en = fecha_real
+        registro.save(update_fields=['origen', 'boton_en'])
         evento = EventoDispositivo.objects.create(
             evento_id=evento_id,
             dispositivo=dispositivo,
@@ -928,6 +966,22 @@ def iot_confirmar_toma(request):
             id_registro=registro,
         )
     return Response({'ok': True, 'duplicado': False, 'registro_id': registro.id}, status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def iot_evento(request):
+    """Eventos de los sensores (tapa, botón, alarmas). Idempotente por `evento_id` para reintentar sin duplicar."""
+    dispositivo = autenticar_dispositivo(request)
+    if not dispositivo:
+        return Response({'detail': 'Credenciales de dispositivo inválidas.'}, status=status.HTTP_401_UNAUTHORIZED)
+    if not isinstance(request.data, dict):
+        return Response({'detail': 'El cuerpo debe ser un objeto JSON.'}, status=status.HTTP_400_BAD_REQUEST)
+    evento, duplicado = registrar_evento(dispositivo, request.data)
+    return Response(
+        {'ok': True, 'duplicado': duplicado},
+        status=status.HTTP_200_OK if duplicado else status.HTTP_201_CREATED,
+    )
 
 
 @api_view(['GET'])

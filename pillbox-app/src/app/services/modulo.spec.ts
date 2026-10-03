@@ -15,6 +15,9 @@ describe('ModuloService', () => {
     numero_modulo: 1,
     id_medicamento: null,
     medicamento_nombre: null,
+    detectado: false,
+    ultimo_visto: null,
+    tapa_abierta: null,
   };
 
   beforeEach(() => {

@@ -104,6 +104,14 @@ class Modulo(models.Model):
         help_text="Medicamento asignado al módulo"
     )
 
+    # Lo informa la placa en cada latido; el servidor nunca lo inventa.
+    detectado = models.BooleanField(default=False, help_text="La placa lo ve conectado en el bus I2C.")
+    ultimo_visto = models.DateTimeField(null=True, blank=True)
+    tapa_abierta = models.BooleanField(null=True, blank=True, help_text="Último estado de la tapa (sensor reed).")
+
+    # Posiciones del bus I2C: PCF8574 (0x20-0x27) -> 1-8 y PCF8574A (0x38-0x3F) -> 9-16.
+    NUMERO_MAXIMO = 16
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -215,6 +223,36 @@ class Horario(models.Model):
 
         return next_dt.astimezone(tz)
 
+    def ultima_toma_programada(self, hasta=None):
+        """Último instante programado que sea menor o igual a `hasta` (por defecto, ahora).
+
+        Es el espejo de `calcular_proxima_toma` hacia atrás y sirve para que el servidor sepa a qué toma
+        corresponde una confirmación del pastillero sin depender de que la app haya creado el registro.
+        """
+        if not self.activo or self.eliminado:
+            return None
+        tz = timezone.get_current_timezone()
+        hasta = timezone.localtime() if hasta is None else hasta
+        hasta = timezone.make_aware(hasta, tz) if timezone.is_naive(hasta) else hasta.astimezone(tz)
+
+        inicio = timezone.make_aware(datetime.combine(self.fecha_inicio, self.hora_toma), tz)
+        if hasta < inicio:
+            return None
+        if not self.frecuencia or self.frecuencia >= 24:
+            hoy = timezone.make_aware(datetime.combine(hasta.date(), self.hora_toma), tz)
+            candidata = hoy if hoy <= hasta else hoy - timedelta(days=1)
+        else:
+            vueltas = math.floor((hasta - inicio).total_seconds() / (self.frecuencia * 3600))
+            candidata = inicio + timedelta(hours=vueltas * self.frecuencia)
+
+        if self.tipo_duracion == self.TipoDuracion.DIAS:
+            if candidata.date() >= self.fecha_inicio + timedelta(days=self.duracion_dias):
+                return None
+        elif self.tipo_duracion == self.TipoDuracion.FECHA:
+            if candidata.date() > self.fecha_fin:
+                return None
+        return candidata
+
     @property
     def proxima_toma(self):
         """Devuelve el siguiente DateTime (timezone-aware en America/Bogota) estrictamente mayor a ahora."""
@@ -237,6 +275,41 @@ class Registro_Toma(models.Model):
 
     def __str__(self):
         return f"{self.id_usuario.nombre} - {self.fecha_hora_programada}"
+
+    class Origen(models.TextChoices):
+        APP = 'APP', 'Aplicación'
+        DISPOSITIVO = 'DISPOSITIVO', 'Pastillero'
+
+    class Metodo(models.TextChoices):
+        APP = 'APP', 'Confirmada desde la aplicación'
+        COMPLETA = 'COMPLETA', 'Tapa abierta y cerrada, y botón pulsado'
+        TAPA = 'TAPA', 'Tapa abierta y cerrada, sin botón'
+        BOTON = 'BOTON', 'Botón pulsado sin abrir la tapa'
+        DISPOSITIVO = 'DISPOSITIVO', 'Confirmada por el pastillero sin evidencia'
+
+    # Qué hizo realmente la persona: el reed informa de la tapa y el botón de lo que ella confirma.
+    modulo = models.ForeignKey('Modulo', null=True, blank=True, on_delete=models.SET_NULL, related_name='registros')
+    origen = models.CharField(max_length=12, choices=Origen.choices, default=Origen.APP)
+    apertura_en = models.DateTimeField(null=True, blank=True)
+    cierre_en = models.DateTimeField(null=True, blank=True)
+    boton_en = models.DateTimeField(null=True, blank=True)
+
+    @property
+    def metodo_confirmacion(self):
+        """Resume la evidencia de una toma confirmada; None si aún está pendiente."""
+        if self.fecha_hora_real is None:
+            return None
+        if self.origen == self.Origen.APP:
+            return self.Metodo.APP
+        tapa = self.apertura_en is not None
+        boton = self.boton_en is not None
+        if tapa and boton:
+            return self.Metodo.COMPLETA
+        if tapa:
+            return self.Metodo.TAPA
+        if boton:
+            return self.Metodo.BOTON
+        return self.Metodo.DISPOSITIVO
 
 
 class MovimientoStock(models.Model):
@@ -306,6 +379,11 @@ class EventoDispositivo(models.Model):
     fecha_dispositivo = models.DateTimeField()
     fecha_recibido = models.DateTimeField(auto_now_add=True)
     id_registro = models.ForeignKey(Registro_Toma, null=True, blank=True, on_delete=models.SET_NULL, related_name='eventos_dispositivo')
+    modulo = models.ForeignKey(Modulo, null=True, blank=True, on_delete=models.SET_NULL, related_name='eventos')
+    datos = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ['-fecha_dispositivo', '-id']
 
 
 class WebPushSubscription(models.Model):

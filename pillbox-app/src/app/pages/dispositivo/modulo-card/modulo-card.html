@@ -1,0 +1,31 @@
+<article class="module-card" [class.module-occupied]="modulo.id_medicamento !== null" [class.module-offline]="!modulo.detectado">
+  <div class="module-card-heading">
+    <strong>Módulo {{ modulo.numero_modulo }}</strong>
+    <span class="module-connection" [class.is-offline]="!modulo.detectado">
+      <span class="status-dot" aria-hidden="true"></span>
+      {{ modulo.detectado ? 'Conectado' : 'Sin conexión' }}
+    </span>
+  </div>
+
+  <p class="module-note" *ngIf="textoTapa">
+    <span class="material-icons" aria-hidden="true">{{ modulo.tapa_abierta ? 'lock_open' : 'lock' }}</span>
+    {{ textoTapa }}
+  </p>
+
+  <p class="module-medication">{{ modulo.medicamento_nombre || 'Sin medicamento asignado' }}</p>
+
+  <p class="module-note" *ngIf="modulo.id_medicamento !== null">
+    <span class="material-icons" aria-hidden="true">schedule</span>
+    <ng-container *ngIf="horasDelMedicamento.length; else sinHorarios">{{ horasDelMedicamento.join(' · ') }}</ng-container>
+    <ng-template #sinHorarios>Sin horarios: créalos en Horarios</ng-template>
+  </p>
+
+  <button *ngIf="modulo.id_medicamento === null" type="button" class="btn btn-sm action-button action-assign" (click)="asignar.emit(modulo)">
+    <span class="material-icons" aria-hidden="true">add_link</span>
+    Asignar
+  </button>
+  <button *ngIf="modulo.id_medicamento !== null" type="button" class="btn btn-sm action-button action-unassign" (click)="desasignar.emit(modulo)">
+    <span class="material-icons" aria-hidden="true">link_off</span>
+    Desasignar
+  </button>
+</article>
