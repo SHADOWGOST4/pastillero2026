@@ -52,6 +52,18 @@ def send_fcm_to_subscription(subscription, payload):
     messaging.send(message)
 
 
+def send_fcm_data(subscription, data):
+    """Mensaje de solo datos: no muestra nada, lo atiende el código de la app aunque esté cerrada."""
+    from firebase_admin import messaging
+
+    message = messaging.Message(
+        token=subscription.token,
+        data={str(k): str(v) for k, v in data.items()},
+        android=messaging.AndroidConfig(priority='high'),
+    )
+    messaging.send(message)
+
+
 def get_vapid_config():
     public_key = getattr(settings, 'WEBPUSH_PUBLIC_KEY', '').strip()
     private_key = getattr(settings, 'WEBPUSH_PRIVATE_KEY', '').strip()
@@ -170,6 +182,32 @@ def send_web_push_for_registro(registro):
     log.error = '; '.join(errores)
     log.save(update_fields=['status', 'error'])
     return sent
+
+
+def notificar_toma_confirmada(registro_id):
+    """Avisa a los teléfonos de que la toma ya se confirmó para que apaguen su alarma y limpien sus notificaciones.
+
+    Se manda a todos los que reciben los avisos de esa toma (el dueño y sus cuidadores), sea quien sea el que la
+    confirmó: la app, la placa u otro teléfono. Un fallo aquí no debe afectar a la confirmación.
+    """
+    try:
+        registro = Registro_Toma.objects.select_related('id_horario').get(id=registro_id)
+        if get_firebase_app() is None:
+            return
+        datos = {
+            'tipo': 'toma_confirmada',
+            'registro_id': registro.id,
+            'horario_id': registro.id_horario_id,
+            'programada_ms': int(registro.fecha_hora_programada.timestamp() * 1000),
+        }
+        for suscripcion in vinculaciones.fcm_suscripciones_para_registro(registro):
+            try:
+                send_fcm_data(suscripcion, datos)
+            except Exception:
+                # El token puede estar vencido: se registra y se sigue con los demás.
+                logger.exception('[FCM] fallo aviso de toma confirmada registro=%s token=%s…', registro_id, suscripcion.token[:16])
+    except Exception:
+        logger.exception('[FCM] no se pudo avisar de la toma confirmada registro=%s', registro_id)
 
 
 def crear_tomas_vencidas(now=None):

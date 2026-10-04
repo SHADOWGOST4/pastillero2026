@@ -6,6 +6,7 @@ import {
   RegistroTomaResponse,
 } from '../core/models/api.interfaces';
 import { Horario } from './horario';
+import { AlarmaMedicacionService } from './alarma-medicacion/alarma-medicacion.service';
 import { Medicamento } from './medicamento';
 import { RegistroToma } from './registro-toma';
 
@@ -31,6 +32,7 @@ export class MedicationReminderService {
     private readonly horarioService: Horario,
     private readonly medicamentoService: Medicamento,
     private readonly registroService: RegistroToma,
+    private readonly alarma: AlarmaMedicacionService,
   ) {}
 
   start(): void {
@@ -87,6 +89,8 @@ export class MedicationReminderService {
           this.registroService.getById(reminderVisible.registro.id),
         );
         if (registroActual.fecha_hora_real) {
+          // La placa (u otro dispositivo) confirmó primero: también se apaga la alarma nativa de esta toma.
+          void this.alarma.detenerPorToma(registroActual.id_horario, registroActual.fecha_hora_programada);
           this.registroService.notificarActualizacion();
           this.clearReminder();
         }

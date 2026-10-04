@@ -10,6 +10,7 @@ import { MedicationReminderService } from '../../services/medication-reminder.se
 import { MedicationReminderModal } from '../../shared/medication-reminder-modal/medication-reminder-modal';
 import { UsuarioResumenResponse, VinculacionResponse } from '../../core/models/api.interfaces';
 import { Vinculacion } from '../../services/vinculacion';
+import { AlarmaMedicacionService } from '../../services/alarma-medicacion/alarma-medicacion.service';
 import { LocalReminderSchedulerService } from '../../services/local-reminder-scheduler.service';
 
 @Component({
@@ -38,6 +39,7 @@ export class MainLayout implements OnDestroy, OnInit {
     private cuentaActivaService: CuentaActiva,
     private vinculacionService: Vinculacion,
     private localReminderScheduler: LocalReminderSchedulerService,
+    private alarmaMedicacion: AlarmaMedicacionService,
   ) {
     this.usuario = this.auth.obtenerUsuario();
   }
@@ -46,12 +48,14 @@ export class MainLayout implements OnDestroy, OnInit {
     if (!document.hidden) {
       this.refrescarUsuario();
       void this.localReminderScheduler.sync();
+      void this.alarmaMedicacion.procesarConfirmacionesPendientes();
     }
   };
 
   ngOnInit() {
     void this.notificationService.initializeWebNotifications();
     this.medicationReminderService.start();
+    void this.alarmaMedicacion.procesarConfirmacionesPendientes();
     void this.localReminderScheduler.sync();
     this.sidebarAbierto = window.innerWidth >= 992;
     this.actualizarBreadcrumb(this.router.url);

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -8,7 +8,8 @@ import {
   RegistroTomaResponse,
 } from '../core/models/api.interfaces';
 import { of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, tap } from 'rxjs/operators';
+import { ALARMA_MEDICACION, AlarmaMedicacionPlugin, detenerAlarmaDeToma } from './alarma-medicacion/alarma-medicacion.plugin';
 
 @Injectable({
   providedIn: 'root',
@@ -17,7 +18,10 @@ export class RegistroToma {
   private apiUrl = `${environment.apiUrl}registros/`;
   readonly registroActualizado$ = new Subject<void>();
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    @Inject(ALARMA_MEDICACION) private alarma: AlarmaMedicacionPlugin,
+  ) {}
 
   getPage(page = 1, titular?: number): Observable<PaginatedResponse<RegistroTomaResponse>> {
     const params: Record<string, number> = { page };
@@ -53,9 +57,12 @@ export class RegistroToma {
   }
 
   confirmar(id: number, fechaHoraReal = new Date().toISOString()): Observable<RegistroTomaResponse> {
-    return this.http.patch<RegistroTomaResponse>(`${this.apiUrl}${id}/`, {
-      fecha_hora_real: fechaHoraReal,
-    });
+    return this.http
+      .patch<RegistroTomaResponse>(`${this.apiUrl}${id}/`, { fecha_hora_real: fechaHoraReal })
+      .pipe(
+        // Confirmada desde la app: la alarma nativa deja de sonar por esta toma.
+        tap((registro) => void detenerAlarmaDeToma(this.alarma, registro.id_horario, registro.fecha_hora_programada)),
+      );
   }
 
   notificarActualizacion(): void {
