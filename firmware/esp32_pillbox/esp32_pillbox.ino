@@ -16,11 +16,13 @@ constexpr uint8_t LED_PIN = 18, BUTTON_PIN = 27, BUZZER_PIN = 23;
 constexpr unsigned long HEARTBEAT_MS = 30000, CONFIG_MS = 15000;
 constexpr unsigned long ALARM_STATUS_MS = 5000;
 WiFiClientSecure tls;
-bool alarma = false, configurado = false;
+volatile bool alarma = false;
+bool configurado = false;
 int horaToma = -1, minutoToma = -1, frecuencia = 0;
 unsigned long ultimoHeartbeat = 0, ultimaConfig = 0;
 unsigned long ultimoEstadoAlarma = 0;
-long ultimaClaveRevisada = -1, ultimaConfirmada = -1, claveAlarma = -1;
+long ultimaClaveRevisada = -1;
+volatile long ultimaConfirmada = -1, claveAlarma = -1;
 String firmaConfiguracion = "";
 String tomaConfirmadaProgramada = "";
 
@@ -31,7 +33,27 @@ IdentidadFabrica identidad;
 constexpr unsigned long RESET_MS = 5000;
 unsigned long inicioPulsacion = 0, ledFijoHasta = 0;
 
+// Una alarma sin confirmar se apaga a los 10 min y se informa como omitida (antes sonaba hasta que alguien pulsaba).
+constexpr unsigned long ALARMA_MAX_MS = 10UL * 60UL * 1000UL;
+unsigned long inicioAlarmaMs = 0;
+
+// El pulsador se atiende en su propia tarea: las peticiones HTTPS bloquean el loop hasta ~3 s, y la alarma tardaba en
+// apagarse (o la pulsación se perdía). Al pulsar, el LED y el buzzer se apagan al instante; el loop envía después.
+volatile bool confirmacionSolicitada = false;
+volatile time_t instanteConfirmacion = 0;
+
+// Un envío pendiente (confirmación o alarma omitida). Se reintenta con el mismo evento_id: el servidor es idempotente.
+struct Envio {
+  bool pendiente = false, esConfirmacion = true;
+  String evento, fecha, programada;
+  int intentos = 0;
+  unsigned long proximoMs = 0;
+};
+Envio envio;
+constexpr int INTENTOS_ENVIO = 12;
+
 void setAlarma(bool activa) {
+  if (activa) inicioAlarmaMs = millis();
   alarma = activa;
   digitalWrite(LED_PIN, activa ? HIGH : LOW);
   digitalWrite(BUZZER_PIN, activa ? HIGH : LOW); // buzzer activo; para pasivo usa LEDC.
@@ -162,19 +184,79 @@ String nuevoEvento() {
   return String(id);
 }
 
-void confirmar() {
-  struct tm ahora;
-  if (!getLocalTime(&ahora, 1000)) { Serial.println("[NTP] Hora no sincronizada; no se confirma."); return; }
-  char fecha[32]; strftime(fecha, sizeof(fecha), "%Y-%m-%dT%H:%M:%S-05:00", &ahora);
+String fechaIso(time_t instante) {
+  struct tm local; localtime_r(&instante, &local);
+  char fecha[32]; strftime(fecha, sizeof(fecha), "%Y-%m-%dT%H:%M:%S-05:00", &local);
+  return String(fecha);
+}
+
+void encolarEnvio(bool esConfirmacion, time_t instante, long claveToma) {
+  envio.pendiente = true; envio.esConfirmacion = esConfirmacion; envio.evento = nuevoEvento();
+  envio.fecha = fechaIso(instante); envio.programada = fechaIso((time_t)claveToma * 60);
+  envio.intentos = 0; envio.proximoMs = millis();
+}
+
+void procesarEnvio() {
+  if (!envio.pendiente || millis() < envio.proximoMs) return;
+  const char *nombre = envio.esConfirmacion ? "Confirmacion" : "Alarma omitida";
+  int codigo = -1;
   HTTPClient http;
-  if (!abrir(http, "/tomas/confirmar/")) { Serial.println("[API] No se pudo abrir confirmacion."); return; }
-  headers(http); JsonDocument body; body["evento_id"] = nuevoEvento(); body["fecha_hora_real"] = fecha;
-  String json; serializeJson(body, json);
-  int codigo = http.POST(json);
-  Serial.printf("[API] Confirmacion HTTP %d: %s\n", codigo, http.getString().c_str());
-  diagnosticarConexion("Confirmacion", codigo);
-  if (codigo == HTTP_CODE_OK || codigo == HTTP_CODE_CREATED) { ultimaConfirmada = claveAlarma; setAlarma(false); }
-  http.end();
+  if (abrir(http, envio.esConfirmacion ? "/tomas/confirmar/" : "/eventos/")) {
+    headers(http);
+    JsonDocument body; body["evento_id"] = envio.evento;
+    if (envio.esConfirmacion) {
+      body["fecha_hora_real"] = envio.fecha;
+    } else {
+      body["tipo"] = "alarma_omitida"; body["fecha_hora"] = envio.fecha; body["datos"]["programada"] = envio.programada;
+    }
+    String json; serializeJson(body, json);
+    codigo = http.POST(json);
+    Serial.printf("[API] %s HTTP %d: %s\n", nombre, codigo, http.getString().c_str());
+    diagnosticarConexion(nombre, codigo);
+    http.end();
+  } else {
+    Serial.printf("[API] No se pudo abrir el envio (%s).\n", nombre);
+  }
+  bool exito = codigo == HTTP_CODE_OK || codigo == HTTP_CODE_CREATED;
+  // Un 4xx (salvo 408 y 429) significa que el servidor lo rechazó: reintentar no lo cambiaría.
+  bool rechazado = codigo >= 400 && codigo < 500 && codigo != 408 && codigo != 429;
+  envio.intentos++;
+  if (exito || rechazado || envio.intentos >= INTENTOS_ENVIO) {
+    if (!exito) Serial.printf("[API] Se descarta el envio (%s) tras %d intento(s).\n", nombre, envio.intentos);
+    envio.pendiente = false;
+    return;
+  }
+  unsigned long espera = 2000UL << (envio.intentos < 4 ? envio.intentos : 4);  // 4, 8, 16, 30, 30... s
+  if (espera > 30000UL) espera = 30000UL;
+  envio.proximoMs = millis() + espera;
+  Serial.printf("[API] Se reintentara %s en %lu s.\n", nombre, espera / 1000);
+}
+
+void tareaBoton(void *) {
+  bool anterior = HIGH;
+  for (;;) {
+    bool boton = digitalRead(BUTTON_PIN);
+    if (anterior == HIGH && boton == LOW) {
+      Serial.printf("[BOTON] Pulsado. Alarma activa=%s\n", alarma ? "si" : "no");
+      vTaskDelay(pdMS_TO_TICKS(35));
+      if (digitalRead(BUTTON_PIN) == LOW) {
+        if (alarma && modo == Modo::OPERACION) {
+          alarma = false;
+          digitalWrite(LED_PIN, LOW); digitalWrite(BUZZER_PIN, LOW);
+          ultimaConfirmada = claveAlarma;
+          instanteConfirmacion = time(nullptr);
+          confirmacionSolicitada = true;
+          Serial.println("[ALARMA] APAGADA al pulsar | confirmacion en curso");
+        } else {
+          Serial.println("[BOTON] No hay una toma pendiente para confirmar.");
+        }
+      } else {
+        Serial.println("[BOTON] Rebote detectado; pulsacion ignorada.");
+      }
+    }
+    anterior = boton;
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
 }
 
 void revisarHorario() {
@@ -262,6 +344,7 @@ void setup() {
   pinMode(LED_PIN, OUTPUT); pinMode(BUZZER_PIN, OUTPUT); pinMode(BUTTON_PIN, INPUT_PULLUP); setAlarma(false);
   Serial.begin(115200); WiFi.mode(WIFI_STA);
   Serial.println("\n[INICIO] Pastillero ESP32 iniciado.");
+  xTaskCreate(tareaBoton, "boton", 4096, nullptr, 2, nullptr);
 
   // Botón mantenido al encender: mismo efecto que la pulsación larga, sin reiniciar de nuevo.
   if (digitalRead(BUTTON_PIN) == LOW) {
@@ -303,6 +386,20 @@ void loop() {
   if (millis() < ledFijoHasta) digitalWrite(LED_PIN, HIGH);
   else if (!alarma) digitalWrite(LED_PIN, LOW);
 
+  if (confirmacionSolicitada) {
+    confirmacionSolicitada = false;
+    if (instanteConfirmacion > 1700000000) encolarEnvio(true, instanteConfirmacion, ultimaConfirmada);
+    else Serial.println("[NTP] Hora no sincronizada; no se confirma.");
+  }
+  if (alarma && millis() - inicioAlarmaMs >= ALARMA_MAX_MS) {
+    Serial.println("[ALARMA] Sin confirmar tras 10 min; se apaga y se informa como omitida.");
+    long clave = claveAlarma;
+    setAlarma(false);
+    ultimaConfirmada = clave;
+    encolarEnvio(false, time(nullptr), clave);
+  }
+  procesarEnvio();
+
   unsigned long ahora = millis();
   if (ahora-ultimoHeartbeat >= HEARTBEAT_MS) { ultimoHeartbeat=ahora; heartbeat(); }
   if (ahora-ultimaConfig >= CONFIG_MS) { ultimaConfig=ahora; obtenerConfiguracion(); }
@@ -311,16 +408,5 @@ void loop() {
     ultimoEstadoAlarma = ahora;
     Serial.println("[ALARMA] ACTIVA: toma pendiente. Presiona el boton para confirmar.");
   }
-  static bool anterior=HIGH; bool boton=digitalRead(BUTTON_PIN);
-  if (anterior==HIGH && boton==LOW) {
-    Serial.printf("[BOTON] Pulsado. Alarma activa=%s\n", alarma ? "si" : "no");
-    delay(35);
-    if (!digitalRead(BUTTON_PIN)) {
-      if (alarma) confirmar();
-      else Serial.println("[BOTON] No hay una toma pendiente para confirmar.");
-    } else {
-      Serial.println("[BOTON] Rebote detectado; pulsacion ignorada.");
-    }
-  }
-  anterior=boton; delay(10);
+  delay(10);
 }
