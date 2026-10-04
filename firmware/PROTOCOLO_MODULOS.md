@@ -184,6 +184,8 @@ Con la clave `modulo` confirma la toma de ese módulo. Sin ella es el flujo ante
 
 | Regla | Valor |
 |---|---|
+| Creación de la toma | La crea el servidor a la hora exacta (cron de cada minuto), sin depender de la app ni de la placa |
+| Ventana de notificación (push) | 10 minutos desde la hora programada |
 | Ventana para confirmar una toma | 6 horas desde su hora programada |
 | Fecha futura aceptada (reloj de la placa) | 10 minutos |
 | Tolerancia de `programada` | 1 minuto |

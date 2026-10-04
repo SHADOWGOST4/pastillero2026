@@ -43,6 +43,16 @@ Luego graba el firmware. Sin esta partición el LED hace doble destello y el equ
 | 10 min sin configurar | Apaga BLE; mantén el botón 5 s para reintentar | apagado |
 | Falta identidad de fábrica | No opera | doble destello |
 
+### Alarma en operación normal
+
+- **Al pulsar el botón**, el LED y el buzzer se apagan **al instante**: el pulsador se atiende en su propia tarea, porque las
+  peticiones HTTPS bloquean el `loop` hasta ~3 s. La confirmación se envía después.
+- **Reintentos:** si el envío falla, se reintenta (4, 8, 16 y 30 s entre intentos, hasta 12) con el mismo `evento_id`; el servidor
+  es idempotente y no duplica la toma. Una respuesta 4xx (salvo 408 y 429) se descarta, porque reintentar no la cambiaría.
+- **Caducidad:** una alarma sin confirmar se apaga a los **10 minutos** y se informa con el evento `alarma_omitida`. Antes sonaba
+  hasta que alguien pulsaba.
+- **Si la toma se confirma desde la app**, la alarma se apaga en la siguiente consulta de configuración (cada 15 s).
+
 Mantener el botón 5 s (en cualquier modo) borra la configuración local y reinicia en modo configuración.
 También sirve para entregar el equipo a otro usuario; antes hay que eliminar el dispositivo en la app.
 Ojo: si se mantiene 5 s durante una alarma, la primera pulsación ya confirma la toma.

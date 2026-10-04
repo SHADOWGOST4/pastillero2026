@@ -11,9 +11,12 @@ from django.utils import timezone
 from pywebpush import webpush
 
 from . import vinculaciones
-from .models import Registro_Toma, WebPushNotificationLog
+from .models import Horario, Registro_Toma, WebPushNotificationLog
 
 logger = logging.getLogger(__name__)
+
+# Desde la hora de una toma, durante este tiempo se crea (si falta) y se notifica. Pasado ese margen se da por omitida.
+VENTANA_NOTIFICACION = timedelta(minutes=10)
 
 
 def get_firebase_app():
@@ -169,19 +172,40 @@ def send_web_push_for_registro(registro):
     return sent
 
 
-def enviar_notificaciones_pendientes():
-    now = timezone.now()
-    logger.info('[SCHEDULER] ciclo iniciado now=%s', now.isoformat())
+def crear_tomas_vencidas(now=None):
+    """Crea la toma pendiente de cada horario activo cuya hora acaba de llegar. Devuelve cuántas creó.
+
+    Hasta ahora las creaba la app, y solo si estaba abierta a esa hora; sin la toma no había push, ni siquiera para un
+    cuidador. Es idempotente: la restricción única (usuario, horario, instante) resuelve la carrera con la app o con la
+    placa, que también crean la toma si no existe.
+    """
+    now = now or timezone.now()
+    horarios = Horario.objects.filter(
+        activo=True, eliminado=False, id_medicamento__id_usuario__activo=True,
+    ).select_related('id_medicamento')
+    creadas = 0
+    for horario in horarios:
+        instante = horario.ultima_toma_programada(now)
+        if instante is None or now - instante > VENTANA_NOTIFICACION:
+            continue
+        _, creada = Registro_Toma.objects.get_or_create(
+            id_usuario_id=horario.id_medicamento.id_usuario_id, id_horario=horario, fecha_hora_programada=instante,
+        )
+        creadas += creada
+    return creadas
+
+
+def enviar_notificaciones_pendientes(ahora=None):
+    now = ahora or timezone.now()
+    creadas = crear_tomas_vencidas(now)
+    # Solo las tomas de los últimos minutos: antes se recorrían todas las pendientes de la historia en cada pasada.
     registros = Registro_Toma.objects.filter(
         fecha_hora_programada__lte=now,
+        fecha_hora_programada__gte=now - VENTANA_NOTIFICACION,
         fecha_hora_real__isnull=True,
     ).select_related('id_horario__id_medicamento', 'id_usuario')
-    logger.info('[SCHEDULER] tomas_encontradas=%s', registros.count())
-
+    if creadas or registros:
+        logger.info('[SCHEDULER] now=%s tomas_creadas=%s pendientes_en_ventana=%s', now.isoformat(), creadas, len(registros))
     for registro in registros:
-        logger.info('[SCHEDULER] revisando registro=%s programada=%s', registro.id, registro.fecha_hora_programada.isoformat())
-        if registro.fecha_hora_programada + timedelta(minutes=10) < now:
-            logger.info('[SCHEDULER] registro=%s fuera de ventana de notificación', registro.id)
-            continue
-        logger.info('[SCHEDULER] enviando push para evento_id=%s registro=%s', registro.id, registro.id)
+        logger.info('[SCHEDULER] enviando push registro=%s programada=%s', registro.id, registro.fecha_hora_programada.isoformat())
         send_web_push_for_registro(registro)
