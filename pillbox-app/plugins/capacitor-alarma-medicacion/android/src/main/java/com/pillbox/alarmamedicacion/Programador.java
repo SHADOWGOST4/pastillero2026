@@ -27,6 +27,16 @@ final class Programador {
         Almacen.guardarProgramadas(contexto, vigentes);
     }
 
+    /** Reemplaza las alarmas por las nuevas, sin perder un "posponer" que siga pendiente. */
+    static synchronized void reemplazar(Context contexto, List<Programada> nuevas) {
+        List<Programada> lista = new ArrayList<>(nuevas);
+        long ahora = System.currentTimeMillis();
+        for (Programada p : Almacen.programadas(contexto)) {
+            if (p.pospuesta && p.disparoMs > ahora) lista.add(p);
+        }
+        reprogramar(contexto, lista);
+    }
+
     /** Tras un reinicio, una actualización o un cambio de hora Android borra las alarmas: se vuelven a crear. */
     static void restaurar(Context contexto) {
         reprogramar(contexto, Almacen.programadas(contexto));

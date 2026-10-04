@@ -51,12 +51,7 @@ public class AlarmaMedicacionPlugin extends Plugin {
                     o.getInt("horarioId"), instante, instante, o.optString("titulo", ""), o.optString("cuerpo", ""), false
                 ));
             }
-            // Un "posponer" pendiente no debe perderse cuando la app vuelve a sincronizar.
-            long ahora = System.currentTimeMillis();
-            for (Programada p : Almacen.programadas(contexto)) {
-                if (p.pospuesta && p.disparoMs > ahora) lista.add(p);
-            }
-            Programador.reprogramar(contexto, lista);
+            Programador.reemplazar(contexto, lista);
             call.resolve();
         } catch (JSONException e) {
             call.reject("Alarmas inválidas.", e);
