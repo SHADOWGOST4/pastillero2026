@@ -136,6 +136,8 @@ public class AlarmaService extends Service {
             .setOngoing(true)
             .setAutoCancel(false)
             .setContentIntent(Programador.intentAbrirApp(this))
+            .setDeleteIntent(PendingIntent.getBroadcast(this, 4,
+                new Intent(this, AlarmaReceiver.class).setAction(Alarma.ACCION_SILENCIAR), banderas))
             .setFullScreenIntent(PendingIntent.getActivity(this, 1, pantalla, banderas), true)
             .addAction(0, "Ya lo tomé", PendingIntent.getActivity(this, 2, tome, banderas))
             .addAction(0, "Posponer 5 min", PendingIntent.getActivity(this, 3, posponer, banderas))
