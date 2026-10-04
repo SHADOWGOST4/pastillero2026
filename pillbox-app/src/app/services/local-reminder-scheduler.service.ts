@@ -3,6 +3,7 @@ import { firstValueFrom } from 'rxjs';
 import { Capacitor } from '@capacitor/core';
 import { HorarioResponse } from '../core/models/api.interfaces';
 import { Horario } from './horario';
+import { AlarmaMedicacionService } from './alarma-medicacion/alarma-medicacion.service';
 
 const VENTANA_DIAS = 3;
 // Rango de IDs reservado para estas alarmas: siempre se cancela por completo
@@ -16,7 +17,8 @@ const MAX_ALARMAS = 40;
 
 /**
  * Programa las tomas próximas como alarmas exactas del sistema operativo
- * (@capacitor/local-notifications), independientes de FCM/red/servidor.
+ * (plugin nativo capacitor-alarma-medicacion: suena en bucle, con pantalla completa y botones),
+ * independientes de FCM/red/servidor.
  * Es el canal más confiable para el dueño del teléfono: si Google Play
  * Services no está disponible, si no hay internet, o si el cron del
  * servidor se cae, esta alarma igual dispara a la hora programada. FCM
@@ -27,7 +29,10 @@ const MAX_ALARMAS = 40;
 export class LocalReminderSchedulerService {
   private sincronizando = false;
 
-  constructor(private readonly horarioService: Horario) {}
+  constructor(
+    private readonly horarioService: Horario,
+    private readonly alarma: AlarmaMedicacionService,
+  ) {}
 
   isSupported(): boolean {
     return Capacitor.getPlatform() === 'android';
@@ -42,9 +47,8 @@ export class LocalReminderSchedulerService {
     try {
       const { LocalNotifications } = await import('@capacitor/local-notifications');
 
-      // Cancela siempre TODO el rango reservado, no solo lo que recordemos
-      // haber programado nosotros mismos — así una sincronización previa
-      // interrumpida (crash, cierre forzado) nunca deja alarmas huérfanas.
+      // Las notificaciones programadas por versiones anteriores (un solo aviso, sin sonido de alarma) ya no se usan:
+      // se cancelan siempre todas, por si alguna quedó, para no duplicar la alarma nativa.
       await LocalNotifications.cancel({
         notifications: Array.from({ length: MAX_ALARMAS }, (_, i) => ({ id: ID_BASE + i })),
       });
@@ -65,19 +69,15 @@ export class LocalReminderSchedulerService {
       candidatas.sort((a, b) => a.fecha.getTime() - b.fecha.getTime());
       const seleccionadas = candidatas.slice(0, MAX_ALARMAS);
 
-      const notificaciones = seleccionadas.map(({ fecha, horario }, indice) => ({
-        id: ID_BASE + indice,
-        title: 'Hora de tomar tu medicamento',
-        body: `${horario.medicamento_nombre} · ${this.formatearHora(fecha)}`,
-        schedule: { at: fecha, allowWhileIdle: true as const },
-        extra: { horarioId: horario.id, targetUrl: '/dashboard' },
+      const alarmas = seleccionadas.map(({ fecha, horario }) => ({
+        horarioId: horario.id,
+        instanteMs: fecha.getTime(),
+        titulo: 'Hora de tomar tu medicamento',
+        cuerpo: `${horario.medicamento_nombre} · ${this.formatearHora(fecha)}`,
       }));
+      await this.alarma.programar(alarmas);
 
-      if (notificaciones.length) {
-        await LocalNotifications.schedule({ notifications: notificaciones });
-      }
-
-      console.log(`[RecordatorioLocal] ${notificaciones.length} alarmas programadas (de ${candidatas.length} candidatas en ${VENTANA_DIAS} días)`);
+      console.log(`[RecordatorioLocal] ${alarmas.length} alarmas programadas (de ${candidatas.length} candidatas en ${VENTANA_DIAS} días)`);
     } catch (error) {
       console.error(`[RecordatorioLocal] error sincronizando alarmas: ${String(error)}`);
     } finally {

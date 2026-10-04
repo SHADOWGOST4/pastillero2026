@@ -2,6 +2,7 @@ from django.db import transaction
 from rest_framework.exceptions import APIException
 
 from .models import Medicamento, MovimientoStock, Registro_Toma
+from .notifications import notificar_toma_confirmada
 
 
 class StockInsuficiente(APIException):
@@ -50,6 +51,8 @@ def confirmar_registro_con_stock(registro_id, usuario, fecha_hora_real):
         tipo=MovimientoStock.Tipo.TOMA_CONFIRMADA,
         usuario=usuario,
     )
+    # Cuando la transacción ya se guardó: los teléfonos apagan su alarma de esta toma.
+    transaction.on_commit(lambda: notificar_toma_confirmada(registro.id))
     return registro
 
 

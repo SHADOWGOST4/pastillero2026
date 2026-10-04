@@ -1,0 +1,15 @@
+{
+  "name": "capacitor-alarma-medicacion",
+  "version": "0.1.0",
+  "description": "Alarma nativa de Android para las tomas de medicación: suena en bucle por el volumen de alarmas, con pantalla completa y botones.",
+  "private": true,
+  "files": ["android/src/main/", "android/build.gradle"],
+  "peerDependencies": {
+    "@capacitor/core": ">=8.0.0"
+  },
+  "capacitor": {
+    "android": {
+      "src": "android"
+    }
+  }
+}
