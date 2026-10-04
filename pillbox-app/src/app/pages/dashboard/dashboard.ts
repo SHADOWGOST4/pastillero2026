@@ -5,6 +5,7 @@ import { forkJoin } from 'rxjs';
 import { Dashboard as DashboardService } from '../../services/dashboard';
 import { Auth } from '../../services/auth';
 import { Medicamento } from '../../services/medicamento';
+import { PermisosAlarma } from '../../shared/permisos-alarma/permisos-alarma';
 import {
   MedicamentoCoberturaResponse,
   ProximaTomaItem,
@@ -20,7 +21,7 @@ interface ModuleCard {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PermisosAlarma],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
   providers: [DatePipe]

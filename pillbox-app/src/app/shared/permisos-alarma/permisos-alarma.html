@@ -1,0 +1,18 @@
+<section *ngIf="faltantes.length > 0" class="permisos-alarma" role="alert">
+  <div class="permisos-cabecera">
+    <span class="material-icons" aria-hidden="true">alarm</span>
+    <div>
+      <strong>Para que la alarma suene bien</strong>
+      <p>{{ faltantes.length === 1 ? 'Falta un permiso' : 'Faltan ' + faltantes.length + ' permisos' }} en tu teléfono.</p>
+    </div>
+  </div>
+  <ul class="permisos-lista">
+    <li *ngFor="let permiso of faltantes">
+      <div>
+        <strong>{{ permiso.titulo }}</strong>
+        <span>{{ permiso.detalle }}</span>
+      </div>
+      <button type="button" class="btn btn-sm btn-primary" (click)="permitir(permiso)">Permitir</button>
+    </li>
+  </ul>
+</section>
