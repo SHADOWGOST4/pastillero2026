@@ -11,7 +11,7 @@ from django.utils import timezone
 from pywebpush import webpush
 
 from . import vinculaciones
-from .models import Horario, Registro_Toma, WebPushNotificationLog
+from .models import FcmSubscription, Horario, Registro_Toma, WebPushNotificationLog
 
 logger = logging.getLogger(__name__)
 
@@ -247,3 +247,52 @@ def enviar_notificaciones_pendientes(ahora=None):
     for registro in registros:
         logger.info('[SCHEDULER] enviando push registro=%s programada=%s', registro.id, registro.fecha_hora_programada.isoformat())
         send_web_push_for_registro(registro)
+
+
+# Un mensaje de datos de FCM admite 4 KB: cada alarma ocupa ~90 bytes, y con 30 sobra margen. Es lo que cabe en las
+# próximas 72 h de varios medicamentos, y la app lo reemplaza por la lista completa en cuanto se abre.
+VENTANA_ALARMAS = timedelta(hours=72)
+MAX_ALARMAS = 30
+
+
+def alarmas_del_usuario(usuario_id, ahora=None):
+    """Próximas tomas del usuario como las necesita la alarma nativa del teléfono, ordenadas por hora.
+
+    Es el mismo cálculo que hace la app (`proxima_toma` y luego una toma cada `frecuencia` horas dentro de la ventana),
+    para que el teléfono tenga las alarmas correctas aunque no abra la app tras un cambio de horario.
+    """
+    ahora = timezone.localtime(ahora) if ahora else timezone.localtime()
+    limite = ahora + VENTANA_ALARMAS
+    alarmas = []
+    horarios = Horario.objects.filter(
+        id_medicamento__id_usuario_id=usuario_id, activo=True, eliminado=False
+    ).select_related('id_medicamento')
+    for horario in horarios:
+        instante = horario.calcular_proxima_toma(ahora)
+        while instante is not None and instante <= limite and len(alarmas) < MAX_ALARMAS * 2:
+            alarmas.append({
+                'h': horario.id,
+                'i': int(instante.timestamp() * 1000),
+                'c': f'{horario.id_medicamento.nombre} · {timezone.localtime(instante).strftime("%H:%M")}',
+            })
+            instante = horario.calcular_proxima_toma(instante)
+    alarmas.sort(key=lambda a: a['i'])
+    return alarmas[:MAX_ALARMAS]
+
+
+def sincronizar_alarmas_del_usuario(usuario_id):
+    """Manda a los teléfonos del usuario sus próximas alarmas para que las reprogramen sin abrir la app.
+
+    Se llama al cambiar un horario o un medicamento. Un fallo aquí no debe afectar a quien guardó el cambio.
+    """
+    try:
+        if get_firebase_app() is None:
+            return
+        datos = {'tipo': 'sincronizar_alarmas', 'alarmas': json.dumps(alarmas_del_usuario(usuario_id), separators=(',', ':'))}
+        for suscripcion in FcmSubscription.objects.filter(usuario_id=usuario_id, active=True):
+            try:
+                send_fcm_data(suscripcion, datos)
+            except Exception:
+                logger.exception('[FCM] fallo al sincronizar alarmas usuario=%s token=%s…', usuario_id, suscripcion.token[:16])
+    except Exception:
+        logger.exception('[FCM] no se pudieron sincronizar las alarmas usuario=%s', usuario_id)

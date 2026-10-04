@@ -9,6 +9,8 @@ class CoreConfig(AppConfig):
     name = 'core'
 
     def ready(self):
+        from . import signals  # noqa: F401
+
         if 'test' in sys.argv:
             return
 

@@ -9,6 +9,11 @@ import androidx.core.content.ContextCompat;
 public class AlarmaReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context contexto, Intent intent) {
+        if (Alarma.ACCION_SILENCIAR.equals(intent.getAction())) {
+            // Descartaron la notificación (p. ej. al cerrar todas las apps): que no quede sonando sin nada en pantalla.
+            AlarmaService.detenerTodo();
+            return;
+        }
         if (!Alarma.ACCION_SONAR.equals(intent.getAction())) return;
         Programada p = new Programada(
             intent.getIntExtra("horarioId", -1),

@@ -13,6 +13,7 @@ final class Alarma {
     static final String ACCION_SONAR = "com.pillbox.alarmamedicacion.SONAR";
     static final String ACCION_TOME = "com.pillbox.alarmamedicacion.TOME";
     static final String ACCION_POSPONER = "com.pillbox.alarmamedicacion.POSPONER";
+    static final String ACCION_SILENCIAR = "com.pillbox.alarmamedicacion.SILENCIAR";
 
     /** Una alarma sin atender se apaga sola a los 10 minutos, igual que la de la placa. */
     static final long DURACION_MAX_MS = 10L * 60L * 1000L;
