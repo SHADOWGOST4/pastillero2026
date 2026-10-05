@@ -4,8 +4,8 @@
 //   Delante, en el piso ... buzzer en su anillo, debajo de la rejilla de la tapa.
 //   Atrás ................. placa perforada de 40 x 60 mm sobre 4 postes. En ella, sobre dos tiras de zócalo hembra,
 //                           el ESP32 DevKit con el USB hacia la pared trasera; a su derecha, el transistor del
-//                           buzzer y el conector del bus (JST-XH de 4 pines).
-//   Cara derecha .......... cola de milano macho y ventana del bus hacia el primer módulo.
+//                           buzzer y los cables del bus hacia el conector de la cara derecha.
+//   Cara derecha .......... unión magnética con el primer módulo: conector hembra del bus, imanes y canal de la guía.
 //   Tapa .................. rejilla del buzzer y agujeros para pulsar EN y BOOT con un clip.
 //
 // Piezas para imprimir: "caja" y "tapa". Vista rápida: "todo" o "imprimir".
@@ -65,10 +65,11 @@ module esp_caja() {
                 translate([b_cx, PARED - 0.01, LED_Z]) rotate([-90, 0, 0]) cylinder(d = LED_D + 2.4, h = 6.5);
                 translate([b_cx - (LED_D + 2.4) / 2, PARED - 0.01, PISO - 0.01]) cube([LED_D + 2.4, 6.5, 0.1]);
             }
-            cola_macho();
+            refuerzos_union(true);
+            refuerzo_guia();
         }
         agujeros_pilares(b_pilares);
-        ventana_bus(derecha = true, izquierda = false);
+        huecos_union(true);
         // LED de estado
         translate([b_cx, -1, LED_Z]) rotate([-90, 0, 0]) cylinder(d = LED_D, h = PARED + 7.5);
         // paso de las patas del LED hacia atrás
@@ -119,8 +120,8 @@ module esp_led() {
     }
 }
 module esp_conector() {
-    // JST-XH de 4 pines del bus y transistor del buzzer, en la franja derecha de la placa perforada
-    translate([b_esp_x + ESP_A + 1.5, BUS_Y - 6.2, PISO + PERF_ALTO + 1.6]) cube([5.8, 12.4, 7]);
+    // conector JST-XH de 4 pines (cables al conector magnético) y transistor del buzzer, en la franja derecha
+    translate([b_esp_x + ESP_A + 1.5, CON_Y - 6.2, PISO + PERF_ALTO + 1.6]) cube([5.8, 12.4, 7]);
     translate([b_esp_x + ESP_A + 2, b_perf_y + 6, PISO + PERF_ALTO + 1.6]) cube([4.6, 3.6, 5]);
 }
 module esp_tornillos() {

@@ -88,7 +88,7 @@ def piezas_impresion():
     print("== piezas para imprimir ==")
     trabajos = [
         ("modulo_base", "modulo", "base"), ("modulo_tapa_1", "modulo", "tapa"), ("modulo_cubierta", "modulo", "cubierta"),
-        ("modulo_tapon", "modulo", "tapon"), ("base_caja", "base_esp32", "caja"), ("base_tapa", "base_esp32", "tapa"),
+        ("base_caja", "base_esp32", "caja"), ("base_tapa", "base_esp32", "tapa"),
     ]
     os.makedirs(os.path.join(CARCASA, "stl"), exist_ok=True)
     for salida, archivo, parte in trabajos:
@@ -153,9 +153,17 @@ def interferencias():
         ("base: ESP32 / conector", "esp_esp32()", "esp_conector()"),
         ("fila: base / modulo 1", "esp_caja()", f"translate([{60},0,0]) mod_base()"),
         ("fila: modulo 1 / modulo 2", M, f"translate([{60},0,0]) mod_base()"),
-        ("fila: base / cable bus", "esp_caja()", "cable_bus()"),
-        ("fila: modulo / cable bus que entra", M, "translate([-60,0,0]) cable_bus()"),
-        ("modulo: base / tapon", M, "tapon_bus()"),
+        ("modulo: base / conector macho", M, "con_macho()"),
+        ("modulo: base / conector hembra", M, "con_hembra()"),
+        ("modulo: base / imanes izquierda", M, "imanes_union(false)"),
+        ("modulo: base / imanes derecha", M, "imanes_union(true)"),
+        ("modulo: PCF8574 / conectores", "mod_pcf()", "union() { con_macho(); con_hembra(); }"),
+        ("base: caja / conector hembra", "esp_caja()", "con_hembra()"),
+        ("base: caja / imanes", "esp_caja()", "imanes_union(true)"),
+        ("base: placa perforada / conector", "esp_perforada()", "con_hembra()"),
+        ("fila: base / pines del modulo 1", "esp_caja()", "translate([60,0,0]) pines_macho()"),
+        ("fila: conector hembra / macho del vecino", "con_hembra()", "translate([60,0,0]) con_macho()"),
+        ("fila: imanes de la base / imanes del modulo", "imanes_union(true)", "translate([60,0,0]) imanes_union(false)"),
     ]
     for nombre, a, b in pares:
         vol, cj = interseccion(re.sub(r"\W+", "_", nombre), a, b)

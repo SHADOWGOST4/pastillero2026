@@ -110,7 +110,7 @@ td.num { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; font-
   <header>
     <div class="ruta">firmware/carcasa · OpenSCAD</div>
     <h1>Carcasa del pastillero</h1>
-    <p class="entrada">La base con el ESP32 va a la izquierda y los módulos de medicamento a su derecha. <b>Todas las unidades miden 60 × 100 × 32 mm</b>, se unen con una cola de milano y el bus I2C pasa de una a otra por dentro. Los números señalan piezas y componentes; las letras, partes de la caja.</p>
+    <p class="entrada">La base con el ESP32 va a la izquierda y los módulos de medicamento a su derecha. <b>Todas las unidades miden 60 × 100 × 32 mm</b> y se unen de lado: unos imanes las sujetan y un conector magnético lleva el bus I2C de una a otra, sin abrir nada. Los números señalan piezas y componentes; las letras, partes de la caja.</p>
   </header>
 
   <section class="visor" aria-label="Vista 3D">
@@ -140,22 +140,22 @@ td.num { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; font-
       <h2>Medidas generales</h2>
       <dl class="medidas">
         <dt>Cada unidad<small>Base del ESP32 o módulo, con la tapa puesta</small></dt><dd>60 × 100 × 32 mm</dd>
-        <dt>Pastillero con 2 módulos<small>La cola de milano del último sobresale 3 mm</small></dt><dd>180 × 100 × 32 mm</dd>
+        <dt>Pastillero con 2 módulos</dt><dd>180 × 100 × 32 mm</dd>
         <dt>Cámara de pastillas<small>Por módulo, descontando la columna del frente</small></dt><dd>55 × 43 × 22 mm · ≈ 48 cm³</dd>
         <dt>Bahía de la electrónica<small>Por módulo, debajo de la cubierta</small></dt><dd>55 × 40 × 26 mm</dd>
         <dt>Paredes y fondo</dt><dd>2,4 mm</dd>
         <dt>Tapas<small>Todas iguales y a ras</small></dt><dd>4 mm</dd>
         <dt>LED del frente<small>Misma altura en todas las unidades</small></dt><dd>Ø 5 mm a 14 mm</dd>
-        <dt>Ventana del bus<small>Caras laterales, misma posición en todas</small></dt><dd>12,5 × 8 mm</dd>
+        <dt>Unión entre unidades<small>Por cara: conector de 4 pines y 2 imanes, a la misma altura en todas</small></dt><dd>Imanes Ø 8 × 3 mm</dd>
         <dt>Holgura entre piezas que encajan</dt><dd>0,3 mm</dd>
       </dl>
     </div>
     <div class="bloque">
       <h2>Cómo se arma</h2>
-      <p>Cada unidad es una caja abierta arriba. Los componentes se colocan desde arriba y la tapa se atornilla con 4 tornillos avellanados que quedan a ras.</p>
-      <p>Para unir las unidades se baja cada módulo desde arriba sobre la cola de milano de la unidad de su izquierda. Antes se pasa el cable del bus por las ventanas laterales y se mete el pasador de la bisagra: una vez unidas, la unidad vecina impide que se salga.</p>
-      <p>En cada módulo, el reed y el LED van en la columna del frente. Sus cables bajan por la columna y llegan a la bahía por el túnel que pasa bajo el fondo de la cámara, así que las pastillas nunca tocan un cable.</p>
-      <p>La tapa del módulo se queda abierta a unos 100° apoyada en el borde de la cubierta, sin llegar a tocar el pulsador.</p>
+      <p><b>Cada unidad, una vez, en el banco.</b> Se pegan los conectores y los imanes en sus alojamientos de las caras laterales y se cablean por dentro: en cada módulo, el conector izquierdo va a la entrada de la PCF8574 y la salida al conector derecho, así el bus pasa de largo. Después se mete el pasador de la bisagra por la izquierda y se atornilla la cubierta.</p>
+      <p><b>El pastillero.</b> Con todo apagado, cada módulo se acerca por la derecha de la unidad anterior: la guía entra en su canal y los imanes lo atrapan. Al quedar juntos, los pines del conector se comprimen sobre los contactos de la hembra y el bus queda conectado. No hace falta abrir nada.</p>
+      <p><b>Añadir o quitar un módulo.</b> Se separa tirando de lado, con el pastillero apagado.</p>
+      <p>En cada módulo, el reed y el LED van en la columna del frente y sus cables llegan a la bahía por un túnel bajo el fondo de la cámara. La tapa se queda abierta a unos 100° sin tocar el pulsador.</p>
     </div>
     <div class="bloque ancho">
       <h2>Qué se imprime</h2>
@@ -168,7 +168,6 @@ td.num { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; font-
             <tr><td>Base del módulo</td><td class="num">2</td><td>Tal cual, con el fondo en la cama</td><td class="num">modulo_base.stl</td></tr>
             <tr><td>Tapa del módulo 1 y 2</td><td class="num">1 + 1</td><td>Boca abajo: el número queda contra la cama y el reborde hacia arriba</td><td class="num">modulo_tapa_1.stl · modulo_tapa_2.stl</td></tr>
             <tr><td>Cubierta de la bahía</td><td class="num">2</td><td>Plana</td><td class="num">modulo_cubierta.stl</td></tr>
-            <tr><td>Tapón de la ventana</td><td class="num">1</td><td>Con la pestaña en la cama</td><td class="num">modulo_tapon.stl</td></tr>
           </tbody>
         </table>
       </div>
@@ -197,21 +196,21 @@ const SEPARA = 30;                         // separación entre unidades al desa
 
 // u: en qué unidades aparece (0 = base, 1 y 2 = módulos); e: hacia dónde se mueve al desarmar (x, y, z)
 const ITEMS = [
-  { id: 'esp_caja', g: 'base', impresa: true, n: 1, nombre: 'Caja de la base', donde: 'Unidad de la izquierda. Cola de milano y ventana del bus en la cara derecha; abertura del USB atrás.', medida: '60 × 100 × 28 mm', u: [0], e: [0, 0, 0], p: [0, 40, 14] },
+  { id: 'esp_caja', g: 'base', impresa: true, n: 1, nombre: 'Caja de la base', donde: 'Unidad de la izquierda. Unión magnética en la cara derecha y abertura del USB atrás.', medida: '60 × 100 × 28 mm', u: [0], e: [0, 0, 0], p: [0, 40, 14] },
   { id: 'esp_tapa', g: 'base', impresa: true, n: 2, nombre: 'Tapa de la base', donde: 'Atornillada arriba. Rejilla del buzzer, agujeros EN y BOOT y rótulos grabados.', medida: '60 × 100 × 4 mm', u: [0], e: [0, 0, 2.2], p: [46, 55, 32] },
   { id: 'esp_perforada', g: 'base', c: '#c9a227', n: 3, nombre: 'Placa perforada', donde: 'Atrás, sobre 4 postes de 5 mm con escuadras. Lleva los zócalos, el transistor y el conector del bus.', medida: '40 × 60 mm', u: [0], e: [0, 0, 0.6], p: [48, 40, 9], dentro: true },
   { id: 'esp_zocalos', g: 'base', c: '#3a3a3a', n: 4, nombre: 'Zócalos hembra', donde: 'Dos tiras de 15 pines soldadas a la placa perforada. El ESP32 se enchufa encima y se puede sacar.', medida: '8,5 mm de alto', u: [0], e: [0, 0, 0.9], p: [14.5, 60, 12], dentro: true },
   { id: 'esp_esp32', g: 'base', c: '#2563eb', n: 5, nombre: 'ESP32 DevKit', donde: 'Enchufado en los zócalos, con el USB contra la pared trasera.', medida: '28,5 × 51,5 mm · 30 pines', u: [0], e: [0, 0, 1.3], p: [27, 66, 22], dentro: true },
   { id: 'esp_buzzer', g: 'base', c: '#111111', n: 6, nombre: 'Buzzer activo', donde: 'Delante, encajado en el anillo del fondo, debajo de la rejilla de la tapa.', medida: 'Ø 12 mm', u: [0], e: [0, 0, 0.6], p: [30, 22, 12], dentro: true },
   { id: 'esp_led', g: 'base', c: '#22c55e', n: 7, nombre: 'LED de estado', donde: 'En el frente, a 14 mm de altura, igual que el LED de cada módulo.', medida: 'Ø 5 mm', u: [0], e: [0, -0.7, 0], p: [30, -1, 14] },
-  { id: 'esp_conector', g: 'base', c: '#e9e9e9', n: 8, nombre: 'Conector del bus y transistor', donde: 'Franja derecha de la placa perforada, junto a la ventana del bus.', medida: 'JST-XH de 4 pines', u: [0], e: [0, 0, 0.9], p: [46, 70, 16], dentro: true },
+  { id: 'esp_conector', g: 'base', c: '#e9e9e9', n: 8, nombre: 'Conector del bus y transistor', donde: 'Franja derecha de la placa perforada. De ahí salen 4 cables al conector magnético de la cara derecha.', medida: 'JST-XH de 4 pines', u: [0], e: [0, 0, 0.9], p: [46, 70, 16], dentro: true },
   { id: 'esp_usb', g: 'base', c: '#444444', n: 9, nombre: 'Cable USB', donde: 'Alimentación. Entra por la abertura de la pared trasera hasta el ESP32.', medida: 'Abertura 13 × 8 mm', u: [0], e: [0, 0.8, 0], p: [27, 112, 21] },
   { id: 'esp_tornillos', g: 'base', c: '#d4a72c', n: 10, nombre: 'Tornillos de la tapa', donde: 'Uno en cada esquina, en los pilares de la caja.', medida: '4 × 2,5 × 8 mm avellanados', u: [0], e: [0, 0, 2.8], p: [55.5, 95.5, 32] },
 
   { id: 'mod_base', g: 'modulo', impresa: true, n: 11, nombre: 'Base del módulo', donde: 'Cámara de pastillas delante, bloque divisor con la bisagra en medio y bahía de la electrónica detrás.', medida: '60 × 100 × 28 mm', u: [1, 2], e: [0, 0, 0], p: [6, 0, 6] },
   { id: 'mod_tapa', g: 'modulo', impresa: true, n: 12, nombre: 'Tapa con bisagra', donde: 'Cubre la cámara. Lleva grabado el número del módulo y el imán por debajo.', medida: '4 mm + reborde de 2 mm', u: [1, 2], e: [0, 0, 1.6], p: [46, 30, 32], tapa: true },
   { id: 'mod_cubierta', g: 'modulo', impresa: true, n: 13, nombre: 'Cubierta de la bahía', donde: 'Atornillada detrás de la bisagra. Lleva el pulsador.', medida: '60 × 45 × 4 mm', u: [1, 2], e: [0, 0, 2.2], p: [12, 74, 32] },
-  { id: 'mod_pasador', g: 'modulo', c: '#e3e3e3', n: 14, nombre: 'Pasador de la bisagra', donde: 'Atraviesa los tres nudillos. Una vez unidas las unidades, la vecina impide que se salga.', medida: 'Filamento 1,75 × 59 mm', u: [1, 2], e: [0, 0, 1.25], p: [57, 51.6, 29], dentro: true },
+  { id: 'mod_pasador', g: 'modulo', c: '#e3e3e3', n: 14, nombre: 'Pasador de la bisagra', donde: 'Entra por la izquierda y atraviesa los tres nudillos. El agujero es ciego a la derecha y la unidad de la izquierda impide que se salga.', medida: 'Filamento 1,75 × 58 mm', u: [1, 2], e: [0, 0, 1.25], p: [57, 51.6, 29], dentro: true },
   { id: 'mod_iman', g: 'modulo', c: '#b8c0c8', n: 15, nombre: 'Imán', donde: 'Pegado en el alojamiento bajo la tapa, justo encima del reed.', medida: 'Disco 6 × 3 mm, N35', u: [1, 2], e: [0, 0, 1.2], p: [30, 6.9, 31], dentro: true, tapa: true },
   { id: 'mod_reed', g: 'modulo', c: '#e05a47', n: 16, nombre: 'Reed (sensor de tapa)', donde: 'En la ranura de lo alto de la columna del frente. Sus patas bajan por la columna hasta el túnel.', medida: 'Cuerpo 14 × 3 mm', u: [1, 2], e: [0, 0, 0.8], p: [36, 6.9, 26], dentro: true },
   { id: 'mod_led', g: 'modulo', c: '#ff3b30', n: 17, nombre: 'LED del módulo', donde: 'En el frente, dentro de la columna. Se enciende a la hora de la toma.', medida: 'Ø 5 mm', u: [1, 2], e: [0, -0.7, 0], p: [30, -1, 14] },
@@ -219,8 +218,10 @@ const ITEMS = [
   { id: 'mod_pulsador', g: 'modulo', c: '#f2c200', n: 19, nombre: 'Pulsador', donde: 'En la cubierta, con la tuerca por debajo. Confirma la toma.', medida: 'De panel, Ø 12 mm', u: [1, 2], e: [0, 0, 2.5], p: [30, 86.6, 38] },
   { id: 'mod_tornillos', g: 'modulo', c: '#d4a72c', n: 20, nombre: 'Tornillos de la cubierta', donde: 'En los 4 pilares de las esquinas de la bahía.', medida: '4 × 2,5 × 8 mm avellanados', u: [1, 2], e: [0, 0, 2.8], p: [55.5, 95.5, 32] },
 
-  { id: 'cable_bus', g: 'union', c: '#333333', n: 21, nombre: 'Cable del bus I2C', donde: 'De cada unidad a la siguiente por las ventanas laterales: 3,3 V, GND, SDA y SCL.', medida: '4 hilos', u: [0, 1], e: [0, 0, 0], p: [60, 70, 17], dentro: true },
-  { id: 'tapon', g: 'union', impresa: true, n: 22, nombre: 'Tapón de la ventana', donde: 'Cierra la ventana del bus del último módulo.', medida: '12 × 7,6 mm', u: [2], e: [0.5, 0, 0], p: [61.2, 70, 10] },
+  { id: 'con_macho', g: 'union', c: '#c0c6cc', n: 21, nombre: 'Conector magnético macho', donde: 'En la cara izquierda de cada módulo, a ras. Sus pines con resorte tocan la hembra de la unidad de la izquierda y llevan el bus: 3,3 V, GND, SDA y SCL.', medida: '4 pines, paso 2,5 mm', u: [1, 2], e: [0, 0, 0], p: [-0.6, 72, 18], dentro: true },
+  { id: 'con_hembra', g: 'union', c: '#c0c6cc', n: 22, nombre: 'Conector magnético hembra', donde: 'En la cara derecha de la base y de cada módulo, hundido 0,3 mm para que los pines del vecino se compriman.', medida: '4 contactos planos', u: [0, 1, 2], e: [0, 0, 0], p: [60.6, 72, 18], dentro: true },
+  { id: 'imanes_izq', g: 'union', c: '#8a939c', n: 23, nombre: 'Imanes de la cara izquierda', donde: 'Dos por cara, a ras, en sus alojamientos. Sujetan la unidad a la de su izquierda.', medida: 'Disco 8 × 3 mm, N35', u: [1, 2], e: [0, 0, 0], p: [-0.6, 14, 12], dentro: true },
+  { id: 'imanes_der', g: 'union', c: '#8a939c', n: 24, nombre: 'Imanes de la cara derecha', donde: 'Dos por cara. Antes de pegarlos, ponlos sobre un imán de una cara izquierda: la cara que queda pegada a él es la que va hacia fuera.', medida: 'Disco 8 × 3 mm, N35', u: [0, 1, 2], e: [0, 0, 0], p: [60.6, 87, 12], dentro: true },
 ];
 
 // Partes de la caja: en qué pieza están y en qué unidad se señalan
@@ -229,11 +230,10 @@ const ZONAS = [
   { l: 'B', nombre: 'Columna del frente', donde: 'Lleva el reed arriba y el LED en el frente.', medida: '21 × 9 mm', en: 'mod_base', u: 1, p: [20.5, 10, 22] },
   { l: 'C', nombre: 'Túnel de cables', donde: 'Bajo el fondo de la cámara, desde la columna hasta la bahía.', medida: '5 × 2,5 mm', en: 'mod_base', u: 1, p: [30, 36, 3.6], dentro: true },
   { l: 'D', nombre: 'Bisagra', donde: 'Sobre el bloque divisor. Los nudillos quedan a ras de la tapa.', medida: 'Eje Ø 2,1 mm', en: 'mod_base', u: 1, p: [4, 51.6, 32] },
-  { l: 'E', nombre: 'Cola de milano', donde: 'Macho en la cara derecha y hembra en la izquierda. La unidad se baja desde arriba.', medida: '5 a 8 mm, 3 de fondo', en: 'mod_base', u: 2, p: [61.6, 51.6, 22] },
-  { l: 'F', nombre: 'Ventana del bus', donde: 'En las dos caras laterales de la bahía, a la misma altura en todas las unidades.', medida: '12,5 × 8 mm', en: 'mod_base', u: 2, p: [60.4, 70, 20.5] },
-  { l: 'G', nombre: 'Bahía de la electrónica', donde: 'Detrás del bloque divisor, cerrada por la cubierta.', medida: '55 × 40 × 26 mm', en: 'mod_base', u: 1, p: [46, 80, 22] },
-  { l: 'H', nombre: 'Rejilla del buzzer', donde: 'En la tapa de la base, encima del buzzer.', medida: '7 ranuras', en: 'esp_tapa', u: 0, p: [30, 22, 32] },
-  { l: 'I', nombre: 'Agujeros EN y BOOT', donde: 'Para pulsarlos con un clip al reprogramar el ESP32.', medida: 'Ø 3,4 mm', en: 'esp_tapa', u: 0, p: [27, 88, 32] },
+  { l: 'E', nombre: 'Guía de la unión', donde: 'Saliente vertical en la cara izquierda y canal en la derecha. Alinea las unidades al juntarlas.', medida: 'De 4 a 2,4 mm, sale 1,5 mm', en: 'mod_base', u: 2, p: [60.4, 51.6, 22] },
+  { l: 'F', nombre: 'Bahía de la electrónica', donde: 'Detrás del bloque divisor, cerrada por la cubierta.', medida: '55 × 40 × 26 mm', en: 'mod_base', u: 1, p: [46, 80, 22] },
+  { l: 'G', nombre: 'Rejilla del buzzer', donde: 'En la tapa de la base, encima del buzzer.', medida: '7 ranuras', en: 'esp_tapa', u: 0, p: [30, 22, 32] },
+  { l: 'H', nombre: 'Agujeros EN y BOOT', donde: 'Para pulsarlos con un clip al reprogramar el ESP32.', medida: 'Ø 3,4 mm', en: 'esp_tapa', u: 0, p: [27, 88, 32] },
 ];
 
 const GRUPOS = [['base', 'Base del ESP32'], ['modulo', 'Cada módulo'], ['union', 'Entre unidades']];
@@ -355,7 +355,7 @@ function crearMarca(texto, color, letra, alPulsar, titulo) {
   return obj;
 }
 for (const n of nodos) {
-  // cada pieza se señala una vez: en la base o en el primer módulo (el tapón y la cola, en el último)
+  // cada pieza se señala una vez, en la primera unidad donde aparece
   if (n.u !== n.item.u[0]) continue;
   const m = crearMarca(String(n.item.n), n.item.impresa ? css('--pieza') : n.item.c, false, () => seleccionar(n.item.id), n.item.nombre);
   m.element.dataset.id = n.item.id;

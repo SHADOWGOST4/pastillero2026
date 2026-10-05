@@ -1,9 +1,12 @@
 // Medidas comunes a todas las unidades del pastillero: la base con el ESP32 y cada módulo de medicamento.
 //
-// Todas las unidades miden lo mismo (ANCHO x FONDO x ALTO + TAPA), se colocan en fila de izquierda a derecha
-// con el frente hacia la persona (y = 0) y se unen con una cola de milano vertical: macho en la cara derecha,
-// hembra en la izquierda. El bus I2C (3,3 V, GND, SDA, SCL) pasa de una unidad a la siguiente por una ventana
-// lateral, así que los cables quedan dentro. Todas las tapas tienen el mismo grosor y quedan a ras.
+// Todas las unidades miden lo mismo (ANCHO x FONDO x ALTO + TAPA) y se colocan en fila de izquierda a derecha, con
+// el frente hacia la persona (y = 0). Se unen empujándolas de lado: unos imanes las mantienen juntas, una guía
+// vertical las alinea y un conector magnético de 4 pines lleva el bus I2C (3,3 V, GND, SDA, SCL) de una a otra.
+// Así se puede añadir o quitar un módulo sin abrir nada. Todas las tapas tienen el mismo grosor y quedan a ras.
+//
+//   Cara izquierda (x = 0) ...... conector macho (pines con resorte) a ras, guía saliente y 2 imanes.
+//   Cara derecha (x = ANCHO) .... conector hembra (contactos planos) hundido, canal de la guía y 2 imanes.
 //
 // Ejes: x = ancho (hacia la derecha), y = fondo (del frente hacia atrás), z = alto. Medidas en milímetros.
 
@@ -26,17 +29,24 @@ PILAR_D = 5.5;
 LED_Z = 14;
 LED_D = 5.2;
 
-// Ventana lateral del bus I2C
-BUS_Y = 70;
-BUS_Z = 14;
-BUS_A = 12.5;       // largo (en y)
-BUS_H = 8;          // alto (en z)
-
-// Cola de milano vertical
-CM_Y = 51.6;        // coincide con la bisagra del módulo
-CM_CUELLO = 5;
-CM_CABEZA = 8;
-CM_PROF = 3;
+// ---------- Unión entre unidades ----------
+// Conector magnético de 4 pines (paso 2,5 mm), macho y hembra. Medidas típicas: compruébalas con el tuyo.
+CON_Y = 72;         // centro del conector
+CON_Z = 14;
+CON_A = 14;         // largo de la cara del conector (en y)
+CON_H = 5.2;        // alto de la cara (en z)
+CON_P = 6;          // fondo del cuerpo
+CON_HUNDIDO = 0.3;  // la hembra queda hundida: los pines del macho se comprimen al juntar las unidades
+CON_HOLGURA = 0.2;
+// Imanes de disco que sujetan las unidades
+IMAN_U_D = 8;
+IMAN_U_H = 3;
+IMANES_U = [[14, 7], [87, 7]];   // posiciones (y, z) en las dos caras
+// Guía vertical: saliente en la cara izquierda, canal en la derecha
+GUIA_Y = 51.6;
+GUIA_BASE = 4;
+GUIA_PUNTA = 2.4;
+GUIA_SALE = 1.5;
 
 $fn = 48;
 
@@ -65,44 +75,61 @@ module agujeros_tapa(lista) {
     }
 }
 
-function perfil_cola() = [
-    [-1, -CM_CUELLO / 2], [0, -CM_CUELLO / 2], [CM_PROF, -CM_CABEZA / 2],
-    [CM_PROF, CM_CABEZA / 2], [0, CM_CUELLO / 2], [-1, CM_CUELLO / 2]
-];
+// ---------- Unión: todo se define en la cara izquierda (x = 0) y se refleja para la derecha ----------
+function fondo_con(derecha) = CON_P + (derecha ? CON_HUNDIDO : 0);
+IMAN_FONDO = IMAN_U_H + 0.2;
 
-module cola_macho() {
-    translate([ANCHO, CM_Y, 0]) linear_extrude(ALTO) polygon(perfil_cola());
-}
+// Lleva una pieza de la cara izquierda a la cara derecha
+module a_la_derecha() { translate([ANCHO, 0, 0]) mirror([1, 0, 0]) children(); }
 
-module cola_hembra() {
-    translate([0, CM_Y, -1]) linear_extrude(ALTO + 1) offset(delta = JUEGO) polygon(perfil_cola());
-}
-
-module ventana_bus(derecha = true, izquierda = true) {
-    for (x = [if (izquierda) -1, if (derecha) ANCHO - PARED - 0.5])
-        translate([x, BUS_Y - BUS_A / 2, BUS_Z - BUS_H / 2]) cube([PARED + 1.5, BUS_A, BUS_H]);
-}
-
-// Apoyos de una placa: un poste en cada esquina y escuadras que no la dejan moverse
-module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6) {
-    for (sx = [0, 1], sy = [0, 1]) {
-        x = x0 + sx * largo;
-        y = y0 + sy * ancho;
-        dx = sx == 0 ? 1 : -1;
-        dy = sy == 0 ? 1 : -1;
-        translate([min(x, x + 3 * dx), min(y, y + 3 * dy), PISO - 0.01]) cube([3, 3, alto + 0.01]);
-        translate([sx == 0 ? x - JUEGO - 1.2 : x + JUEGO, min(y, y + 5 * dy), PISO - 0.01]) cube([1.2, 5, alto + pcb + 2]);
-        translate([min(x, x + 5 * dx), sy == 0 ? y - JUEGO - 1.2 : y + JUEGO, PISO - 0.01]) cube([5, 1.2, alto + pcb + 2]);
+// Refuerzos por dentro de la pared: marco del conector y alojamientos de los imanes (bajan hasta el fondo)
+module refuerzos_union(derecha) {
+    fc = fondo_con(derecha);
+    module r() {
+        translate([PARED - 0.01, CON_Y - CON_A / 2 - 2, PISO - 0.01]) cube([fc + 1 - PARED + 0.01, CON_A + 4, CON_Z + CON_H / 2 + 2 - PISO]);
+        for (p = IMANES_U) hull() {
+            translate([PARED - 0.01, p[0], p[1]]) rotate([0, 90, 0]) cylinder(d = IMAN_U_D + 3, h = IMAN_FONDO + 0.8 - PARED + 0.01);
+            translate([PARED - 0.01, p[0] - (IMAN_U_D + 3) / 2, 0.5]) cube([IMAN_FONDO + 0.8 - PARED + 0.01, IMAN_U_D + 3, 0.1]);
+        }
     }
+    if (derecha) a_la_derecha() r(); else r();
 }
 
-// Tramo de cable del bus entre una unidad y la siguiente (en coordenadas de la unidad de la izquierda)
-module cable_bus() {
-    translate([ANCHO - 9, BUS_Y, BUS_Z]) rotate([0, 90, 0]) cylinder(d = 4, h = 18, $fn = 20);
+// Huecos: conector, cables por detrás del conector, imanes y, en la derecha, el canal de la guía
+module huecos_union(derecha) {
+    fc = fondo_con(derecha);
+    module h() {
+        translate([-1, CON_Y - CON_A / 2 - CON_HOLGURA, CON_Z - CON_H / 2 - CON_HOLGURA]) cube([fc + 1, CON_A + 2 * CON_HOLGURA, CON_H + 2 * CON_HOLGURA]);
+        translate([fc - 0.01, CON_Y - CON_A / 2 + 1.5, CON_Z - CON_H / 2 + 0.75]) cube([3, CON_A - 3, CON_H - 1.5]);
+        for (p = IMANES_U) translate([-1, p[0], p[1]]) rotate([0, 90, 0]) cylinder(d = IMAN_U_D + 0.3, h = IMAN_FONDO + 1);
+        if (derecha) translate([0, GUIA_Y, -1]) linear_extrude(ALTO + 2) offset(delta = JUEGO) polygon(perfil_guia());
+    }
+    if (derecha) a_la_derecha() h(); else h();
 }
 
-// Tapón de la ventana del bus de la última unidad (en coordenadas de esa unidad, cara derecha)
-module tapon_bus() {
-    translate([ANCHO - PARED, BUS_Y - BUS_A / 2 + 0.2, BUS_Z - BUS_H / 2 + 0.2]) cube([PARED, BUS_A - 0.4, BUS_H - 0.4]);
-    translate([ANCHO, BUS_Y - BUS_A / 2 - 1.5, BUS_Z - BUS_H / 2 - 1.5]) cube([1.2, BUS_A + 3, BUS_H + 3]);
+function perfil_guia() = [[-1, -GUIA_BASE / 2], [GUIA_SALE, -GUIA_PUNTA / 2], [GUIA_SALE, GUIA_PUNTA / 2], [-1, GUIA_BASE / 2]];
+
+// Guía saliente de la cara izquierda (sobresale GUIA_SALE mm)
+module guia() {
+    translate([0, GUIA_Y, 1]) mirror([1, 0, 0]) linear_extrude(ALTO - 2) polygon([for (p = perfil_guia()) [p[0] < 0 ? -0.01 : p[0], p[1]]]);
+}
+
+// Bloque interior que da grosor al canal de la guía cuando la pared es fina (base del ESP32)
+module refuerzo_guia() {
+    a_la_derecha() translate([PARED - 0.01, GUIA_Y - 4, PISO - 0.01]) cube([GUIA_SALE + JUEGO + 1.2, 8, ALTO - PISO + 0.01]);
+}
+
+// ---------- Componentes de la unión (solo para ver el montaje) ----------
+module con_macho() {
+    translate([0, CON_Y - CON_A / 2, CON_Z - CON_H / 2]) cube([CON_P, CON_A, CON_H]);
+}
+module pines_macho() {
+    for (i = [0 : 3]) translate([-CON_HUNDIDO, CON_Y + (i - 1.5) * 2.5, CON_Z]) rotate([0, 90, 0]) cylinder(d = 1, h = CON_HUNDIDO, $fn = 12);
+}
+module con_hembra() {
+    a_la_derecha() translate([CON_HUNDIDO, CON_Y - CON_A / 2, CON_Z - CON_H / 2]) cube([CON_P, CON_A, CON_H]);
+}
+module imanes_union(derecha) {
+    module i() for (p = IMANES_U) translate([0, p[0], p[1]]) rotate([0, 90, 0]) cylinder(d = IMAN_U_D, h = IMAN_U_H);
+    if (derecha) a_la_derecha() i(); else i();
 }

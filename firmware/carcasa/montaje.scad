@@ -4,6 +4,7 @@
 //   vista = "fila"      : todo montado y cerrado
 //   vista = "abierta"   : con las tapas de los módulos abiertas
 //   vista = "explotada" : cada unidad desarmada en el orden de montaje
+//   vista = "union"     : la base y un módulo separados, para ver las caras de la unión magnética
 //   vista = "corte"     : un módulo cortado por la mitad (columna, túnel, bahía)
 //   objeto = "..."      : una sola pieza o componente, para exportarlo (ver la lista al final)
 include <comun.scad>
@@ -27,6 +28,8 @@ module componentes_base() {
     color("#f8f8f8") esp_conector();
     color("#d4a72c") esp_tornillos();
     color("#444") esp_usb();
+    color("#c0c6cc") con_hembra();
+    color("#8a939c") imanes_union(true);
 }
 
 module componentes_modulo(a = 0) {
@@ -37,6 +40,9 @@ module componentes_modulo(a = 0) {
     color("#d4a72c") mod_tornillos();
     color("#e8e8e8") mod_pasador();
     mod_abrir(a) color("#cfd4da") mod_iman();
+    color("#c0c6cc") { con_macho(); con_hembra(); }
+    color("#d4a72c") pines_macho();
+    color("#8a939c") { imanes_union(false); imanes_union(true); }
 }
 
 module unidad_base(dz = 0) {
@@ -45,21 +51,16 @@ module unidad_base(dz = 0) {
     color(C_TAPA) translate([0, 0, 2.2 * dz]) esp_tapa();
 }
 
-module unidad_modulo(n, a = 0, dz = 0, ultimo = false) {
+module unidad_modulo(n, a = 0, dz = 0) {
     color(C_PIEZA) mod_base();
     translate([0, 0, dz]) componentes_modulo(a);
     mod_abrir(a) color(C_TAPA) translate([0, 0, 1.6 * dz]) mod_tapa(n);
     color(C_TAPA) translate([0, 0, 2.2 * dz]) mod_cubierta();
-    if (ultimo) color(C_PIEZA) tapon_bus();
 }
 
 module fila(a = 0, dz = 0, separa = 0) {
     unidad_base(dz);
-    color("#333") cable_bus();
-    for (i = [1 : modulos]) translate([i * (ANCHO + separa), 0, 0]) {
-        unidad_modulo(i, a, dz, i == modulos);
-        if (i < modulos) color("#333") cable_bus();
-    }
+    for (i = [1 : modulos]) translate([i * (ANCHO + separa), 0, 0]) unidad_modulo(i, a, dz);
 }
 
 if (objeto != "") {
@@ -70,7 +71,6 @@ if (objeto != "") {
     if (objeto == "mod_tapa_1") mod_tapa(1);
     if (objeto == "mod_tapa_2") mod_tapa(2);
     if (objeto == "mod_cubierta") mod_cubierta();
-    if (objeto == "tapon") tapon_bus();
     // componentes
     if (objeto == "esp_perforada") esp_perforada();
     if (objeto == "esp_zocalos") esp_zocalos();
@@ -87,10 +87,18 @@ if (objeto != "") {
     if (objeto == "mod_pulsador") mod_pulsador();
     if (objeto == "mod_tornillos") mod_tornillos();
     if (objeto == "mod_pasador") mod_pasador();
-    if (objeto == "cable_bus") cable_bus();
+    if (objeto == "con_macho") { con_macho(); pines_macho(); }
+    if (objeto == "con_hembra") con_hembra();
+    if (objeto == "imanes_izq") imanes_union(false);
+    if (objeto == "imanes_der") imanes_union(true);
 } else if (vista == "fila") fila(abrir);
 else if (vista == "abierta") fila(100);
 else if (vista == "explotada") fila(0, 22, 25);
+else if (vista == "union") {
+    // la base y el primer módulo abiertos como un libro, para ver las dos caras que se juntan
+    translate([-8, 0, 0]) rotate([0, 0, -45]) translate([-ANCHO, -FONDO, 0]) unidad_base();
+    translate([8, 0, 0]) rotate([0, 0, 45]) translate([0, -FONDO, 0]) unidad_modulo(1);
+}
 else if (vista == "corte") difference() {
     unidad_modulo(1);
     translate([ANCHO / 2, -20, -10]) cube([100, FONDO + 40, 60]);

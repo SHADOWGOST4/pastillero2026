@@ -3,10 +3,11 @@
 //   Frente (y = 0) ........ LED del módulo, a la vista con la tapa cerrada.
 //   Cámara ................ pastillas sueltas, con doble fondo: por dentro pasa el túnel de los cables.
 //   Columna del frente .... dentro: el reed (arriba, debajo del imán de la tapa) y el LED.
-//   Bloque divisor ........ bisagra de la tapa y cola de milano para unirse a la unidad de la izquierda.
+//   Bloque divisor ........ bisagra de la tapa y guía de la unión con las unidades vecinas.
+//   Caras laterales ....... unión magnética: conector del bus, imanes y guía (ver comun.scad).
 //   Bahía (atrás) ......... placa PCF8574 en el fondo y pulsador de panel en la cubierta.
 //
-// Piezas para imprimir: "base", "tapa" (con el número grabado), "cubierta" y "tapon" (solo para el último módulo).
+// Piezas para imprimir: "base", "tapa" (con el número grabado) y "cubierta".
 // Vista rápida: "todo" o "imprimir".
 include <comun.scad>
 
@@ -44,7 +45,7 @@ BOTON_D = 12.2;         // pulsador de panel de 12 mm
 m_cx = ANCHO / 2;
 m_div0 = PARED + CAM_F;                 // empieza el bloque divisor
 m_bahia = m_div0 + DIV;                 // empieza la bahía
-m_eje_y = CM_Y;
+m_eje_y = m_div0 + DIV / 2;
 m_eje_z = ALTO + TAPA - BIS_R;          // los nudillos quedan a ras de la tapa
 m_reed_y = PARED + COL_F / 2;
 m_pcf_x = m_cx - PCF_L / 2;
@@ -52,7 +53,7 @@ m_pcf_y = m_bahia + 0.6;
 m_boton_y = FONDO - PARED - 11;
 m_pilares = pilares_en(PARED, m_bahia, ANCHO - PARED, FONDO - PARED);
 
-assert(abs(m_div0 + DIV / 2 - CM_Y) < 0.01, "La bisagra debe coincidir con la cola de milano");
+assert(abs(m_div0 + DIV / 2 - GUIA_Y) < 0.01, "La guía de la unión debe ir en el bloque divisor");
 
 module mod_base() {
     difference() {
@@ -74,13 +75,15 @@ module mod_base() {
             }
             pilares(m_pilares);
             apoyos_placa(m_pcf_x, m_pcf_y, PCF_L, PCF_A, PCF_ALTO);
-            cola_macho();
+            refuerzos_union(false);
+            refuerzos_union(true);
+            guia();
         }
         agujeros_pilares(m_pilares);
-        cola_hembra();
-        ventana_bus();
-        // pasador de la bisagra
-        translate([-1, m_eje_y, m_eje_z]) rotate([0, 90, 0]) cylinder(d = PASADOR, h = ANCHO + 2);
+        huecos_union(false);
+        huecos_union(true);
+        // pasador de la bisagra: entra por la izquierda; el agujero es ciego a la derecha para que no se salga
+        translate([-1, m_eje_y, m_eje_z]) rotate([0, 90, 0]) cylinder(d = PASADOR, h = ANCHO - 1.5 + 1);
         // rebaje para el nudillo de la tapa
         translate([BIS_K, m_eje_y - BIS_R - 1.5, m_eje_z - BIS_R - 0.5]) cube([ANCHO - 2 * BIS_K, 2 * BIS_R + 2, 10]);
         // ranura del reed en lo alto de la columna y agujeros de sus patas hacia el túnel
@@ -178,13 +181,12 @@ module mod_tornillos() {
     }
 }
 module mod_pasador() {
-    translate([0.2, m_eje_y, m_eje_z]) rotate([0, 90, 0]) cylinder(d = 1.75, h = ANCHO - 0.4, $fn = 12);
+    translate([0.2, m_eje_y, m_eje_z]) rotate([0, 90, 0]) cylinder(d = 1.75, h = ANCHO - 1.5 - 0.4, $fn = 12);   // 58 mm
 }
 
 if (parte == "base") mod_base();
 else if (parte == "tapa") translate([0, 0, ALTO + TAPA]) rotate([180, 0, 0]) mod_tapa();   // boca abajo: el reborde queda arriba
 else if (parte == "cubierta") translate([0, 0, -ALTO]) mod_cubierta();
-else if (parte == "tapon") rotate([0, 90, 0]) translate([-ANCHO - 1.2, 0, 0]) tapon_bus();
 else if (parte == "todo") { mod_base(); mod_tapa(); mod_cubierta(); }
 else if (parte == "imprimir") {
     mod_base();
