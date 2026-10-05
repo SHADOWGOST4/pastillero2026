@@ -1,0 +1,618 @@
+<meta charset="utf-8">
+<title>Carcasa del pastillero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Ficha de montaje: visor 3D a la izquierda y leyenda numerada a la derecha; debajo, medidas y piezas. */
+:root {
+  --bg: #eef1f4;
+  --panel: #ffffff;
+  --stage: #e3e8ee;
+  --fg: #17202b;
+  --muted: #5b6878;
+  --line: #cfd7e0;
+  --grid: #c3ccd7;
+  --accent: #a8560a;
+  --accent-soft: #f6e3cd;
+  --pieza: #9fb6cd;
+  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --panel: #18202a; --stage: #1c2530; --fg: #e6ebf1; --muted: #9aa7b6;
+    --line: #2c3845; --grid: #314050; --accent: #f0a24a; --accent-soft: #3a2a17; --pieza: #7f98b2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --panel: #18202a; --stage: #1c2530; --fg: #e6ebf1; --muted: #9aa7b6;
+  --line: #2c3845; --grid: #314050; --accent: #f0a24a; --accent-soft: #3a2a17; --pieza: #7f98b2;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.pagina { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; display: grid; gap: 28px; }
+header { display: grid; gap: 6px; }
+.ruta { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: .02em; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 4.6vw, 44px); line-height: 1.05; margin: 0; text-wrap: balance; letter-spacing: .01em; }
+.entrada { margin: 0; max-width: 68ch; color: var(--muted); }
+.entrada b { color: var(--fg); font-weight: 600; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 24px; margin: 0; letter-spacing: .01em; }
+h3 { font-family: var(--display); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0; }
+
+.visor { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+.escena { position: relative; background: var(--stage); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; height: clamp(380px, 66vh, 660px); }
+.escena canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.capa { position: absolute; inset: 0; pointer-events: none; }
+.barra { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; pointer-events: none; }
+.barra > * { pointer-events: auto; }
+.segmentos, .interruptores { display: flex; flex-wrap: wrap; gap: 2px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 3px; }
+.barra button { font: 600 13px/1 var(--body); color: var(--muted); background: transparent; border: 0; border-radius: 6px; padding: 7px 10px; cursor: pointer; }
+.barra button:hover { color: var(--fg); }
+.barra button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.barra button:focus-visible, .item:focus-visible, .marca:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pista { position: absolute; left: 12px; bottom: 10px; font-size: 12px; color: var(--muted); pointer-events: none; }
+.detalle { position: absolute; right: 12px; bottom: 12px; max-width: min(360px, calc(100% - 24px)); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 2px; font-size: 13.5px; }
+.detalle strong { font-family: var(--display); font-size: 18px; font-weight: 600; }
+.detalle .medida { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+.cargando { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 14px; }
+
+.marca { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; display: grid; place-items: center; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; font: 600 12px/1 var(--mono); color: #fff; background: var(--c, var(--accent)); border: 2px solid var(--panel); box-shadow: 0 1px 3px rgb(0 0 0 / .25); }
+.marca.letra { background: var(--panel); color: var(--accent); border-color: var(--accent); border-radius: 5px; }
+.marca.atenua { opacity: .28; }
+.cota { position: absolute; transform: translate(-50%, -50%); font: 500 12px/1.2 var(--mono); color: var(--fg); background: var(--stage); padding: 2px 5px; border-radius: 4px; white-space: nowrap; pointer-events: none; }
+.etiqueta-flot { position: absolute; pointer-events: none; font: 600 12.5px/1.3 var(--body); background: var(--fg); color: var(--bg); padding: 4px 8px; border-radius: 5px; transform: translate(12px, 12px); white-space: nowrap; }
+
+.leyenda { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 12px; display: grid; gap: 14px; max-height: clamp(380px, 66vh, 660px); overflow: auto; }
+.grupo { display: grid; gap: 4px; }
+.grupo h3 { padding-inline: 6px; margin-bottom: 2px; }
+.item { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 2px 8px; align-items: start; text-align: left; width: 100%; background: transparent; border: 0; border-radius: 7px; padding: 6px; color: inherit; font: inherit; cursor: pointer; }
+.item:hover { background: var(--bg); }
+.item[aria-pressed="true"] { background: var(--accent-soft); }
+.item .chapa { grid-row: span 2; justify-self: center; display: grid; place-items: center; min-width: 22px; height: 22px; border-radius: 11px; font: 600 12px/1 var(--mono); color: #fff; background: var(--c); }
+.item .chapa.impresa { background: var(--pieza); color: #102030; }
+.item .chapa.letra { background: transparent; color: var(--accent); border: 2px solid var(--accent); border-radius: 5px; }
+.item .nombre { font-weight: 600; font-size: 14px; line-height: 1.25; }
+.item .sub { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+.item .sub .medida { font-family: var(--mono); font-size: 11.5px; color: var(--accent); }
+
+.bloques { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.bloque { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.bloque p { margin: 0; color: var(--muted); max-width: 70ch; }
+dl.medidas { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0; }
+dl.medidas dt, dl.medidas dd { margin: 0; padding: 8px 0; border-bottom: 1px solid var(--line); }
+dl.medidas dd { font-family: var(--mono); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; padding-left: 12px; }
+dl.medidas dt small { display: block; color: var(--muted); font-size: 12.5px; }
+.tabla { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th { text-align: left; font: 600 12px/1.2 var(--display); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); }
+td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+td.num { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ancho { grid-column: 1 / -1; }
+
+@media (max-width: 900px) {
+  .visor { grid-template-columns: minmax(0, 1fr); }
+  .leyenda { max-height: none; }
+  .bloques { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 520px) {
+  .pagina { padding-inline: 16px; }
+  .escena { height: 420px; }
+  .detalle { left: 12px; right: 12px; max-width: none; }
+  .pista { display: none; }
+}
+</style>
+
+<div class="pagina">
+  <header>
+    <div class="ruta">firmware/carcasa · OpenSCAD</div>
+    <h1>Carcasa del pastillero</h1>
+    <p class="entrada">La base con el ESP32 va a la izquierda y los módulos de medicamento a su derecha. <b>Todas las unidades miden 60 × 100 × 32 mm</b>, se unen con una cola de milano y el bus I2C pasa de una a otra por dentro. Los números señalan piezas y componentes; las letras, partes de la caja.</p>
+  </header>
+
+  <section class="visor" aria-label="Vista 3D">
+    <div class="escena" id="escena">
+      <div class="cargando" id="cargando">Cargando el modelo…</div>
+      <div class="barra">
+        <div class="segmentos" role="group" aria-label="Estado">
+          <button type="button" data-modo="montado" aria-pressed="true">Montado</button>
+          <button type="button" data-modo="abierto" aria-pressed="false">Tapas abiertas</button>
+          <button type="button" data-modo="desarmado" aria-pressed="false">Desarmado</button>
+        </div>
+        <div class="interruptores" role="group" aria-label="Opciones">
+          <button type="button" id="t-dentro" aria-pressed="false">Ver por dentro</button>
+          <button type="button" id="t-marcas" aria-pressed="true">Señales</button>
+          <button type="button" id="t-cotas" aria-pressed="true">Medidas</button>
+          <button type="button" id="t-vista">Centrar</button>
+        </div>
+      </div>
+      <div class="pista">Arrastra para girar · rueda o pellizco para acercar · clic en una pieza para ver qué es</div>
+      <div class="detalle" id="detalle" hidden></div>
+    </div>
+    <aside class="leyenda" id="leyenda" aria-label="Qué es cada cosa"></aside>
+  </section>
+
+  <section class="bloques">
+    <div class="bloque">
+      <h2>Medidas generales</h2>
+      <dl class="medidas">
+        <dt>Cada unidad<small>Base del ESP32 o módulo, con la tapa puesta</small></dt><dd>60 × 100 × 32 mm</dd>
+        <dt>Pastillero con 2 módulos<small>La cola de milano del último sobresale 3 mm</small></dt><dd>180 × 100 × 32 mm</dd>
+        <dt>Cámara de pastillas<small>Por módulo, descontando la columna del frente</small></dt><dd>55 × 43 × 22 mm · ≈ 48 cm³</dd>
+        <dt>Bahía de la electrónica<small>Por módulo, debajo de la cubierta</small></dt><dd>55 × 40 × 26 mm</dd>
+        <dt>Paredes y fondo</dt><dd>2,4 mm</dd>
+        <dt>Tapas<small>Todas iguales y a ras</small></dt><dd>4 mm</dd>
+        <dt>LED del frente<small>Misma altura en todas las unidades</small></dt><dd>Ø 5 mm a 14 mm</dd>
+        <dt>Ventana del bus<small>Caras laterales, misma posición en todas</small></dt><dd>12,5 × 8 mm</dd>
+        <dt>Holgura entre piezas que encajan</dt><dd>0,3 mm</dd>
+      </dl>
+    </div>
+    <div class="bloque">
+      <h2>Cómo se arma</h2>
+      <p>Cada unidad es una caja abierta arriba. Los componentes se colocan desde arriba y la tapa se atornilla con 4 tornillos avellanados que quedan a ras.</p>
+      <p>Para unir las unidades se baja cada módulo desde arriba sobre la cola de milano de la unidad de su izquierda. Antes se pasa el cable del bus por las ventanas laterales y se mete el pasador de la bisagra: una vez unidas, la unidad vecina impide que se salga.</p>
+      <p>En cada módulo, el reed y el LED van en la columna del frente. Sus cables bajan por la columna y llegan a la bahía por el túnel que pasa bajo el fondo de la cámara, así que las pastillas nunca tocan un cable.</p>
+      <p>La tapa del módulo se queda abierta a unos 100° apoyada en el borde de la cubierta, sin llegar a tocar el pulsador.</p>
+    </div>
+    <div class="bloque ancho">
+      <h2>Qué se imprime</h2>
+      <div class="tabla">
+        <table>
+          <thead><tr><th>Pieza</th><th>Cantidad</th><th>Cómo se imprime</th><th>Archivo</th></tr></thead>
+          <tbody>
+            <tr><td>Caja de la base</td><td class="num">1</td><td>Tal cual, con el fondo en la cama</td><td class="num">base_caja.stl</td></tr>
+            <tr><td>Tapa de la base</td><td class="num">1</td><td>Plana, con los rótulos hacia arriba</td><td class="num">base_tapa.stl</td></tr>
+            <tr><td>Base del módulo</td><td class="num">2</td><td>Tal cual, con el fondo en la cama</td><td class="num">modulo_base.stl</td></tr>
+            <tr><td>Tapa del módulo 1 y 2</td><td class="num">1 + 1</td><td>Boca abajo: el número queda contra la cama y el reborde hacia arriba</td><td class="num">modulo_tapa_1.stl · modulo_tapa_2.stl</td></tr>
+            <tr><td>Cubierta de la bahía</td><td class="num">2</td><td>Plana</td><td class="num">modulo_cubierta.stl</td></tr>
+            <tr><td>Tapón de la ventana</td><td class="num">1</td><td>Con la pestaña en la cama</td><td class="num">modulo_tapon.stl</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>PETG o PLA, capa de 0,2 mm, 3 perímetros, relleno 20 % y sin soportes. Conviene imprimir primero una sola base de módulo con su tapa para comprobar las medidas de la placa PCF8574, el reed, el imán y la bisagra.</p>
+    </div>
+  </section>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="application/json" id="modelos">/*MODELOS*/</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+const ANCHO = 60, FONDO = 100, ALTO = 28, TAPA = 4, MODULOS = 2;
+const EJE = [0, 51.6, 29];                  // bisagra del módulo (y, z)
+const PASO = 28;                           // desplazamiento al desarmar
+const SEPARA = 30;                         // separación entre unidades al desarmar
+
+// u: en qué unidades aparece (0 = base, 1 y 2 = módulos); e: hacia dónde se mueve al desarmar (x, y, z)
+const ITEMS = [
+  { id: 'esp_caja', g: 'base', impresa: true, n: 1, nombre: 'Caja de la base', donde: 'Unidad de la izquierda. Cola de milano y ventana del bus en la cara derecha; abertura del USB atrás.', medida: '60 × 100 × 28 mm', u: [0], e: [0, 0, 0], p: [0, 40, 14] },
+  { id: 'esp_tapa', g: 'base', impresa: true, n: 2, nombre: 'Tapa de la base', donde: 'Atornillada arriba. Rejilla del buzzer, agujeros EN y BOOT y rótulos grabados.', medida: '60 × 100 × 4 mm', u: [0], e: [0, 0, 2.2], p: [46, 55, 32] },
+  { id: 'esp_perforada', g: 'base', c: '#c9a227', n: 3, nombre: 'Placa perforada', donde: 'Atrás, sobre 4 postes de 5 mm con escuadras. Lleva los zócalos, el transistor y el conector del bus.', medida: '40 × 60 mm', u: [0], e: [0, 0, 0.6], p: [48, 40, 9], dentro: true },
+  { id: 'esp_zocalos', g: 'base', c: '#3a3a3a', n: 4, nombre: 'Zócalos hembra', donde: 'Dos tiras de 15 pines soldadas a la placa perforada. El ESP32 se enchufa encima y se puede sacar.', medida: '8,5 mm de alto', u: [0], e: [0, 0, 0.9], p: [14.5, 60, 12], dentro: true },
+  { id: 'esp_esp32', g: 'base', c: '#2563eb', n: 5, nombre: 'ESP32 DevKit', donde: 'Enchufado en los zócalos, con el USB contra la pared trasera.', medida: '28,5 × 51,5 mm · 30 pines', u: [0], e: [0, 0, 1.3], p: [27, 66, 22], dentro: true },
+  { id: 'esp_buzzer', g: 'base', c: '#111111', n: 6, nombre: 'Buzzer activo', donde: 'Delante, encajado en el anillo del fondo, debajo de la rejilla de la tapa.', medida: 'Ø 12 mm', u: [0], e: [0, 0, 0.6], p: [30, 22, 12], dentro: true },
+  { id: 'esp_led', g: 'base', c: '#22c55e', n: 7, nombre: 'LED de estado', donde: 'En el frente, a 14 mm de altura, igual que el LED de cada módulo.', medida: 'Ø 5 mm', u: [0], e: [0, -0.7, 0], p: [30, -1, 14] },
+  { id: 'esp_conector', g: 'base', c: '#e9e9e9', n: 8, nombre: 'Conector del bus y transistor', donde: 'Franja derecha de la placa perforada, junto a la ventana del bus.', medida: 'JST-XH de 4 pines', u: [0], e: [0, 0, 0.9], p: [46, 70, 16], dentro: true },
+  { id: 'esp_usb', g: 'base', c: '#444444', n: 9, nombre: 'Cable USB', donde: 'Alimentación. Entra por la abertura de la pared trasera hasta el ESP32.', medida: 'Abertura 13 × 8 mm', u: [0], e: [0, 0.8, 0], p: [27, 112, 21] },
+  { id: 'esp_tornillos', g: 'base', c: '#d4a72c', n: 10, nombre: 'Tornillos de la tapa', donde: 'Uno en cada esquina, en los pilares de la caja.', medida: '4 × 2,5 × 8 mm avellanados', u: [0], e: [0, 0, 2.8], p: [55.5, 95.5, 32] },
+
+  { id: 'mod_base', g: 'modulo', impresa: true, n: 11, nombre: 'Base del módulo', donde: 'Cámara de pastillas delante, bloque divisor con la bisagra en medio y bahía de la electrónica detrás.', medida: '60 × 100 × 28 mm', u: [1, 2], e: [0, 0, 0], p: [6, 0, 6] },
+  { id: 'mod_tapa', g: 'modulo', impresa: true, n: 12, nombre: 'Tapa con bisagra', donde: 'Cubre la cámara. Lleva grabado el número del módulo y el imán por debajo.', medida: '4 mm + reborde de 2 mm', u: [1, 2], e: [0, 0, 1.6], p: [46, 30, 32], tapa: true },
+  { id: 'mod_cubierta', g: 'modulo', impresa: true, n: 13, nombre: 'Cubierta de la bahía', donde: 'Atornillada detrás de la bisagra. Lleva el pulsador.', medida: '60 × 45 × 4 mm', u: [1, 2], e: [0, 0, 2.2], p: [12, 74, 32] },
+  { id: 'mod_pasador', g: 'modulo', c: '#e3e3e3', n: 14, nombre: 'Pasador de la bisagra', donde: 'Atraviesa los tres nudillos. Una vez unidas las unidades, la vecina impide que se salga.', medida: 'Filamento 1,75 × 59 mm', u: [1, 2], e: [0, 0, 1.25], p: [57, 51.6, 29], dentro: true },
+  { id: 'mod_iman', g: 'modulo', c: '#b8c0c8', n: 15, nombre: 'Imán', donde: 'Pegado en el alojamiento bajo la tapa, justo encima del reed.', medida: 'Disco 6 × 3 mm, N35', u: [1, 2], e: [0, 0, 1.2], p: [30, 6.9, 31], dentro: true, tapa: true },
+  { id: 'mod_reed', g: 'modulo', c: '#e05a47', n: 16, nombre: 'Reed (sensor de tapa)', donde: 'En la ranura de lo alto de la columna del frente. Sus patas bajan por la columna hasta el túnel.', medida: 'Cuerpo 14 × 3 mm', u: [1, 2], e: [0, 0, 0.8], p: [36, 6.9, 26], dentro: true },
+  { id: 'mod_led', g: 'modulo', c: '#ff3b30', n: 17, nombre: 'LED del módulo', donde: 'En el frente, dentro de la columna. Se enciende a la hora de la toma.', medida: 'Ø 5 mm', u: [1, 2], e: [0, -0.7, 0], p: [30, -1, 14] },
+  { id: 'mod_pcf', g: 'modulo', c: '#1f9d55', n: 18, nombre: 'Placa PCF8574', donde: 'En el fondo de la bahía, sobre 4 postes de 4 mm, con los conectores del bus hacia los lados.', medida: '40 × 20 mm', u: [1, 2], e: [0, 0, 0.6], p: [30, 68, 9], dentro: true },
+  { id: 'mod_pulsador', g: 'modulo', c: '#f2c200', n: 19, nombre: 'Pulsador', donde: 'En la cubierta, con la tuerca por debajo. Confirma la toma.', medida: 'De panel, Ø 12 mm', u: [1, 2], e: [0, 0, 2.5], p: [30, 86.6, 38] },
+  { id: 'mod_tornillos', g: 'modulo', c: '#d4a72c', n: 20, nombre: 'Tornillos de la cubierta', donde: 'En los 4 pilares de las esquinas de la bahía.', medida: '4 × 2,5 × 8 mm avellanados', u: [1, 2], e: [0, 0, 2.8], p: [55.5, 95.5, 32] },
+
+  { id: 'cable_bus', g: 'union', c: '#333333', n: 21, nombre: 'Cable del bus I2C', donde: 'De cada unidad a la siguiente por las ventanas laterales: 3,3 V, GND, SDA y SCL.', medida: '4 hilos', u: [0, 1], e: [0, 0, 0], p: [60, 70, 17], dentro: true },
+  { id: 'tapon', g: 'union', impresa: true, n: 22, nombre: 'Tapón de la ventana', donde: 'Cierra la ventana del bus del último módulo.', medida: '12 × 7,6 mm', u: [2], e: [0.5, 0, 0], p: [61.2, 70, 10] },
+];
+
+// Partes de la caja: en qué pieza están y en qué unidad se señalan
+const ZONAS = [
+  { l: 'A', nombre: 'Cámara de pastillas', donde: 'Pastillas sueltas. Tiene doble fondo: por debajo pasa el túnel de los cables.', medida: '55 × 43 × 22 mm · ≈ 48 cm³', en: 'mod_base', u: 1, p: [40, 26, 8] },
+  { l: 'B', nombre: 'Columna del frente', donde: 'Lleva el reed arriba y el LED en el frente.', medida: '21 × 9 mm', en: 'mod_base', u: 1, p: [20.5, 10, 22] },
+  { l: 'C', nombre: 'Túnel de cables', donde: 'Bajo el fondo de la cámara, desde la columna hasta la bahía.', medida: '5 × 2,5 mm', en: 'mod_base', u: 1, p: [30, 36, 3.6], dentro: true },
+  { l: 'D', nombre: 'Bisagra', donde: 'Sobre el bloque divisor. Los nudillos quedan a ras de la tapa.', medida: 'Eje Ø 2,1 mm', en: 'mod_base', u: 1, p: [4, 51.6, 32] },
+  { l: 'E', nombre: 'Cola de milano', donde: 'Macho en la cara derecha y hembra en la izquierda. La unidad se baja desde arriba.', medida: '5 a 8 mm, 3 de fondo', en: 'mod_base', u: 2, p: [61.6, 51.6, 22] },
+  { l: 'F', nombre: 'Ventana del bus', donde: 'En las dos caras laterales de la bahía, a la misma altura en todas las unidades.', medida: '12,5 × 8 mm', en: 'mod_base', u: 2, p: [60.4, 70, 20.5] },
+  { l: 'G', nombre: 'Bahía de la electrónica', donde: 'Detrás del bloque divisor, cerrada por la cubierta.', medida: '55 × 40 × 26 mm', en: 'mod_base', u: 1, p: [46, 80, 22] },
+  { l: 'H', nombre: 'Rejilla del buzzer', donde: 'En la tapa de la base, encima del buzzer.', medida: '7 ranuras', en: 'esp_tapa', u: 0, p: [30, 22, 32] },
+  { l: 'I', nombre: 'Agujeros EN y BOOT', donde: 'Para pulsarlos con un clip al reprogramar el ESP32.', medida: 'Ø 3,4 mm', en: 'esp_tapa', u: 0, p: [27, 88, 32] },
+];
+
+const GRUPOS = [['base', 'Base del ESP32'], ['modulo', 'Cada módulo'], ['union', 'Entre unidades']];
+
+// ---------- Estado ----------
+const estado = { modo: 'montado', dentro: false, marcas: true, cotas: true, sel: null };
+const anim = { abrir: 0, desarmar: 0 };
+const reduceMov = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- Escena ----------
+const escena = document.getElementById('escena');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+escena.prepend(renderer.domElement);
+const capa = new CSS2DRenderer();
+capa.domElement.className = 'capa';
+escena.appendChild(capa.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, 1, 1, 5000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.12;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a96a3, 1.6));
+const sol = new THREE.DirectionalLight(0xffffff, 1.6);
+sol.position.set(-180, 320, 260);
+scene.add(sol);
+const contraluz = new THREE.DirectionalLight(0xffffff, 0.55);
+contraluz.position.set(260, 120, -220);
+scene.add(contraluz);
+
+// Coordenadas de OpenSCAD (z hacia arriba) dentro de un grupo girado
+const raiz = new THREE.Group();
+raiz.rotation.x = -Math.PI / 2;
+scene.add(raiz);
+
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let rejilla;
+function aplicarTema() {
+  scene.background = new THREE.Color(css('--stage'));
+  if (rejilla) raiz.remove(rejilla);
+  rejilla = new THREE.GridHelper(420, 42, css('--grid'), css('--grid'));
+  rejilla.rotation.x = Math.PI / 2;
+  rejilla.position.set(90, 50, -0.05);
+  raiz.add(rejilla);
+  for (const m of mallas) if (m.userData.item.impresa) m.material.color.set(css('--pieza'));
+  for (const l of lineasCota) l.material.color.set(css('--muted'));
+  pedirRender();
+}
+
+// ---------- Modelos ----------
+const datos = JSON.parse(document.getElementById('modelos').textContent);
+const loader = new STLLoader();
+function geometria(nombre) {
+  const bin = atob(datos[nombre]);
+  const buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  const g = loader.parse(buf.buffer);
+  g.computeVertexNormals();
+  return g;
+}
+
+const unidades = [];
+for (let u = 0; u <= MODULOS; u++) {
+  const grupo = new THREE.Group();
+  raiz.add(grupo);
+  unidades.push(grupo);
+}
+
+const mallas = [];
+const nodos = [];     // { item, u, nodo (se desplaza al desarmar), pivote? }
+const geos = {};
+for (const item of ITEMS) {
+  for (const u of item.u) {
+    const archivo = item.id === 'mod_tapa' ? `mod_tapa_${u}` : item.id;
+    geos[archivo] ??= geometria(archivo);
+    const material = new THREE.MeshStandardMaterial({
+      color: item.impresa ? css('--pieza') : item.c,
+      roughness: item.impresa ? 0.72 : 0.45,
+      metalness: item.id.includes('tornillos') || item.id === 'mod_iman' ? 0.6 : 0.05,
+      transparent: true,
+      opacity: 1,
+    });
+    if (item.id === 'mod_tapa' || item.id === 'esp_tapa' || item.id === 'mod_cubierta') material.color.offsetHSL(0, 0, 0.06);
+    const malla = new THREE.Mesh(geos[archivo], material);
+    malla.userData = { item, u, base: material.color.clone() };
+    const nodo = new THREE.Group();
+    let pivote = null;
+    if (item.tapa) {
+      pivote = new THREE.Group();
+      pivote.position.set(0, EJE[1], EJE[2]);
+      malla.position.set(0, -EJE[1], -EJE[2]);
+      pivote.add(malla);
+      nodo.add(pivote);
+    } else {
+      nodo.add(malla);
+    }
+    unidades[u].add(nodo);
+    mallas.push(malla);
+    nodos.push({ item, u, nodo, pivote, malla });
+  }
+}
+
+// ---------- Señales ----------
+const marcas = [];
+function crearMarca(texto, color, letra, alPulsar, titulo) {
+  const el = document.createElement('button');
+  el.type = 'button';
+  el.className = 'marca' + (letra ? ' letra' : '');
+  el.textContent = texto;
+  el.title = titulo;
+  el.setAttribute('aria-label', `${texto}: ${titulo}`);
+  if (color) el.style.setProperty('--c', color);
+  el.addEventListener('click', (ev) => { ev.stopPropagation(); alPulsar(); });
+  const obj = new CSS2DObject(el);
+  obj.userData.oculta = false;
+  marcas.push(obj);
+  return obj;
+}
+for (const n of nodos) {
+  // cada pieza se señala una vez: en la base o en el primer módulo (el tapón y la cola, en el último)
+  if (n.u !== n.item.u[0]) continue;
+  const m = crearMarca(String(n.item.n), n.item.impresa ? css('--pieza') : n.item.c, false, () => seleccionar(n.item.id), n.item.nombre);
+  m.element.dataset.id = n.item.id;
+  m.userData.dentro = !!n.item.dentro;
+  if (n.item.impresa) m.element.style.color = '#102030';
+  m.position.set(...n.item.p);
+  if (n.pivote) { m.position.set(n.item.p[0], n.item.p[1] - EJE[1], n.item.p[2] - EJE[2]); n.pivote.add(m); }
+  else n.nodo.add(m);
+}
+for (const z of ZONAS) {
+  const n = nodos.find((x) => x.item.id === z.en && x.u === z.u);
+  const m = crearMarca(z.l, null, true, () => seleccionar(z.l), z.nombre);
+  m.element.dataset.id = z.l;
+  m.userData.dentro = !!z.dentro;
+  m.position.set(...z.p);
+  n.nodo.add(m);
+}
+
+// ---------- Medidas ----------
+const cotas = new THREE.Group();
+raiz.add(cotas);
+const lineasCota = [];
+function cota(a, b, texto, extension) {
+  const mat = new THREE.LineBasicMaterial({ color: css('--muted') });
+  const pts = [new THREE.Vector3(...a), new THREE.Vector3(...b)];
+  const g = new THREE.BufferGeometry().setFromPoints(pts);
+  const linea = new THREE.Line(g, mat);
+  cotas.add(linea);
+  lineasCota.push(linea);
+  // marcas de los extremos, hacia la pieza
+  for (const p of [a, b]) {
+    const e = [p[0] + extension[0], p[1] + extension[1], p[2] + extension[2]];
+    const gl = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...p), new THREE.Vector3(...e)]);
+    const l = new THREE.Line(gl, mat);
+    cotas.add(l);
+    lineasCota.push(l);
+  }
+  const el = document.createElement('div');
+  el.className = 'cota';
+  el.textContent = texto;
+  const etiqueta = new CSS2DObject(el);
+  etiqueta.position.set((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2);
+  cotas.add(etiqueta);
+}
+const TOTAL = ANCHO * (MODULOS + 1);
+cota([0, -16, 0], [TOTAL, -16, 0], `${TOTAL} mm en total`, [0, 6, 0]);
+for (let u = 0; u <= MODULOS; u++) cota([u * ANCHO + 1, -7, 0], [(u + 1) * ANCHO - 1, -7, 0], `${ANCHO}`, [0, 3, 0]);
+cota([-9, 0, 0], [-9, FONDO, 0], `${FONDO} mm`, [5, 0, 0]);
+cota([-9, 0, 0], [-9, 0, ALTO + TAPA], `${ALTO + TAPA} mm`, [5, 0, 0]);
+
+// ---------- Leyenda ----------
+const leyenda = document.getElementById('leyenda');
+function filaLeyenda(id, chapa, chapaClase, color, nombre, donde, medida) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'item';
+  b.dataset.id = id;
+  b.setAttribute('aria-pressed', 'false');
+  b.innerHTML = `<span class="chapa ${chapaClase}"></span><span class="nombre"></span><span class="sub"></span>`;
+  const ch = b.querySelector('.chapa');
+  ch.textContent = chapa;
+  if (color) ch.style.setProperty('--c', color);
+  b.querySelector('.nombre').textContent = nombre;
+  const sub = b.querySelector('.sub');
+  sub.append(donde + ' ');
+  const md = document.createElement('span');
+  md.className = 'medida';
+  md.textContent = medida;
+  sub.append(md);
+  b.addEventListener('click', () => seleccionar(id));
+  return b;
+}
+for (const [g, titulo] of GRUPOS) {
+  const sec = document.createElement('div');
+  sec.className = 'grupo';
+  const h = document.createElement('h3');
+  h.textContent = titulo;
+  sec.append(h);
+  for (const it of ITEMS.filter((x) => x.g === g)) {
+    sec.append(filaLeyenda(it.id, it.n, it.impresa ? 'impresa' : '', it.impresa ? null : it.c, it.nombre + (it.impresa ? ' · impresa' : ''), it.donde, it.medida));
+  }
+  leyenda.append(sec);
+}
+{
+  const sec = document.createElement('div');
+  sec.className = 'grupo';
+  const h = document.createElement('h3');
+  h.textContent = 'Partes de la caja';
+  sec.append(h);
+  for (const z of ZONAS) sec.append(filaLeyenda(z.l, z.l, 'letra', null, z.nombre, z.donde, z.medida));
+  leyenda.append(sec);
+}
+
+// ---------- Selección ----------
+const detalle = document.getElementById('detalle');
+function info(id) {
+  return ITEMS.find((x) => x.id === id) || ZONAS.find((x) => x.l === id);
+}
+function seleccionar(id) {
+  estado.sel = estado.sel === id ? null : id;
+  actualizarSeleccion();
+}
+function actualizarSeleccion() {
+  const id = estado.sel;
+  const it = id ? info(id) : null;
+  document.querySelectorAll('.item').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === id)));
+  if (it) {
+    detalle.hidden = false;
+    detalle.innerHTML = '<strong></strong><span class="donde"></span><span class="medida"></span>';
+    detalle.querySelector('strong').textContent = (it.n ?? it.l) + ' · ' + it.nombre;
+    detalle.querySelector('.donde').textContent = it.donde;
+    detalle.querySelector('.medida').textContent = it.medida;
+  } else {
+    detalle.hidden = true;
+  }
+  aplicarMateriales();
+}
+function aplicarMateriales() {
+  const id = estado.sel;
+  const it = id ? info(id) : null;
+  const zona = it && it.l;
+  const verDentro = estado.dentro || (it && it.dentro);
+  for (const m of mallas) {
+    const item = m.userData.item;
+    const elegido = it && !zona && item.id === id;
+    let op = 1;
+    if (item.impresa && verDentro && !elegido) op = 0.16;
+    if (it && !zona && !elegido) op = Math.min(op, item.impresa ? 0.16 : 0.3);
+    if (zona && item.id !== it.en) op = Math.min(op, item.impresa ? 0.35 : 0.5);
+    if (zona && it.l === 'C' && item.impresa) op = 0.22;
+    m.material.opacity = op;
+    m.material.depthWrite = op > 0.5;
+    m.material.emissive.set(elegido ? css('--accent') : '#000000');
+    m.material.emissiveIntensity = elegido ? 0.35 : 0;
+  }
+  for (const mk of marcas) mk.element.classList.toggle('atenua', !!id && mk.element.dataset.id !== id);
+  pedirRender();
+}
+
+// ---------- Controles ----------
+document.querySelectorAll('[data-modo]').forEach((b) => b.addEventListener('click', () => {
+  estado.modo = b.dataset.modo;
+  document.querySelectorAll('[data-modo]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  pedirRender();
+}));
+function interruptor(idBoton, clave, alCambiar) {
+  const b = document.getElementById(idBoton);
+  b.addEventListener('click', () => {
+    estado[clave] = !estado[clave];
+    b.setAttribute('aria-pressed', String(estado[clave]));
+    alCambiar();
+  });
+}
+interruptor('t-dentro', 'dentro', aplicarMateriales);
+interruptor('t-marcas', 'marcas', pedirRender);
+interruptor('t-cotas', 'cotas', pedirRender);
+document.getElementById('t-vista').addEventListener('click', vistaInicial);
+
+function vistaInicial() {
+  const centro = new THREE.Vector3(TOTAL / 2, FONDO / 2, 12);
+  const ojo = new THREE.Vector3(TOTAL / 2 - 105, -175, 160);
+  raiz.updateMatrixWorld();
+  controls.target.copy(raiz.localToWorld(centro.clone()));
+  camera.position.copy(raiz.localToWorld(ojo.clone()));
+  controls.update();
+  pedirRender();
+}
+
+// ---------- Etiqueta al pasar el ratón ----------
+const flot = document.createElement('div');
+flot.className = 'etiqueta-flot';
+flot.hidden = true;
+escena.append(flot);
+const ray = new THREE.Raycaster();
+const puntero = new THREE.Vector2();
+function mallaBajo(ev) {
+  const r = renderer.domElement.getBoundingClientRect();
+  puntero.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(puntero, camera);
+  const hits = ray.intersectObjects(mallas, false).filter((h) => h.object.material.opacity > 0.25);
+  return hits[0]?.object || null;
+}
+let abajo = null;
+renderer.domElement.addEventListener('pointerdown', (ev) => { abajo = [ev.clientX, ev.clientY]; });
+renderer.domElement.addEventListener('pointerup', (ev) => {
+  if (!abajo || Math.hypot(ev.clientX - abajo[0], ev.clientY - abajo[1]) > 5) return;
+  const m = mallaBajo(ev);
+  if (m) seleccionar(m.userData.item.id);
+  else if (estado.sel) { estado.sel = null; actualizarSeleccion(); }
+});
+renderer.domElement.addEventListener('pointermove', (ev) => {
+  if (ev.buttons) { flot.hidden = true; return; }
+  const m = mallaBajo(ev);
+  if (!m) { flot.hidden = true; renderer.domElement.style.cursor = ''; return; }
+  const r = escena.getBoundingClientRect();
+  flot.textContent = `${m.userData.item.n} · ${m.userData.item.nombre}`;
+  flot.style.left = `${ev.clientX - r.left}px`;
+  flot.style.top = `${ev.clientY - r.top}px`;
+  flot.hidden = false;
+  renderer.domElement.style.cursor = 'pointer';
+});
+renderer.domElement.addEventListener('pointerleave', () => { flot.hidden = true; });
+
+// ---------- Bucle ----------
+let pendiente = true;
+function pedirRender() { pendiente = true; }
+controls.addEventListener('change', pedirRender);
+
+function ajustar() {
+  const w = escena.clientWidth, h = escena.clientHeight;
+  renderer.setSize(w, h, false);
+  capa.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  pedirRender();
+}
+new ResizeObserver(ajustar).observe(escena);
+
+function hacia(actual, objetivo) {
+  if (reduceMov) return objetivo;
+  const v = actual + (objetivo - actual) * 0.14;
+  return Math.abs(objetivo - v) < 0.002 ? objetivo : v;
+}
+function cuadro() {
+  requestAnimationFrame(cuadro);
+  const objAbrir = estado.modo === 'abierto' ? 1 : 0;
+  const objDesarmar = estado.modo === 'desarmado' ? 1 : 0;
+  if (anim.abrir !== objAbrir || anim.desarmar !== objDesarmar) {
+    anim.abrir = hacia(anim.abrir, objAbrir);
+    anim.desarmar = hacia(anim.desarmar, objDesarmar);
+    for (const n of nodos) {
+      const [ex, ey, ez] = n.item.e;
+      n.nodo.position.set(ex * PASO * anim.desarmar, ey * PASO * anim.desarmar, ez * PASO * anim.desarmar);
+      if (n.pivote) n.pivote.rotation.x = -THREE.MathUtils.degToRad(100) * anim.abrir;
+    }
+    unidades.forEach((g, u) => { g.position.x = u * (ANCHO + SEPARA * anim.desarmar); });
+    pendiente = true;
+  }
+  cotas.visible = estado.cotas && anim.desarmar < 0.02;
+  const seVeDentro = estado.dentro || anim.desarmar > 0.5 || (estado.sel && info(estado.sel)?.dentro);
+  for (const m of marcas) {
+    const v = estado.marcas && (!m.userData.dentro || seVeDentro || m.element.dataset.id === estado.sel);
+    if (m.visible !== v) { m.visible = v; pendiente = true; }
+  }
+  if (controls.update()) pendiente = true;
+  if (!pendiente) return;
+  pendiente = false;
+  renderer.render(scene, camera);
+  capa.render(scene, camera);
+}
+
+unidades.forEach((g, u) => { g.position.x = u * ANCHO; });
+aplicarTema();
+new MutationObserver(aplicarTema).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', aplicarTema);
+ajustar();
+vistaInicial();
+document.getElementById('cargando').remove();
+cuadro();
+</script>
