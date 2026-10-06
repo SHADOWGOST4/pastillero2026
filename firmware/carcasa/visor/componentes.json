@@ -15,7 +15,7 @@
    ],
    [
     "Abertura del USB",
-    "13 × 10 mm, centrada a 20,7 mm de altura"
+    "13 × 10 mm, centrada a 21,2 mm de altura"
    ],
    [
     "Pilares de tornillo",
@@ -42,7 +42,7 @@
    ],
    [
     "Agujeros EN y BOOT",
-    "Ø 3,4 mm, a ±10,5 mm del centro y a 4 mm del borde de la placa donde está el USB"
+    "Ø 3,4 mm, a ±8,2 mm del centro del ESP32 y a 4,1 mm del borde de la placa donde está el USB"
    ],
    [
     "Rejilla del buzzer",
@@ -56,7 +56,7 @@
   "hueco": [
    [
     "Altura libre bajo la tapa",
-    "28 − 22,3 = 5,7 mm sobre el módulo del ESP32"
+    "5,2 mm sobre el módulo del ESP32"
    ]
   ],
   "comprobar": "Con el ESP32 puesto, pasa un clip por cada agujero: debe tocar el botón que lleva el mismo rótulo."
@@ -69,13 +69,13 @@
    ],
    [
     "Posición",
-    "del frente: de 36,1 a 96,1 mm; a lo ancho: centrada"
+    "del frente: de 35,1 a 95,1 mm; a lo ancho: centrada"
    ]
   ],
   "hueco": [
    [
     "Apoyos",
-    "4 postes de 5 mm de alto con escuadras, holgura 0,3 mm"
+    "4 postes de 3 mm de alto con escuadras, holgura 0,3 mm"
    ],
    [
     "Franja libre a la derecha del ESP32",
@@ -83,7 +83,7 @@
    ],
    [
     "Espacio debajo",
-    "5 mm, para las soldaduras"
+    "3 mm, para las soldaduras"
    ]
   ],
   "comprobar": "Mide tu placa: debe ser de 40 × 60 mm (el formato de 4 × 6 cm). Si es de otro tamaño, cambia PERF_A y PERF_L.",
@@ -97,53 +97,64 @@
    ],
    [
     "Entre las dos tiras",
-    "25,4 mm entre centros"
+    "25,4 mm entre centros, igual que las filas del ESP32"
+   ],
+   [
+    "Posición",
+    "el primer pin a 6,5 mm del borde de la antena del ESP32"
    ]
   ],
   "hueco": [
    [
     "Alto sobre la placa perforada",
-    "8,5 mm"
+    "8,5 mm, y encima 2,5 mm del plástico de los pines del ESP32"
    ]
   ],
-  "comprobar": "Mide la distancia entre las dos filas de pines de tu ESP32 (centro a centro): suele ser 25,4 mm, pero cambia según el modelo.",
+  "comprobar": "Usa tiras hembra de 8,5 mm de alto. Si las tuyas son más bajas o más altas, cambia ZOCALO.",
   "supuesta": true
  },
  "esp_esp32": {
   "modelo": [
    [
     "Placa",
-    "28,5 × 51,5 × 1,6 mm"
+    "52,5 × 28 × 1,6 mm (medida en tus fotos, ±0,5 mm)"
    ],
    [
-    "Módulo WROOM",
-    "18 × 25,5 × 3,2 mm, con la antena hacia el frente"
+    "Módulo WROOM-32",
+    "18 × 25,5 × 3,2 mm, con la antena en el borde del frente"
    ],
    [
-    "Conector micro USB",
-    "8 × 6 × 3 mm, sobresale 1 mm del borde"
+    "Conector USB-C",
+    "9 × 7,5 × 3,2 mm, sobresale 1,9 mm del borde"
+   ],
+   [
+    "Pines",
+    "2 filas de 15, paso 2,54 mm, a 25,4 mm entre filas; el primero a 6,5 mm del borde de la antena"
    ],
    [
     "Botones EN y BOOT",
-    "4 × 4 × 1,8 mm, a ±10,5 mm del centro"
+    "a ±8,2 mm del centro y a 4,1 mm del borde del USB; BOOT a la izquierda mirando desde el frente"
+   ],
+   [
+    "Agujeros de la placa",
+    "4 de unos Ø 3 mm en las esquinas (no se usan: la sujetan los zócalos)"
    ],
    [
     "Altura total sobre la perforada",
-    "8,5 + 1,6 + 3,2 = 13,3 mm"
+    "8,5 de zócalo + 2,5 de pines + 1,6 + 3,2 = 15,8 mm"
    ]
   ],
   "hueco": [
    [
-    "Espacio al USB",
-    "0,5 mm entre el conector y la pared trasera"
+    "Espacio al USB-C",
+    "0,6 mm entre el conector y la pared trasera"
    ],
    [
     "Altura libre sobre el módulo",
-    "5,7 mm hasta la tapa"
+    "5,2 mm hasta la tapa"
    ]
   ],
-  "comprobar": "Mide largo y ancho de tu placa, la separación de las filas de pines y dónde quedan EN, BOOT y el USB. Cambia según el fabricante.",
-  "supuesta": true
+  "comprobar": "Medido en tus fotos sobre papel milimetrado. Confirma con un calibre el largo (52,5 mm), el ancho (28 mm) y la distancia entre filas de pines (25,4 mm)."
  },
  "esp_buzzer": {
   "modelo": [
@@ -219,8 +230,8 @@
  "esp_usb": {
   "modelo": [
    [
-    "Enchufe micro USB",
-    "11 × 8 mm (cuerpo), 18 mm de largo"
+    "Enchufe USB-C",
+    "11 × 8 mm de cuerpo en el modelo, 18 mm de largo"
    ]
   ],
   "hueco": [
@@ -231,9 +242,13 @@
    [
     "Holgura",
     "1 mm a cada lado y 1 mm en vertical"
+   ],
+   [
+    "Hasta el conector",
+    "2,4 mm de pared y 0,6 mm de aire"
    ]
   ],
-  "comprobar": "Mide el ancho y el alto del cuerpo de tu enchufe (no solo la punta): algunos miden 12 × 8 mm.",
+  "comprobar": "Mide el cuerpo del enchufe USB-C de tu cable: los comunes miden unos 12 × 6,5 mm y entran por la abertura hasta el conector.",
   "supuesta": true
  },
  "esp_tornillos": {

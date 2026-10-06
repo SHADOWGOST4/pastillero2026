@@ -3,7 +3,7 @@
 //   Frente (y = 0) ........ LED de estado, a la misma altura que el LED de cada módulo.
 //   Delante, en el piso ... buzzer en su anillo, debajo de la rejilla de la tapa.
 //   Atrás ................. placa perforada de 40 x 60 mm sobre 4 postes. En ella, sobre dos tiras de zócalo hembra,
-//                           el ESP32 DevKit con el USB hacia la pared trasera; a su derecha, el transistor del
+//                           el ESP32 DevKit (30 pines, USB-C) con el USB hacia la pared trasera; a su derecha, el transistor del
 //                           buzzer y los cables del bus hacia el conector de la cara derecha.
 //   Cara derecha .......... unión magnética con el primer módulo: conector hembra del bus, imanes y canal de la guía.
 //   Tapa .................. rejilla del buzzer y agujeros para pulsar EN y BOOT con un clip.
@@ -16,17 +16,22 @@ parte = "imprimir";
 // ---------- Placa perforada y ESP32 ----------
 PERF_A = 40;            // placa perforada (ancho, x)
 PERF_L = 60;            // placa perforada (largo, y)
-PERF_ALTO = 5;          // altura de los postes: deja sitio a las soldaduras de abajo
-ESP_A = 28.5;           // ESP32 DevKit de 30 pines
-ESP_L = 51.5;
+PERF_ALTO = 3;          // altura de los postes: deja sitio a las soldaduras de abajo
+// ESP32 DevKit de 30 pines con USB-C, medido sobre las fotos de la placa (precisión de unos ±0,5 mm)
+ESP_A = 28;             // ancho de la placa
+ESP_L = 52.5;           // largo de la placa, sin el USB
+ESP_FILAS = 25.4;       // distancia entre las dos filas de pines (centro a centro)
+ESP_PIN0 = 6.5;         // centro del primer pin, medido desde el borde de la antena
+USB_SALE = 1.9;         // lo que el conector USB-C sobresale del borde de la placa
+MACHO = 2.5;            // plástico de las tiras de pines del ESP32, que queda sobre el zócalo
 ZOCALO = 8.5;           // tiras de zócalo hembra entre la placa perforada y el ESP32
 USB_A = 13;             // abertura del USB
 USB_H = 10;
-BOTONES_X = 10.5;       // pulsadores EN y BOOT, a cada lado del USB
-BOTONES_Y = 4;          // distancia al borde del USB
+BOTONES_X = 8.2;        // pulsadores EN y BOOT, a cada lado del USB (medido en las fotos)
+BOTONES_Y = 4.1;        // distancia al borde del USB
 BOTONES_D = 3.4;
-// Con el USB hacia atrás, en el DevKit V1 BOOT queda a la izquierda y EN a la derecha mirando desde el frente.
-// Compruébalo en tu placa antes de imprimir: si están al revés, cambia el orden.
+// Con el USB hacia atrás, BOOT queda a la izquierda y EN a la derecha mirando desde el frente (comprobado en las
+// fotos de la placa: con los componentes arriba y el USB a la derecha, BOOT está arriba y EN abajo).
 ETIQUETAS_BOTONES = ["BOOT", "EN"];
 
 // ---------- Buzzer ----------
@@ -37,10 +42,10 @@ BUZ_Y = 22;
 // ---------- Derivadas ----------
 b_cx = ANCHO / 2;
 b_perf_x = b_cx - PERF_A / 2;
-b_perf_y = FONDO - PARED - 1.5 - PERF_L;
+b_perf_y = FONDO - PARED - 2.5 - PERF_L;   // el USB-C sobresale 1,9 mm de la placa: quedan 0,6 mm hasta la pared
 b_esp_x = b_perf_x + 3;                 // a la derecha del ESP32 quedan 8,5 mm para el transistor y el conector
 b_esp_y = b_perf_y + PERF_L - ESP_L;    // el USB queda en el borde trasero
-b_esp_z = PISO + PERF_ALTO + 1.6 + ZOCALO;
+b_esp_z = PISO + PERF_ALTO + 1.6 + ZOCALO + MACHO;
 b_esp_cx = b_esp_x + ESP_A / 2;
 b_usb_z = b_esp_z + 1.6 + 1.6;
 b_botones = [for (s = [-1, 1]) [b_esp_cx + s * BOTONES_X, b_esp_y + ESP_L - BOTONES_Y]];
@@ -100,13 +105,15 @@ module esp_perforada() {
     translate([b_perf_x, b_perf_y, PISO + PERF_ALTO]) cube([PERF_A, PERF_L, 1.6]);
 }
 module esp_zocalos() {
-    for (s = [-1, 1]) translate([b_esp_cx + s * 12.7 - 1.25, b_esp_y + (ESP_L - 15 * 2.54) / 2, PISO + PERF_ALTO + 1.6]) cube([2.5, 15 * 2.54, ZOCALO]);
+    for (s = [-1, 1]) translate([b_esp_cx + s * ESP_FILAS / 2 - 1.25, b_esp_y + ESP_PIN0 - 1.27, PISO + PERF_ALTO + 1.6]) cube([2.5, 15 * 2.54, ZOCALO]);
 }
 module esp_esp32() {
     translate([b_esp_x, b_esp_y, b_esp_z]) {
         cube([ESP_A, ESP_L, 1.6]);
-        translate([ESP_A / 2 - 9, 1, 1.6]) cube([18, 25.5, 3.2]);                    // módulo WROOM (antena al frente)
-        translate([ESP_A / 2 - 4, ESP_L - 5, 1.6]) cube([8, 6, 3]);                  // conector USB
+        translate([ESP_A / 2 - 9, 0, 1.6]) cube([18, 25.5, 3.2]);                    // módulo WROOM (antena al frente)
+        translate([ESP_A / 2 - 4.5, ESP_L + USB_SALE - 7.5, 1.6]) cube([9, 7.5, 3.2]);  // conector USB-C
+        // tiras de pines macho, por debajo de la placa
+        for (s = [-1, 1]) translate([ESP_A / 2 + s * ESP_FILAS / 2 - 1.25, ESP_PIN0 - 1.27, -MACHO]) cube([2.5, 15 * 2.54, MACHO]);
         for (s = [-1, 1]) translate([ESP_A / 2 + s * BOTONES_X - 2, ESP_L - BOTONES_Y - 2, 1.6]) cube([4, 4, 1.8]);
     }
 }
