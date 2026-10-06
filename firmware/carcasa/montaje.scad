@@ -26,6 +26,9 @@ module componentes_base() {
     color("#111") esp_buzzer();
     color("#22c55e") esp_led();
     color("#f8f8f8") esp_conector();
+    color("#f97316") esp_boton_v();
+    color("#c8a47e") esp_resistencias();
+    color("#333333") esp_cables();
     color("#d4a72c") esp_tornillos();
     color("#444") esp_usb();
     color("#c0c6cc") con_hembra();
@@ -84,6 +87,9 @@ if (objeto != "") {
     if (objeto == "esp_conector") esp_conector();
     if (objeto == "esp_tornillos") esp_tornillos();
     if (objeto == "esp_usb") esp_usb();
+    if (objeto == "esp_boton_v") esp_boton_v();
+    if (objeto == "esp_resistencias") esp_resistencias();
+    if (objeto == "esp_cables") esp_cables();
     if (objeto == "mod_pcf") mod_pcf();
     if (objeto == "mod_reed") mod_reed();
     if (objeto == "mod_iman") mod_iman();

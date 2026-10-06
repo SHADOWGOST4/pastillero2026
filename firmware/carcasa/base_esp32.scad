@@ -6,7 +6,12 @@
 //                           el ESP32 DevKit (30 pines, USB-C) con el USB hacia la pared trasera; a su derecha, el transistor del
 //                           buzzer y los cables del bus hacia el conector de la cara derecha.
 //   Cara derecha .......... unión magnética con el primer módulo: conector hembra del bus, imanes y canal de la guía.
-//   Tapa .................. rejilla del buzzer y agujeros para pulsar EN y BOOT con un clip.
+//   Tapa .................. rejilla del buzzer, botón de vinculación hundido (mantener 5 s para conectar el Wi-Fi
+//                           con la app) y agujeros para pulsar EN y BOOT con un clip, con sus rótulos grabados.
+//
+// Conexiones (firmware esp32_pillbox): LED de estado en GPIO 18 con 220 ohm; botón de vinculación entre GPIO 27 y
+// GND (pull-up interno); buzzer activo por un transistor NPN con 1 kohm en GPIO 23; bus I2C en GPIO 21 (SDA) y
+// GPIO 22 (SCL), con 3,3 V y GND, hacia el conector magnético de la cara derecha.
 //
 // Piezas para imprimir: "caja" y "tapa". Vista rápida: "todo" o "imprimir".
 include <comun.scad>
@@ -33,6 +38,14 @@ BOTONES_D = 3.4;
 // Con el USB hacia atrás, BOOT queda a la izquierda y EN a la derecha mirando desde el frente (comprobado en las
 // fotos de la placa: con los componentes arriba y el USB a la derecha, BOOT está arriba y EN abajo).
 ETIQUETAS_BOTONES = ["BOOT", "EN"];
+
+// ---------- Botón de vinculación (GPIO 27) ----------
+// Pulsador de panel mini de 7 mm (tipo PBS-110). Va hundido en la tapa para que no se pulse sin querer.
+BV_X = 48;
+BV_Y = 26;
+BV_D = 7.2;             // agujero de la rosca
+BV_HUECO_D = 13;        // rebaje alrededor del botón
+BV_HUECO_H = 2.5;       // profundidad del rebaje: la rosca agarra en los 1,5 mm de tapa que quedan
 
 // ---------- Buzzer ----------
 BUZ_D = 12.4;
@@ -91,11 +104,16 @@ module esp_tapa() {
         for (b = b_botones) translate([b[0], b[1], ALTO - 1]) cylinder(d = BOTONES_D, h = TAPA + 2);
         // rejilla del buzzer
         for (i = [-3 : 3]) translate([b_cx + i * 3 - 0.8, BUZ_Y - 6, ALTO - 1]) cube([1.6, 12, TAPA + 2]);
+        // botón de vinculación, hundido
+        translate([BV_X, BV_Y, ALTO - 1]) cylinder(d = BV_D, h = TAPA + 2);
+        translate([BV_X, BV_Y, ALTO + TAPA - BV_HUECO_H]) cylinder(d = BV_HUECO_D, h = BV_HUECO_H + 1);
         // rótulos grabados
         translate([0, 0, ALTO + TAPA - 0.6]) linear_extrude(1) {
             for (i = [0, 1]) translate([b_botones[i][0], b_botones[i][1] - 5, 0])
                 text(ETIQUETAS_BOTONES[i], size = 3.2, halign = "center", valign = "top", font = "Liberation Sans:style=Bold");
             translate([b_esp_cx, FONDO - 7, 0]) text("USB", size = 3.2, halign = "center", valign = "center", font = "Liberation Sans:style=Bold");
+            translate([BV_X, BV_Y + BV_HUECO_D / 2 + 7.5, 0]) text("VINCULAR", size = 2.8, halign = "center", valign = "center", font = "Liberation Sans:style=Bold");
+            translate([BV_X, BV_Y + BV_HUECO_D / 2 + 3.5, 0]) text("MANTÉN 5 s", size = 2.8, halign = "center", valign = "center", font = "Liberation Sans:style=Bold");
         }
     }
 }
@@ -130,6 +148,27 @@ module esp_conector() {
     // conector JST-XH de 4 pines (cables al conector magnético) y transistor del buzzer, en la franja derecha
     translate([b_esp_x + ESP_A + 1.5, CON_Y - 6.2, PISO + PERF_ALTO + 1.6]) cube([5.8, 12.4, 7]);
     translate([b_esp_x + ESP_A + 2, b_perf_y + 6, PISO + PERF_ALTO + 1.6]) cube([4.6, 3.6, 5]);
+}
+module esp_boton_v() {
+    // cabeza, tuerca por debajo y cuerpo con los terminales
+    translate([BV_X, BV_Y, ALTO + TAPA - BV_HUECO_H]) { cylinder(d = 9, h = 0.8); cylinder(d = 5, h = 4.5); }
+    translate([BV_X, BV_Y, ALTO - 2]) cylinder(d = 10, h = 2, $fn = 6);
+    translate([BV_X, BV_Y, ALTO - 15]) cylinder(d = 7, h = 15 + TAPA - BV_HUECO_H);
+}
+// Resistencias en la franja derecha de la placa perforada: 220 ohm del LED y 1 kohm de la base del transistor
+module esp_resistencias() {
+    for (y = [b_perf_y + 12, b_perf_y + 16]) translate([b_esp_x + ESP_A + 1.2, y, PISO + PERF_ALTO + 1.6 + 1.2]) rotate([0, 90, 0]) cylinder(d = 2.2, h = 6.4, $fn = 12);
+}
+// Cables interiores: LED, botón y buzzer a la placa perforada; bus del JST al conector magnético
+module tramo(a, b, d = 1.4) { hull() { translate(a) sphere(d = d, $fn = 8); translate(b) sphere(d = d, $fn = 8); } }
+module recorrido(puntos, d = 1.4) { for (i = [0 : len(puntos) - 2]) tramo(puntos[i], puntos[i + 1], d); }
+function b_perf_top() = PISO + PERF_ALTO + 1.6;
+module esp_cables() {
+    xs = b_esp_x + ESP_A + 3;
+    recorrido([[b_cx, PARED + 7.5, LED_Z], [b_cx, PARED + 12, LED_Z], [xs, b_perf_y - 2, LED_Z], [xs, b_perf_y + 3, b_perf_top() + 0.8]]);
+    recorrido([[BV_X, BV_Y, ALTO - 16.5], [BV_X, b_perf_y - 3, 13], [xs + 2, b_perf_y + 3, b_perf_top() + 0.8]]);
+    recorrido([[b_cx + 3, BUZ_Y, PISO + 9.5 + 1.2], [b_cx + 8, b_perf_y - 4, 12], [xs - 2, b_perf_y + 4, b_perf_top() + 0.8]]);
+    recorrido([[b_esp_x + ESP_A + 4.4, CON_Y, b_perf_top() + 8.6], [ANCHO - fondo_con(true) - 4, CON_Y, b_perf_top() + 8.6], [ANCHO - fondo_con(true) - 2, CON_Y, CON_Z]], d = 3);
 }
 module esp_tornillos() {
     for (p = b_pilares) translate([p[0], p[1], ALTO + TAPA - 8]) {

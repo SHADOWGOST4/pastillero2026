@@ -45,12 +45,16 @@
     "Ø 3,4 mm, a ±8,2 mm del centro del ESP32 y a 4,1 mm del borde de la placa donde está el USB"
    ],
    [
+    "Botón de vinculación",
+    "Ø 7,2 mm en un rebaje de Ø 13 × 2,5 mm, a 48 mm del lado izquierdo y 26 mm del frente"
+   ],
+   [
     "Rejilla del buzzer",
     "7 ranuras de 1,6 × 12 mm, paso 3 mm"
    ],
    [
     "Rótulos",
-    "BOOT, EN y USB grabados 0,6 mm"
+    "BOOT, EN, USB, VINCULAR y MANTÉN 5 s, grabados 0,6 mm"
    ]
   ],
   "hueco": [
@@ -720,5 +724,87 @@
   ],
   "comprobar": "Con hilo fino (AWG 26 a 30) el mazo mide unos 3 mm. Mide el tuyo: si es más grueso, sube TUNEL_H en modulo.scad.",
   "supuesta": true
+ },
+ "esp_boton_v": {
+  "modelo": [
+   [
+    "Pulsador",
+    "de panel mini, rosca Ø 7 mm (tipo PBS-110), normalmente abierto"
+   ],
+   [
+    "Cabeza",
+    "Ø 5 mm, sobresale unos 2 mm de la tapa"
+   ],
+   [
+    "Cuerpo",
+    "Ø 7 mm, unos 15 mm por debajo de la tapa"
+   ],
+   [
+    "Conexión",
+    "entre GPIO 27 y GND; el firmware usa el pull-up interno"
+   ]
+  ],
+  "hueco": [
+   [
+    "Agujero",
+    "Ø 7,2 mm, a 48 mm del lado izquierdo y 26 mm del frente"
+   ],
+   [
+    "Rebaje",
+    "Ø 13 × 2,5 mm: la cabeza queda hundida y no se pulsa sin querer"
+   ],
+   [
+    "Rosca útil",
+    "1,5 mm de tapa bajo el rebaje"
+   ]
+  ],
+  "comprobar": "Mide la rosca (7 mm) y cuánto sobresale la cabeza. Mantenlo pulsado 5 s: el LED parpadea 3 veces y el ESP32 entra en modo de vinculación.",
+  "supuesta": true
+ },
+ "esp_resistencias": {
+  "modelo": [
+   [
+    "Resistencias",
+    "2 de 1/4 W, Ø 2,2 × 6,4 mm, tumbadas"
+   ],
+   [
+    "Valores",
+    "220 Ω para el LED (GPIO 18) y 1 kΩ para la base del transistor (GPIO 23)"
+   ]
+  ],
+  "hueco": [
+   [
+    "Posición",
+    "franja derecha de la placa perforada, junto al transistor"
+   ]
+  ],
+  "comprobar": "Con 220 Ω el LED de 5 mm consume unos 6 mA a 3,3 V. Si se ve poco, baja a 150 Ω."
+ },
+ "esp_cables": {
+  "modelo": [
+   [
+    "LED de estado",
+    "2 hilos, del frente a la placa perforada (unos 45 mm)"
+   ],
+   [
+    "Botón de vinculación",
+    "2 hilos, de la tapa a la placa (unos 30 mm, con holgura para abrir la tapa)"
+   ],
+   [
+    "Buzzer",
+    "2 hilos, al transistor (unos 25 mm)"
+   ],
+   [
+    "Bus I2C",
+    "4 hilos del JST al conector magnético: 3,3 V, GND, SDA (GPIO 21) y SCL (GPIO 22), unos 15 mm"
+   ]
+  ],
+  "hueco": [
+   [
+    "Paso",
+    "por la zona libre delante de la placa perforada, sin tocar el buzzer ni el ESP32"
+   ]
+  ],
+  "comprobar": "Deja unos 60 mm de cable en el botón para poder abrir la tapa sin desoldar."
  }
 }

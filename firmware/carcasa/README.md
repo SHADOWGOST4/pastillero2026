@@ -28,17 +28,35 @@ Ejes de los modelos: `x` es el ancho (hacia la derecha), `y` el fondo (el frente
 
 ### Base del ESP32
 
+![Tapa de la base: botón de vinculación, rejilla del buzzer, EN, BOOT y USB](vistas/base_tapa.png)
+
 | Componente | Dónde va | Cómo se sujeta |
 |---|---|---|
-| Placa perforada 40 × 60 mm | Atrás, en el fondo | 4 postes de 5 mm con escuadras (y cinta de doble cara) |
-| ESP32 DevKit de 30 pines | Sobre la placa perforada, con el USB contra la pared trasera | Enchufado en dos tiras de zócalo hembra: se puede sacar |
-| Transistor del buzzer y conector JST-XH de 4 pines | Franja derecha de la placa perforada | Soldados a la placa; del JST salen 4 cables al conector magnético de la cara derecha |
+| Placa perforada 40 × 60 mm | Atrás, en el fondo | 4 postes de 3 mm con escuadras (y cinta de doble cara) |
+| ESP32 DevKit de 30 pines con USB-C (52,5 × 28 mm) | Sobre la placa perforada, con el USB contra la pared trasera y la antena hacia el frente | Enchufado en dos tiras de zócalo hembra: se puede sacar |
+| Transistor NPN, resistencias de 220 Ω y 1 kΩ y conector JST-XH de 4 pines | Franja derecha de la placa perforada (9 mm) | Soldados a la placa; del JST salen 4 cables al conector magnético de la cara derecha |
 | Buzzer activo de 12 mm | Delante, en el fondo | Encajado en un anillo, debajo de la rejilla de la tapa |
 | LED de estado de 5 mm | Frente, a 14 mm de altura | En un soporte detrás de la pared |
-| Cable USB | Pared trasera | Abertura de 13 × 8 mm |
+| **Botón de vinculación** (pulsador de panel mini de 7 mm) | En la tapa, a 48 mm del lado izquierdo y 26 mm del frente | Con su tuerca por debajo, hundido 2,5 mm para que no se pulse sin querer |
+| Cable USB-C | Pared trasera | Abertura de 13 × 10 mm |
 
-La tapa lleva la rejilla del buzzer, los agujeros para pulsar EN y BOOT con un clip y los rótulos grabados.
-**Comprueba en tu placa de qué lado quedan EN y BOOT** antes de imprimir; se cambian en `ETIQUETAS_BOTONES`.
+La tapa lleva la rejilla del buzzer, el botón de vinculación con los rótulos **VINCULAR** y **MANTÉN 5 s**, los
+agujeros para pulsar EN y BOOT con un clip y el rótulo **USB** junto a la salida del cable. Con el USB hacia atrás,
+BOOT queda a la izquierda y EN a la derecha (comprobado en las fotos de la placa).
+
+![Interior de la base: ESP32 en sus zócalos, placa perforada, buzzer, botón de vinculación y cableado](vistas/base_interior.png)
+
+#### Conexiones de la base
+
+Son las del firmware `esp32_pillbox`. El bus I2C usa los pines por defecto del ESP32.
+
+| Pin del ESP32 | Va a | Detalle |
+|---|---|---|
+| GPIO 18 | LED de estado | Ánodo por una resistencia de 220 Ω; cátodo a GND. Parpadea mientras espera la vinculación |
+| GPIO 27 | Botón de vinculación | El otro borne a GND (pull-up interno). **Mantenerlo 5 s** borra el Wi-Fi y vuelve al modo de vinculación con la app |
+| GPIO 23 | Buzzer | Por una resistencia de 1 kΩ a la base de un NPN (2N2222 o S8050); el buzzer entre 5 V (VIN) y el colector |
+| GPIO 21 (SDA), GPIO 22 (SCL) | Conector del bus | Por el JST de la placa perforada al conector magnético hembra de la cara derecha |
+| 3V3 y GND | Conector del bus | Alimentan los módulos; las resistencias de pull-up del bus van una sola vez, en la base |
 
 ### Cada módulo
 
@@ -100,7 +118,7 @@ La tabla se genera con `visor/exportar.py` a partir de `visor/componentes.json`:
 | Pieza | Medidas del modelo | Hueco en la caja | Compáralo con el real |
 |---|---|---|---|
 | Caja de la base | Exterior: 60 × 100 × 28 mm (sin tapa)<br>Interior: 55,2 × 95,2 × 25,6 mm<br>Paredes y fondo: 2,4 mm<br>Abertura del USB: 13 × 10 mm, centrada a 21,2 mm de altura<br>Pilares de tornillo: Ø 5,5 mm en las 4 esquinas | Cara izquierda: lisa: la base va en el extremo<br>Cara derecha: unión magnética (conector hembra e imanes) | Tras imprimir: 60 × 100 mm con una tolerancia de ±0,3 mm. Comprueba que el enchufe USB entra por la abertura. |
-| Tapa de la base | Tamaño: 60 × 100 × 4 mm<br>Agujeros EN y BOOT: Ø 3,4 mm, a ±8,2 mm del centro del ESP32 y a 4,1 mm del borde de la placa donde está el USB<br>Rejilla del buzzer: 7 ranuras de 1,6 × 12 mm, paso 3 mm<br>Rótulos: BOOT, EN y USB grabados 0,6 mm | Altura libre bajo la tapa: 5,2 mm sobre el módulo del ESP32 | Con el ESP32 puesto, pasa un clip por cada agujero: debe tocar el botón que lleva el mismo rótulo. |
+| Tapa de la base | Tamaño: 60 × 100 × 4 mm<br>Agujeros EN y BOOT: Ø 3,4 mm, a ±8,2 mm del centro del ESP32 y a 4,1 mm del borde de la placa donde está el USB<br>Botón de vinculación: Ø 7,2 mm en un rebaje de Ø 13 × 2,5 mm, a 48 mm del lado izquierdo y 26 mm del frente<br>Rejilla del buzzer: 7 ranuras de 1,6 × 12 mm, paso 3 mm<br>Rótulos: BOOT, EN, USB, VINCULAR y MANTÉN 5 s, grabados 0,6 mm | Altura libre bajo la tapa: 5,2 mm sobre el módulo del ESP32 | Con el ESP32 puesto, pasa un clip por cada agujero: debe tocar el botón que lleva el mismo rótulo. |
 | Placa perforada *(supuesta)* | Placa: 40 × 60 × 1,6 mm<br>Posición: del frente: de 35,1 a 95,1 mm; a lo ancho: centrada | Apoyos: 4 postes de 3 mm de alto con escuadras, holgura 0,3 mm<br>Franja libre a la derecha del ESP32: 8,5 mm (conector JST y transistor)<br>Espacio debajo: 3 mm, para las soldaduras | Mide tu placa: debe ser de 40 × 60 mm (el formato de 4 × 6 cm). Si es de otro tamaño, cambia PERF_A y PERF_L. |
 | Zócalos hembra *(supuesta)* | Cada tira: 2,5 × 38,1 × 8,5 mm (15 pines, paso 2,54 mm)<br>Entre las dos tiras: 25,4 mm entre centros, igual que las filas del ESP32<br>Posición: el primer pin a 6,5 mm del borde de la antena del ESP32 | Alto sobre la placa perforada: 8,5 mm, y encima 2,5 mm del plástico de los pines del ESP32 | Usa tiras hembra de 8,5 mm de alto. Si las tuyas son más bajas o más altas, cambia ZOCALO. |
 | ESP32 DevKit | Placa: 52,5 × 28 × 1,6 mm (medida en tus fotos, ±0,5 mm)<br>Módulo WROOM-32: 18 × 25,5 × 3,2 mm, con la antena en el borde del frente<br>Conector USB-C: 9 × 7,5 × 3,2 mm, sobresale 1,9 mm del borde<br>Pines: 2 filas de 15, paso 2,54 mm, a 25,4 mm entre filas; el primero a 6,5 mm del borde de la antena<br>Botones EN y BOOT: a ±8,2 mm del centro y a 4,1 mm del borde del USB; BOOT a la izquierda mirando desde el frente<br>Agujeros de la placa: 4 de unos Ø 3 mm en las esquinas (no se usan: la sujetan los zócalos)<br>Altura total sobre la perforada: 8,5 de zócalo + 2,5 de pines + 1,6 + 3,2 = 15,8 mm | Espacio al USB-C: 0,6 mm entre el conector y la pared trasera<br>Altura libre sobre el módulo: 5,2 mm hasta la tapa | Medido en tus fotos sobre papel milimetrado. Confirma con un calibre el largo (52,5 mm), el ancho (28 mm) y la distancia entre filas de pines (25,4 mm). |
