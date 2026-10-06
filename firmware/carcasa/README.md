@@ -194,3 +194,16 @@ Para la unión, con la base y 2 módulos: 2 pares de conectores magnéticos de 4
 
 Imprime primero **una sola base de módulo con su tapa** y comprueba con las piezas reales la placa PCF8574,
 el reed, el imán y la bisagra antes de imprimir el resto.
+
+## Pendiente hasta tener las piezas
+
+Decidido, pero se modela cuando estén las piezas reales para medirlas:
+
+- **Tornillos de las tapas: insertos de latón termofijados M3.** Sustituyen a los autorroscantes de 2,5 mm. Hará
+  falta cambiar el agujero de los pilares al diámetro que indique el fabricante del inserto (suele ser Ø 4,0–4,2 mm,
+  de 5–6 mm de profundidad) y engordar los pilares a Ø 7–8 mm. Datos que faltan: diámetro exterior y largo del
+  inserto, y largo y tipo de cabeza del tornillo M3.
+- **Botón de la base (GPIO 27):** vincular manteniéndolo 5 s; falta decidir si también silencia la alarma en la
+  versión con módulos, y confirmar la rosca del pulsador (supuesto de 7 mm).
+- **Medidas supuestas por confirmar:** placa PCF8574, pulsador de panel de los módulos, conector magnético de
+  4 pines, reed, imanes y tiras de zócalo (ver la tabla de medidas).
