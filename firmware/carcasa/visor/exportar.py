@@ -22,7 +22,7 @@ OBJETOS = [
     "esp_caja", "esp_tapa", "esp_perforada", "esp_zocalos", "esp_esp32", "esp_buzzer", "esp_led", "esp_conector",
     "esp_tornillos", "esp_usb",
     "mod_base", "mod_tapa_1", "mod_tapa_2", "mod_cubierta", "mod_pasador", "mod_iman", "mod_reed", "mod_led",
-    "mod_pcf", "mod_pulsador", "mod_tornillos", "con_macho", "con_hembra", "imanes_izq", "imanes_der",
+    "mod_pcf", "mod_pulsador", "mod_tornillos", "mod_tapita", "mod_cable", "con_macho", "con_hembra", "imanes_izq", "imanes_der",
 ]
 
 

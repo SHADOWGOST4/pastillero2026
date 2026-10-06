@@ -36,6 +36,7 @@ module componentes_modulo(a = 0) {
     color("#1f9d55") mod_pcf();
     color("#e05a47") mod_reed();
     color("#ff3b30") mod_led();
+    color("#333333") mod_cable();
     color("#f2c200") mod_pulsador();
     color("#d4a72c") mod_tornillos();
     color("#e8e8e8") mod_pasador();
@@ -56,6 +57,7 @@ module unidad_modulo(n, a = 0, dz = 0) {
     translate([0, 0, dz]) componentes_modulo(a);
     mod_abrir(a) color(C_TAPA) translate([0, 0, 1.6 * dz]) mod_tapa(n);
     color(C_TAPA) translate([0, 0, 2.2 * dz]) mod_cubierta();
+    color(C_TAPA) translate([0, 0, 2.6 * dz]) mod_tapita();
 }
 
 module fila(a = 0, dz = 0, separa = 0) {
@@ -71,6 +73,8 @@ if (objeto != "") {
     if (objeto == "mod_tapa_1") mod_tapa(1);
     if (objeto == "mod_tapa_2") mod_tapa(2);
     if (objeto == "mod_cubierta") mod_cubierta();
+    if (objeto == "mod_tapita") mod_tapita();
+    if (objeto == "mod_cable") mod_cable();
     // componentes
     if (objeto == "esp_perforada") esp_perforada();
     if (objeto == "esp_zocalos") esp_zocalos();

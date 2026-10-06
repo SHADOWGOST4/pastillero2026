@@ -88,6 +88,7 @@ def piezas_impresion():
     print("== piezas para imprimir ==")
     trabajos = [
         ("modulo_base", "modulo", "base"), ("modulo_tapa_1", "modulo", "tapa"), ("modulo_cubierta", "modulo", "cubierta"),
+        ("modulo_tapita", "modulo", "tapita"),
         ("base_caja", "base_esp32", "caja"), ("base_tapa", "base_esp32", "tapa"),
     ]
     os.makedirs(os.path.join(CARCASA, "stl"), exist_ok=True)
@@ -96,7 +97,7 @@ def piezas_impresion():
         tmp = os.path.join(TMP, salida + ".stl")
         log = render(ruta, tmp)
         simple = re.search(r"Simple:\s+(\w+)", log)
-        errores = [l for l in log.splitlines() if "ERROR" in l or "WARNING: Object may not" in l]
+        errores = [l for l in log.splitlines() if "ERROR" in l or "WARNING: Object may not" in l or "Ignoring unknown" in l]
         tris = leer_stl(tmp)
         mn, mx = caja(tris)
         print(f"{salida:18s} simple={simple.group(1) if simple else '?'}  tamaño={[round(mx[k]-mn[k],1) for k in range(3)]}  zmin={mn[2]:.2f}  {errores[:2]}")
@@ -140,6 +141,15 @@ def interferencias():
         ("modulo: tapa / iman", "mod_tapa(1)", "mod_iman()"),
         ("modulo: base / iman", M, "mod_iman()"),
         ("modulo: base / pasador", M, "mod_pasador()"),
+        ("modulo: base / tapita", M, "mod_tapita()"),
+        ("modulo: tapa / tapita", "mod_tapa(1)", "mod_tapita()"),
+        ("modulo: tapa abierta / tapita", "mod_abrir(95) mod_tapa(1)", "mod_tapita()"),
+        ("modulo: tapita / reed", "mod_tapita()", "mod_reed()"),
+        ("modulo: tapita / cable", "mod_tapita()", "mod_cable()"),
+        ("modulo: tapita / iman", "mod_tapita()", "mod_iman()"),
+        ("modulo: base / cable del sensor", M, "mod_cable()"),
+        ("modulo: base / apoyos y PCF8574", M, "mod_pcf()"),
+        ("modulo: reed / cable", "mod_reed()", "mod_cable()"),
         ("modulo: tapa / pasador", "mod_tapa(1)", "mod_pasador()"),
         ("base: caja / tapa", "esp_caja()", "esp_tapa()"),
         ("base: caja / perforada", "esp_caja()", "esp_perforada()"),

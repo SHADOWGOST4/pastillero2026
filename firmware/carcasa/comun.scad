@@ -43,7 +43,7 @@ IMAN_U_D = 8;
 IMAN_U_H = 3;
 IMANES_U = [[14, 7], [87, 7]];   // posiciones (y, z) en las dos caras
 // Guía vertical: saliente en la cara izquierda, canal en la derecha
-GUIA_Y = 51.6;
+GUIA_Y = 55.4;
 GUIA_BASE = 4;
 GUIA_PUNTA = 2.4;
 GUIA_SALE = 1.5;
@@ -72,6 +72,19 @@ module agujeros_tapa(lista) {
     for (p = lista) {
         translate([p[0], p[1], ALTO - 1]) cylinder(d = TORNILLO_PASO, h = TAPA + 2);
         translate([p[0], p[1], ALTO + TAPA - 1.6]) cylinder(d1 = TORNILLO_PASO, d2 = TORNILLO_CABEZA + 0.4, h = 1.61);
+    }
+}
+
+// Apoyos de una placa: un poste en cada esquina y escuadras que no la dejan moverse
+module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6) {
+    for (sx = [0, 1], sy = [0, 1]) {
+        x = x0 + sx * largo;
+        y = y0 + sy * ancho;
+        dx = sx == 0 ? 1 : -1;
+        dy = sy == 0 ? 1 : -1;
+        translate([min(x, x + 3 * dx), min(y, y + 3 * dy), PISO - 0.01]) cube([3, 3, alto + 0.01]);
+        translate([sx == 0 ? x - JUEGO - 1.2 : x + JUEGO, min(y, y + 5 * dy), PISO - 0.01]) cube([1.2, 5, alto + pcb + 2]);
+        translate([min(x, x + 5 * dx), sy == 0 ? y - JUEGO - 1.2 : y + JUEGO, PISO - 0.01]) cube([5, 1.2, alto + pcb + 2]);
     }
 }
 
