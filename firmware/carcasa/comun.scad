@@ -19,11 +19,15 @@ PISO = 2.4;
 R_ESQ = 3;          // radio de las esquinas verticales
 JUEGO = 0.3;        // holgura entre piezas que encajan
 
-// Tornillos autorroscantes de 2,5 mm x 8 mm, cabeza avellanada
-TORNILLO_GUIA = 2.2;
-TORNILLO_PASO = 2.9;
-TORNILLO_CABEZA = 5.4;
-PILAR_D = 5.5;
+// Tapas atornilladas con tornillos M3 x 8 de cabeza avellanada sobre insertos de latón termofijados M3.
+// Medidas típicas de un inserto M3 x 5,7: compruébalas con el tuyo (el vendedor indica el agujero recomendado).
+INSERTO_D = 4.2;        // agujero del inserto
+INSERTO_L = 5.7;        // largo del inserto
+INSERTO_REBOSE = 0.8;   // fondo extra para el plástico que desplaza el inserto al calentarlo
+INSERTO_PASO = 3;       // agujero de Ø 3,2 debajo, para un tornillo más largo
+TORNILLO_PASO = 3.4;    // paso del M3 en la tapa
+TORNILLO_CABEZA = 6.5;  // cabeza avellanada del M3
+PILAR_D = 8;            // pilar de la esquina, unido a las dos paredes
 
 // LED en el frente de cada unidad, siempre a la misma altura
 LED_Z = 14;
@@ -50,28 +54,59 @@ GUIA_SALE = 1.5;
 
 $fn = 48;
 
-// Separación del centro de un pilar a la pared: lo mete 0,6 mm en ella para que quede unido
-PILAR_O = PILAR_D / 2 - 0.6;
+// Centro del pilar a esta distancia de las dos paredes interiores (5,6 mm del borde exterior)
+PILAR_O = 3.2;
 
 module caja_redondeada(a, f, h, r = R_ESQ) {
     hull() for (x = [r, a - r], y = [r, f - r]) translate([x, y, 0]) cylinder(r = r, h = h);
 }
 
-function pilares_en(x0, y0, x1, y1) = [for (x = [x0 + PILAR_O, x1 - PILAR_O], y = [y0 + PILAR_O, y1 - PILAR_O]) [x, y]];
+// Cada pilar: [x, y] de su centro y [x, y] de la esquina interior de la caja en la que va
+function pilares_en(x0, y0, x1, y1) = [for (x = [x0, x1], y = [y0, y1])
+    [x == x0 ? x + PILAR_O : x - PILAR_O, y == y0 ? y + PILAR_O : y - PILAR_O, x, y]];
 
+// El pilar rellena la esquina entera: un cilindro unido por un bloque a las dos paredes, sin huecos entre medias
 module pilares(lista) {
-    for (p = lista) translate([p[0], p[1], PISO - 0.01]) cylinder(d = PILAR_D, h = ALTO - PISO + 0.01);
+    for (p = lista) hull() {
+        translate([p[0], p[1], PISO - 0.01]) cylinder(d = PILAR_D, h = ALTO - PISO + 0.01);
+        xa = min(p[0], p[2]) - (p[2] < p[0] ? 0.5 : 0);
+        xb = max(p[0], p[2]) + (p[2] > p[0] ? 0.5 : 0);
+        ya = min(p[1], p[3]) - (p[3] < p[1] ? 0.5 : 0);
+        yb = max(p[1], p[3]) + (p[3] > p[1] ? 0.5 : 0);
+        translate([xa, ya, PISO - 0.01]) cube([xb - xa, yb - ya, ALTO - PISO + 0.01]);
+    }
 }
 
+// Alojamiento del inserto: chaflán de entrada, agujero del inserto con fondo extra y paso del tornillo debajo
 module agujeros_pilares(lista) {
-    for (p = lista) translate([p[0], p[1], ALTO - 12]) cylinder(d = TORNILLO_GUIA, h = 13);
+    for (p = lista) translate([p[0], p[1], 0]) {
+        translate([0, 0, ALTO - INSERTO_L - INSERTO_REBOSE]) cylinder(d = INSERTO_D, h = INSERTO_L + INSERTO_REBOSE + 1);
+        translate([0, 0, ALTO - 0.6]) cylinder(d1 = INSERTO_D, d2 = INSERTO_D + 1.2, h = 0.61);
+        translate([0, 0, ALTO - INSERTO_L - INSERTO_REBOSE - INSERTO_PASO]) cylinder(d = 3.2, h = INSERTO_PASO + 0.01);
+    }
+}
+
+// Componentes (solo para ver el montaje): insertos y tornillos M3 x 8 avellanados
+module insertos(lista) {
+    for (p = lista) translate([p[0], p[1], ALTO - INSERTO_L]) difference() {
+        cylinder(d = INSERTO_D - 0.1, h = INSERTO_L, $fn = 18);   // 0,1 menos: el real entra a presión al calentarlo
+        translate([0, 0, -1]) cylinder(d = 3, h = INSERTO_L + 2, $fn = 12);
+    }
+}
+module tornillos(lista) {
+    cab = (TORNILLO_CABEZA - 2.9) / 2;
+    for (p = lista) translate([p[0], p[1], ALTO + TAPA - 8]) {
+        cylinder(d = 2.9, h = 8, $fn = 12);
+        translate([0, 0, 8 - cab]) cylinder(d1 = 2.9, d2 = TORNILLO_CABEZA, h = cab, $fn = 20);
+    }
 }
 
 // Agujeros de la tapa: de paso, con avellanado arriba para que la cabeza quede a ras
 module agujeros_tapa(lista) {
     for (p = lista) {
         translate([p[0], p[1], ALTO - 1]) cylinder(d = TORNILLO_PASO, h = TAPA + 2);
-        translate([p[0], p[1], ALTO + TAPA - 1.6]) cylinder(d1 = TORNILLO_PASO, d2 = TORNILLO_CABEZA + 0.4, h = 1.61);
+        cab = (TORNILLO_CABEZA + 0.4 - TORNILLO_PASO) / 2;
+        translate([p[0], p[1], ALTO + TAPA - cab]) cylinder(d1 = TORNILLO_PASO, d2 = TORNILLO_CABEZA + 0.4, h = cab + 0.01);
     }
 }
 

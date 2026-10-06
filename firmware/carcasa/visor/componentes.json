@@ -18,8 +18,8 @@
     "13 × 10 mm, centrada a 21,2 mm de altura"
    ],
    [
-    "Pilares de tornillo",
-    "Ø 5,5 mm en las 4 esquinas"
+    "Pilares de las esquinas",
+    "Ø 8 mm unidos a las dos paredes, con alojamiento para inserto M3"
    ]
   ],
   "hueco": [
@@ -259,29 +259,24 @@
   "modelo": [
    [
     "Tornillo",
-    "Ø 2,1 (rosca) × 8 mm, cabeza avellanada Ø 5,4 mm"
+    "M3 × 8 mm de cabeza avellanada (DIN 7991), cabeza Ø 6,5 mm"
    ],
    [
     "Posiciones",
-    "4 esquinas, a 4,55 mm de las paredes"
+    "4 esquinas, a 5,6 mm de los bordes exteriores"
    ]
   ],
   "hueco": [
    [
     "Paso en la tapa",
-    "Ø 2,9 mm con avellanado"
-   ],
-   [
-    "Agujero guía en el pilar",
-    "Ø 2,2 mm, 12 mm de profundidad"
+    "Ø 3,4 mm con avellanado de Ø 6,9 mm: la cabeza queda a ras"
    ],
    [
     "Reparto de la longitud",
-    "4 mm en la tapa y 4 mm en el pilar"
+    "4 mm en la tapa y 4 mm en el inserto"
    ]
   ],
-  "comprobar": "Tornillo autorroscante de 2,5 mm: la cabeza no debe pasar de Ø 5,4 mm. Prueba con uno antes de imprimir todo.",
-  "supuesta": true
+  "comprobar": "Con un M3 × 10 también sirve: el agujero sigue 3 mm por debajo del inserto."
  },
  "mod_base": {
   "modelo": [
@@ -373,7 +368,7 @@
    ],
    [
     "Agujeros de tornillo",
-    "4 de Ø 2,9 mm con avellanado"
+    "4 de Ø 3,4 mm con avellanado de Ø 6,9 mm para M3"
    ]
   ],
   "hueco": [
@@ -554,7 +549,7 @@
   "modelo": [
    [
     "Tornillo",
-    "Ø 2,1 (rosca) × 8 mm, cabeza avellanada Ø 5,4 mm"
+    "M3 × 8 mm de cabeza avellanada (DIN 7991), cabeza Ø 6,5 mm"
    ],
    [
     "Posiciones",
@@ -563,16 +558,15 @@
   ],
   "hueco": [
    [
-    "Paso en la cubierta",
-    "Ø 2,9 mm con avellanado"
+    "Paso en la tapa",
+    "Ø 3,4 mm con avellanado de Ø 6,9 mm: la cabeza queda a ras"
    ],
    [
-    "Agujero guía en el pilar",
-    "Ø 2,2 mm, 12 mm de profundidad"
+    "Reparto de la longitud",
+    "4 mm en la tapa y 4 mm en el inserto"
    ]
   ],
-  "comprobar": "Tornillo autorroscante de 2,5 mm: la cabeza no debe pasar de Ø 5,4 mm.",
-  "supuesta": true
+  "comprobar": "Con un M3 × 10 también sirve: el agujero sigue 3 mm por debajo del inserto."
  },
  "con_macho": {
   "modelo": [
@@ -806,5 +800,69 @@
    ]
   ],
   "comprobar": "Deja unos 60 mm de cable en el botón para poder abrir la tapa sin desoldar."
+ },
+ "esp_insertos": {
+  "modelo": [
+   [
+    "Inserto",
+    "de latón termofijado M3, Ø 4,2 × 5,7 mm (medida típica)"
+   ]
+  ],
+  "hueco": [
+   [
+    "Pilar",
+    "Ø 8 mm unido a las dos paredes, sin huecos en la esquina"
+   ],
+   [
+    "Agujero",
+    "Ø 4,2 mm, 6,5 mm de profundidad (5,7 del inserto + 0,8 para el plástico que desplaza)"
+   ],
+   [
+    "Chaflán de entrada",
+    "de Ø 5,4 a Ø 4,2, 0,6 mm"
+   ],
+   [
+    "Debajo",
+    "agujero de Ø 3,2 × 3 mm para un tornillo más largo"
+   ],
+   [
+    "Pared alrededor",
+    "1,9 mm hasta el exterior del pilar y 3,4 mm hasta la cara exterior de la caja"
+   ]
+  ],
+  "comprobar": "Usa el agujero que recomienda el vendedor para tu inserto (suele ser 4,0 a 4,2 mm para M3) y ajusta INSERTO_D e INSERTO_L. Se mete con el soldador a unos 220 °C, recto y sin apretar.",
+  "supuesta": true
+ },
+ "mod_insertos": {
+  "modelo": [
+   [
+    "Inserto",
+    "de latón termofijado M3, Ø 4,2 × 5,7 mm (medida típica)"
+   ]
+  ],
+  "hueco": [
+   [
+    "Pilar",
+    "Ø 8 mm unido a las dos paredes, sin huecos en la esquina"
+   ],
+   [
+    "Agujero",
+    "Ø 4,2 mm, 6,5 mm de profundidad (5,7 del inserto + 0,8 para el plástico que desplaza)"
+   ],
+   [
+    "Chaflán de entrada",
+    "de Ø 5,4 a Ø 4,2, 0,6 mm"
+   ],
+   [
+    "Debajo",
+    "agujero de Ø 3,2 × 3 mm para un tornillo más largo"
+   ],
+   [
+    "Pared alrededor",
+    "1,9 mm hasta el exterior del pilar y 3,4 mm hasta la cara exterior de la caja"
+   ]
+  ],
+  "comprobar": "Usa el agujero que recomienda el vendedor para tu inserto (suele ser 4,0 a 4,2 mm para M3) y ajusta INSERTO_D e INSERTO_L. Se mete con el soldador a unos 220 °C, recto y sin apretar.",
+  "supuesta": true
  }
 }

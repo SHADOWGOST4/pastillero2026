@@ -197,12 +197,8 @@ module mod_pulsador() {
     translate([m_cx, m_boton_y, ALTO - 16]) cylinder(d = 12, h = 16 + TAPA);
     translate([m_cx, m_boton_y, ALTO - 3]) cylinder(d = 15, h = 2.5, $fn = 6);
 }
-module mod_tornillos() {
-    for (p = m_pilares) translate([p[0], p[1], ALTO + TAPA - 8]) {
-        cylinder(d = 2.1, h = 8, $fn = 12);
-        translate([0, 0, 6.4]) cylinder(d1 = 2.1, d2 = TORNILLO_CABEZA, h = 1.6, $fn = 20);
-    }
-}
+module mod_tornillos() { tornillos(m_pilares); }
+module mod_insertos() { insertos(m_pilares); }
 module mod_pasador() {
     translate([0.2, m_eje_y, m_eje_z]) rotate([0, 90, 0]) cylinder(d = 1.75, h = ANCHO - 1.5 - 0.4, $fn = 12);   // 58 mm
 }

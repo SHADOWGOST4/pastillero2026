@@ -170,12 +170,8 @@ module esp_cables() {
     recorrido([[b_cx + 3, BUZ_Y, PISO + 9.5 + 1.2], [b_cx + 8, b_perf_y - 4, 12], [xs - 2, b_perf_y + 4, b_perf_top() + 0.8]]);
     recorrido([[b_esp_x + ESP_A + 4.4, CON_Y, b_perf_top() + 8.6], [ANCHO - fondo_con(true) - 4, CON_Y, b_perf_top() + 8.6], [ANCHO - fondo_con(true) - 2, CON_Y, CON_Z]], d = 3);
 }
-module esp_tornillos() {
-    for (p = b_pilares) translate([p[0], p[1], ALTO + TAPA - 8]) {
-        cylinder(d = 2.1, h = 8, $fn = 12);
-        translate([0, 0, 6.4]) cylinder(d1 = 2.1, d2 = TORNILLO_CABEZA, h = 1.6, $fn = 20);
-    }
-}
+module esp_tornillos() { tornillos(b_pilares); }
+module esp_insertos() { insertos(b_pilares); }
 module esp_usb() {
     translate([b_esp_cx - 5.5, FONDO - 1.5, b_usb_z - 4]) cube([11, 18, 8]);
 }

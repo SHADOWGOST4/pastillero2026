@@ -20,9 +20,9 @@ MODELOS = os.path.join(AQUI, "modelos")
 # Nombres de `objeto` en montaje.scad
 OBJETOS = [
     "esp_caja", "esp_tapa", "esp_perforada", "esp_zocalos", "esp_esp32", "esp_buzzer", "esp_led", "esp_conector",
-    "esp_tornillos", "esp_usb", "esp_boton_v", "esp_resistencias", "esp_cables",
+    "esp_tornillos", "esp_insertos", "esp_usb", "esp_boton_v", "esp_resistencias", "esp_cables",
     "mod_base", "mod_tapa_1", "mod_tapa_2", "mod_cubierta", "mod_pasador", "mod_iman", "mod_reed", "mod_led",
-    "mod_pcf", "mod_pulsador", "mod_tornillos", "mod_tapita", "mod_cable", "con_macho", "con_hembra", "imanes_izq", "imanes_der",
+    "mod_pcf", "mod_pulsador", "mod_tornillos", "mod_insertos", "mod_tapita", "mod_cable", "con_macho", "con_hembra", "imanes_izq", "imanes_der",
 ]
 
 
@@ -67,10 +67,10 @@ def tabla_markdown():
     nombres = {
         "esp_caja": "Caja de la base", "esp_tapa": "Tapa de la base", "esp_perforada": "Placa perforada",
         "esp_zocalos": "Zócalos hembra", "esp_esp32": "ESP32 DevKit", "esp_buzzer": "Buzzer", "esp_led": "LED de estado",
-        "esp_conector": "Conector del bus y transistor", "esp_usb": "Cable USB", "esp_tornillos": "Tornillos de la tapa",
+        "esp_conector": "Conector del bus y transistor", "esp_usb": "Cable USB", "esp_tornillos": "Tornillos de la tapa", "esp_insertos": "Insertos de la base",
         "mod_base": "Base del módulo", "mod_tapa": "Tapa del módulo", "mod_cubierta": "Cubierta de la bahía",
         "mod_pasador": "Pasador de la bisagra", "mod_iman": "Imán de la tapa", "mod_reed": "Reed", "mod_led": "LED del módulo",
-        "mod_pcf": "Placa PCF8574", "mod_pulsador": "Pulsador", "mod_tornillos": "Tornillos de la cubierta",
+        "mod_pcf": "Placa PCF8574", "mod_pulsador": "Pulsador", "mod_tornillos": "Tornillos de la cubierta", "mod_insertos": "Insertos del módulo",
         "con_macho": "Conector magnético macho", "con_hembra": "Conector magnético hembra",
         "imanes_izq": "Imanes de la cara izquierda", "imanes_der": "Imanes de la cara derecha",
     }
