@@ -58,6 +58,19 @@ h3 { font-family: var(--display); font-weight: 600; font-size: 13px; text-transf
 .detalle { position: absolute; right: 12px; bottom: 12px; max-width: min(360px, calc(100% - 24px)); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 2px; font-size: 13.5px; }
 .detalle strong { font-family: var(--display); font-size: 18px; font-weight: 600; }
 .detalle .medida { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+.detalle { max-height: calc(100% - 70px); overflow: auto; }
+.detalle dl { margin: 6px 0 0; display: grid; grid-template-columns: minmax(0, 9em) minmax(0, 1fr); gap: 3px 10px; font-size: 12.5px; }
+.detalle dt { color: var(--muted); }
+.detalle dd { margin: 0; font-family: var(--mono); font-size: 11.5px; }
+.detalle h4 { margin: 8px 0 0; font: 600 11px/1 var(--display); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.detalle .comprobar { margin-top: 8px; padding: 6px 8px; background: var(--accent-soft); border-radius: 6px; font-size: 12.5px; }
+.detalle .supuesta { font-size: 11.5px; color: var(--accent); font-weight: 600; }
+.sup { font-size: 11px; font-weight: 600; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 1px 5px; white-space: nowrap; }
+table.comparar td { vertical-align: top; }
+table.comparar td:first-child { font-weight: 600; min-width: 11em; }
+table.comparar td.num { white-space: normal; }
+table.comparar tr.grupo td { font: 600 12px/1.2 var(--display); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: var(--bg); padding-block: 6px; }
+
 .cargando { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 14px; }
 
 .marca { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; display: grid; place-items: center; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; font: 600 12px/1 var(--mono); color: #fff; background: var(--c, var(--accent)); border: 2px solid var(--panel); box-shadow: 0 1px 3px rgb(0 0 0 / .25); }
@@ -101,7 +114,7 @@ td.num { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; font-
 @media (max-width: 520px) {
   .pagina { padding-inline: 16px; }
   .escena { height: 420px; }
-  .detalle { left: 12px; right: 12px; max-width: none; }
+  .detalle { left: 12px; right: 12px; max-width: none; max-height: 55%; }
   .pista { display: none; }
 }
 </style>
@@ -158,6 +171,11 @@ td.num { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; font-
       <p>En cada módulo, el reed y el LED van en la columna del frente y sus cables llegan a la bahía por un túnel bajo el fondo de la cámara. La tapa se queda abierta a unos 100° sin tocar el pulsador.</p>
     </div>
     <div class="bloque ancho">
+      <h2>Medidas para comparar con la realidad</h2>
+      <p>Cada fila dice qué dibuja el modelo, qué hueco le da la caja y qué conviene medir en la pieza real. Las marcadas con <span class="sup">supuesta</span> son medidas típicas que todavía no están confirmadas con la tuya.</p>
+      <div class="tabla"><table class="comparar" id="tabla-medidas"><thead><tr><th>Pieza o componente</th><th>Medidas del modelo</th><th>Hueco en la caja</th><th>Compáralo con el real</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="bloque ancho">
       <h2>Qué se imprime</h2>
       <div class="tabla">
         <table>
@@ -183,6 +201,7 @@ td.num { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; font-
 } }
 </script>
 <script type="application/json" id="modelos">/*MODELOS*/</script>
+<script type="application/json" id="componentes">/*COMPONENTES*/</script>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -235,6 +254,9 @@ const ZONAS = [
   { l: 'G', nombre: 'Rejilla del buzzer', donde: 'En la tapa de la base, encima del buzzer.', medida: '7 ranuras', en: 'esp_tapa', u: 0, p: [30, 22, 32] },
   { l: 'H', nombre: 'Agujeros EN y BOOT', donde: 'Para pulsarlos con un clip al reprogramar el ESP32.', medida: 'Ø 3,4 mm', en: 'esp_tapa', u: 0, p: [27, 88, 32] },
 ];
+
+const MEDIDAS = JSON.parse(document.getElementById('componentes').textContent);
+for (const it of ITEMS) Object.assign(it, MEDIDAS[it.id] || {});
 
 const GRUPOS = [['base', 'Base del ESP32'], ['modulo', 'Cada módulo'], ['union', 'Entre unidades']];
 
@@ -449,6 +471,36 @@ for (const [g, titulo] of GRUPOS) {
   leyenda.append(sec);
 }
 
+// ---------- Tabla de medidas ----------
+{
+  const cuerpo = document.querySelector('#tabla-medidas tbody');
+  for (const [g, titulo] of GRUPOS) {
+    const tr = document.createElement('tr');
+    tr.className = 'grupo';
+    tr.innerHTML = '<td colspan="4"></td>';
+    tr.firstChild.textContent = titulo;
+    cuerpo.append(tr);
+    for (const it of ITEMS.filter((x) => x.g === g)) {
+      const fila = document.createElement('tr');
+      for (let i = 0; i < 4; i++) fila.append(document.createElement('td'));
+      const [a, b, c, d] = fila.children;
+      a.textContent = `${it.n} · ${it.nombre}`;
+      if (it.supuesta) { a.append(' '); const sp = document.createElement('span'); sp.className = 'sup'; sp.textContent = 'supuesta'; a.append(sp); }
+      for (const [td, filas] of [[b, it.modelo], [c, it.hueco]]) {
+        td.className = 'num';
+        for (const [k, v] of filas || []) {
+          const d1 = document.createElement('div');
+          const sk = document.createElement('span'); sk.style.color = 'var(--muted)'; sk.textContent = k + ': ';
+          d1.append(sk, v);
+          td.append(d1);
+        }
+      }
+      d.textContent = it.comprobar || '';
+      cuerpo.append(fila);
+    }
+  }
+}
+
 // ---------- Selección ----------
 const detalle = document.getElementById('detalle');
 function info(id) {
@@ -464,10 +516,37 @@ function actualizarSeleccion() {
   document.querySelectorAll('.item').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === id)));
   if (it) {
     detalle.hidden = false;
-    detalle.innerHTML = '<strong></strong><span class="donde"></span><span class="medida"></span>';
+    detalle.innerHTML = '<strong></strong><span class="donde"></span><span class="medida"></span><div class="filas"></div>';
     detalle.querySelector('strong').textContent = (it.n ?? it.l) + ' · ' + it.nombre;
     detalle.querySelector('.donde').textContent = it.donde;
     detalle.querySelector('.medida').textContent = it.medida;
+    const filas = detalle.querySelector('.filas');
+    const grupo = (titulo, lista) => {
+      if (!lista || !lista.length) return;
+      const h = document.createElement('h4');
+      h.textContent = titulo;
+      const dl = document.createElement('dl');
+      for (const [k, v] of lista) {
+        const dt = document.createElement('dt'); dt.textContent = k;
+        const dd = document.createElement('dd'); dd.textContent = v;
+        dl.append(dt, dd);
+      }
+      filas.append(h, dl);
+    };
+    grupo('Medidas del modelo', it.modelo);
+    grupo('Hueco en la caja', it.hueco);
+    if (it.comprobar) {
+      const c = document.createElement('div');
+      c.className = 'comprobar';
+      c.textContent = 'Compáralo con el real: ' + it.comprobar;
+      filas.append(c);
+    }
+    if (it.supuesta) {
+      const sp = document.createElement('div');
+      sp.className = 'supuesta';
+      sp.textContent = 'Medida supuesta: confírmala con tu pieza.';
+      filas.append(sp);
+    }
   } else {
     detalle.hidden = true;
   }

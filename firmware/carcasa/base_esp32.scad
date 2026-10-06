@@ -21,7 +21,7 @@ ESP_A = 28.5;           // ESP32 DevKit de 30 pines
 ESP_L = 51.5;
 ZOCALO = 8.5;           // tiras de zócalo hembra entre la placa perforada y el ESP32
 USB_A = 13;             // abertura del USB
-USB_H = 8;
+USB_H = 10;
 BOTONES_X = 10.5;       // pulsadores EN y BOOT, a cada lado del USB
 BOTONES_Y = 4;          // distancia al borde del USB
 BOTONES_D = 3.4;
@@ -100,7 +100,7 @@ module esp_perforada() {
     translate([b_perf_x, b_perf_y, PISO + PERF_ALTO]) cube([PERF_A, PERF_L, 1.6]);
 }
 module esp_zocalos() {
-    for (s = [-1, 1]) translate([b_esp_cx + s * 12.7 - 1.25, b_esp_y + 2, PISO + PERF_ALTO + 1.6]) cube([2.5, ESP_L - 6, ZOCALO]);
+    for (s = [-1, 1]) translate([b_esp_cx + s * 12.7 - 1.25, b_esp_y + (ESP_L - 15 * 2.54) / 2, PISO + PERF_ALTO + 1.6]) cube([2.5, 15 * 2.54, ZOCALO]);
 }
 module esp_esp32() {
     translate([b_esp_x, b_esp_y, b_esp_z]) {
