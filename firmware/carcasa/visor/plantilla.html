@@ -46,8 +46,8 @@ h3 { font-family: var(--display); font-weight: 600; font-size: 13px; text-transf
 .visor { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
 .escena { position: relative; background: var(--stage); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; height: clamp(380px, 66vh, 660px); }
 .escena canvas { display: block; width: 100%; height: 100%; touch-action: none; }
-.capa { position: absolute; inset: 0; pointer-events: none; }
-.barra { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; pointer-events: none; }
+.capa { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.barra { position: absolute; z-index: 2; top: 12px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; pointer-events: none; }
 .barra > * { pointer-events: auto; }
 .segmentos, .interruptores { display: flex; flex-wrap: wrap; gap: 2px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 3px; }
 .barra button { font: 600 13px/1 var(--body); color: var(--muted); background: transparent; border: 0; border-radius: 6px; padding: 7px 10px; cursor: pointer; }
@@ -55,8 +55,14 @@ h3 { font-family: var(--display); font-weight: 600; font-size: 13px; text-transf
 .barra button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
 .barra button:focus-visible, .item:focus-visible, .marca:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .pista { position: absolute; left: 12px; bottom: 10px; font-size: 12px; color: var(--muted); pointer-events: none; }
-.detalle { position: absolute; right: 12px; bottom: 12px; max-width: min(360px, calc(100% - 24px)); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 2px; font-size: 13.5px; }
+.detalle { position: absolute; z-index: 2; right: 12px; bottom: 12px; max-width: min(360px, calc(100% - 24px)); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 2px; font-size: 13.5px; }
 .detalle strong { font-family: var(--display); font-size: 18px; font-weight: 600; }
+.detalle .cabecera { display: flex; align-items: start; gap: 8px; justify-content: space-between; }
+.detalle .plegar { flex: none; width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); font: 600 16px/1 var(--body); cursor: pointer; display: grid; place-items: center; }
+.detalle .plegar:hover { border-color: var(--accent); color: var(--accent); }
+.detalle .plegar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.detalle.minimizado .cuerpo { display: none; }
+.detalle .cuerpo { display: grid; gap: 2px; }
 .detalle .medida { font-family: var(--mono); font-size: 12px; color: var(--accent); }
 .detalle { max-height: calc(100% - 70px); overflow: auto; }
 .detalle dl { margin: 6px 0 0; display: grid; grid-template-columns: minmax(0, 9em) minmax(0, 1fr); gap: 3px 10px; font-size: 12.5px; }
@@ -244,7 +250,7 @@ const ITEMS = [
   { id: 'mod_tornillos', g: 'modulo', c: '#d4a72c', n: 20, nombre: 'Tornillos de la cubierta', donde: 'Roscados en los insertos de latón de los 4 pilares de la bahía.', medida: '4 × M3 × 8 avellanados', u: [1, 2], e: [0, 0, 2.8], p: [55.5, 95.5, 32] },
 
   { id: 'mod_insertos', g: 'modulo', c: '#b08d3c', n: 31, nombre: 'Insertos de latón', donde: 'Uno en cada pilar de la bahía, metidos con el soldador. Los tornillos de la cubierta roscan en ellos.', medida: '4 × M3 × 5,7 mm', u: [1, 2], e: [0, 0, 1.9], p: [4, 63, 29], dentro: true },
-  { id: 'mod_tapita', g: 'modulo', impresa: true, n: 25, nombre: 'Tapita del sensor', donde: 'Cubre el reed y los cables del canal. Queda a ras y la tapa cerrada la mantiene en su sitio; con la tapa abierta se saca con la uña.', medida: '29,5 × 7,2 × 1,2 mm', u: [1, 2], e: [0, 0, 2.6], p: [20, 6, 34] },
+  { id: 'mod_tapita', g: 'modulo', impresa: true, n: 25, nombre: 'Tapita del sensor', donde: 'Cubre el canal entero: el reed, sus cables y el pozo. Queda a ras y la tapa cerrada la mantiene en su sitio; con la tapa abierta se saca con la uña.', medida: '32,9 × 7,2 × 1,2 mm', u: [1, 2], e: [0, 0, 2.6], p: [20, 6, 34] },
   { id: 'mod_cable', g: 'modulo', c: '#333333', n: 26, nombre: 'Cable del reed y del LED', donde: 'Un mazo de 4 hilos que sigue un solo camino recto: el carril del canal abierto, el pozo y el canal recto hasta la bahía.', medida: 'Mazo Ø 3 mm', u: [1, 2], e: [0, 0, 1.2], p: [30, 30, 5], dentro: true },
   { id: 'con_macho', g: 'union', c: '#c0c6cc', n: 21, nombre: 'Conector magnético macho', donde: 'En la cara izquierda de cada módulo, a ras. Sus pines con resorte tocan la hembra de la unidad de la izquierda y llevan el bus: 3,3 V, GND, SDA y SCL.', medida: '4 pines, paso 2,5 mm', u: [1, 2], e: [0, 0, 0], p: [-0.6, 72, 18], dentro: true },
   { id: 'con_hembra', g: 'union', c: '#c0c6cc', n: 22, nombre: 'Conector magnético hembra', donde: 'En la cara derecha de la base y de cada módulo, hundido 0,3 mm para que los pines del vecino se compriman.', medida: '4 contactos planos', u: [0, 1, 2], e: [0, 0, 0], p: [60.6, 72, 18], dentro: true },
@@ -255,7 +261,7 @@ const ITEMS = [
 // Partes de la caja: en qué pieza están y en qué unidad se señalan
 const ZONAS = [
   { l: 'A', nombre: 'Cámara de pastillas', donde: 'Pastillas sueltas. Tiene doble fondo: por debajo pasa el canal recto de los cables.', medida: '55 × 36 × 21 mm · ≈ 41 cm³', en: 'mod_base', u: 1, p: [40, 26, 8] },
-  { l: 'B', nombre: 'Borde del sensor', donde: 'Ocupa todo el ancho, al frente. Arriba lleva el canal abierto del reed, tapado por la tapita; en la pared, el LED.', medida: '60 × 12 mm', en: 'mod_base', u: 1, p: [46, 7, 28] },
+  { l: 'B', nombre: 'Borde del sensor', donde: 'Ocupa todo el ancho, al frente. Arriba lleva el canal del reed, solo del reed al pozo y tapado entero por la tapita; en la pared, el LED.', medida: '60 × 12 mm', en: 'mod_base', u: 1, p: [46, 7, 28] },
   { l: 'C', nombre: 'Canal recto de cables', donde: 'Un solo canal, grande y recto, bajo el fondo de la cámara: del pozo a la bahía.', medida: '12 × 3,5 mm, unos 57 mm', en: 'mod_base', u: 1, p: [30, 36, 4.1], dentro: true },
   { l: 'D', nombre: 'Bisagra', donde: 'Sobre el bloque divisor. Los nudillos quedan a ras de la tapa.', medida: 'Eje Ø 2,1 mm', en: 'mod_base', u: 1, p: [4, 55.4, 32] },
   { l: 'E', nombre: 'Guía de la unión', donde: 'Saliente vertical en la cara izquierda y canal en la derecha. Alinea las unidades al juntarlas.', medida: 'De 4 a 2,4 mm, sale 1,5 mm', en: 'mod_base', u: 2, p: [60.4, 55.4, 22] },
@@ -513,6 +519,7 @@ for (const [g, titulo] of GRUPOS) {
 
 // ---------- Selección ----------
 const detalle = document.getElementById('detalle');
+let detalleMinimizado = false;
 function info(id) {
   return ITEMS.find((x) => x.id === id) || ZONAS.find((x) => x.l === id);
 }
@@ -526,7 +533,17 @@ function actualizarSeleccion() {
   document.querySelectorAll('.item').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === id)));
   if (it) {
     detalle.hidden = false;
-    detalle.innerHTML = '<strong></strong><span class="donde"></span><span class="medida"></span><div class="filas"></div>';
+    detalle.innerHTML = '<div class="cabecera"><strong></strong><button type="button" class="plegar"></button></div><div class="cuerpo"><span class="donde"></span><span class="medida"></span><div class="filas"></div></div>';
+    const plegar = detalle.querySelector('.plegar');
+    const pintarPlegado = () => {
+      detalle.classList.toggle('minimizado', detalleMinimizado);
+      plegar.textContent = detalleMinimizado ? '+' : '−';
+      plegar.setAttribute('aria-expanded', String(!detalleMinimizado));
+      plegar.setAttribute('aria-label', detalleMinimizado ? 'Mostrar la información' : 'Minimizar la información');
+      plegar.title = detalleMinimizado ? 'Mostrar' : 'Minimizar';
+    };
+    plegar.addEventListener('click', (ev) => { ev.stopPropagation(); detalleMinimizado = !detalleMinimizado; pintarPlegado(); });
+    pintarPlegado();
     detalle.querySelector('strong').textContent = (it.n ?? it.l) + ' · ' + it.nombre;
     detalle.querySelector('.donde').textContent = it.donde;
     detalle.querySelector('.medida').textContent = it.medida;

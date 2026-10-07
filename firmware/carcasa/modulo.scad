@@ -2,8 +2,8 @@
 //
 //   Frente (y = 0) ........ LED del módulo, a la vista con la tapa cerrada.
 //   Cámara ................ pastillas sueltas, con doble fondo: por debajo pasa el canal de los cables.
-//   Borde del sensor ...... a todo el ancho, al frente: arriba, un canal abierto con el reed (debajo del imán de
-//                           la tapa) y una tapita que lo cubre; en la pared, el LED. Un pozo lleva los cables
+//   Borde del sensor ...... a todo el ancho, al frente: arriba, un canal abierto, solo del largo necesario, con el
+//                           reed (debajo del imán de la tapa) y una tapita que lo cubre entero; en la pared, el LED. Un pozo lleva los cables
 //                           del canal al fondo, y de ahí un único canal recto, grande, los lleva a la bahía.
 //   Bloque divisor ........ bisagra de la tapa y guía de la unión con las unidades vecinas.
 //   Caras laterales ....... unión magnética: conector del bus, imanes y guía (ver comun.scad).
@@ -27,10 +27,10 @@ TUNEL_H = 3.5;
 RAIL = 12;              // fondo del borde, desde el frente
 CANAL_Y0 = 4.4;         // el canal abierto empieza aquí...
 CANAL_A = 4.8;          // ...mide esto de ancho (en y)...
-CANAL_H = 4.8;          // ...y esto de profundo desde lo alto, a todo el ancho del módulo
+CANAL_H = 4.8;          // ...y esto de profundo; a lo largo va del reed al pozo y nada más
 POZO_A = 8;             // pozo por donde los cables bajan al canal recto (centrado)
 POZO_Y0 = 5.6;
-REED_X = 14;            // posición del reed y del imán a lo ancho del canal
+REED_X = 14;            // posición del reed y del imán; el canal y la tapita se ajustan solos
 REED_L = 14;            // cuerpo de vidrio del reed
 REED_D = 3;
 TAPITA_E = 1.2;         // grosor de la tapita; queda a ras y la tapa cerrada la sujeta
@@ -56,8 +56,10 @@ m_bahia = m_div0 + DIV;                 // empieza la bahía
 m_eje_y = m_div0 + DIV / 2;
 m_eje_z = ALTO + TAPA - BIS_R;          // los nudillos quedan a ras de la tapa
 m_reed_y = CANAL_Y0 + REED_D / 2 + 0.2;   // el reed va junto al frente del canal; detrás queda un carril para los cables
-m_tap_x0 = REED_X - REED_L / 2 - 1;
-m_tap_x1 = m_cx + POZO_A / 2 + 1.5;
+m_canal_x0 = REED_X - REED_L / 2 - 3;    // deja sitio para doblar la pata del reed
+m_canal_x1 = m_cx + POZO_A / 2 + 0.5;    // termina justo pasado el pozo
+m_tap_x0 = m_canal_x0 - TAPITA_H;
+m_tap_x1 = m_canal_x1 + TAPITA_H;
 m_tap_y0 = CANAL_Y0 - TAPITA_H;
 m_tap_y1 = CANAL_Y0 + CANAL_A + TAPITA_H;
 m_pcf_x = m_cx - PCF_L / 2;
@@ -95,8 +97,8 @@ module mod_base() {
         translate([-1, m_eje_y, m_eje_z]) rotate([0, 90, 0]) cylinder(d = PASADOR, h = ANCHO - 1.5 + 1);
         // rebaje para el nudillo de la tapa
         translate([BIS_K, m_eje_y - BIS_R - 1.5, m_eje_z - BIS_R - 0.5]) cube([ANCHO - 2 * BIS_K, 2 * BIS_R + 2, 10]);
-        // canal abierto a todo el ancho del borde: el reed va dentro y los cables corren por él
-        translate([PARED, CANAL_Y0, ALTO - CANAL_H]) cube([ANCHO - 2 * PARED, CANAL_A, CANAL_H + 1]);
+        // canal abierto, del reed al pozo: el reed va dentro y sus cables corren por él; la tapita lo cubre entero
+        translate([m_canal_x0, CANAL_Y0, ALTO - CANAL_H]) cube([m_canal_x1 - m_canal_x0, CANAL_A, CANAL_H + 1]);
         // rebaje en el que apoya la tapita, a ras con lo alto del borde
         translate([m_tap_x0 - JUEGO / 2, m_tap_y0 - JUEGO / 2, ALTO - TAPITA_E]) cube([m_tap_x1 - m_tap_x0 + JUEGO, m_tap_y1 - m_tap_y0 + JUEGO, TAPITA_E + 1]);
         // pozo: los cables bajan del canal al fondo
@@ -149,7 +151,8 @@ module mod_cubierta() {
     }
 }
 
-// Tapita que cubre el reed y los cables del canal. Queda a ras y la tapa cerrada la mantiene en su sitio.
+// Tapita que cubre el canal entero (reed, cables y pozo). Apoya 1,2 mm por los cuatro lados, queda a ras y la tapa
+// cerrada la mantiene en su sitio.
 module mod_tapita() {
     translate([m_tap_x0, m_tap_y0, ALTO - TAPITA_E]) cube([m_tap_x1 - m_tap_x0, m_tap_y1 - m_tap_y0, TAPITA_E]);
 }
