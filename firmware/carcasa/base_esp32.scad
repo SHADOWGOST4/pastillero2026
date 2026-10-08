@@ -87,8 +87,8 @@ module esp_caja() {
             }
             // soporte del LED de estado, detrás del frente
             hull() {
-                translate([b_cx, PARED - 0.01, LED_Z]) rotate([-90, 0, 0]) cylinder(d = LED_D + 2.4, h = 6.5);
-                translate([b_cx - (LED_D + 2.4) / 2, PARED - 0.01, PISO - 0.01]) cube([LED_D + 2.4, 6.5, 0.1]);
+                translate([b_cx, PARED - 0.01, LED_Z]) rotate([-90, 0, 0]) cylinder(d = LED_AGUJERO + 2.4, h = 6.5);
+                translate([b_cx - (LED_AGUJERO + 2.4) / 2, PARED - 0.01, PISO - 0.01]) cube([LED_AGUJERO + 2.4, 6.5, 0.1]);
             }
             refuerzos_union(true);
             refuerzo_guia();
@@ -96,7 +96,7 @@ module esp_caja() {
         agujeros_pilares(b_pilares);
         huecos_union(true);
         // LED de estado
-        translate([b_cx, -1, LED_Z]) rotate([-90, 0, 0]) cylinder(d = LED_D, h = PARED + 7.5);
+        agujero_led(b_cx, PARED + 7);
         // paso de las patas del LED hacia atrás
         translate([b_cx - 1.5, PARED + 4, PISO + 2]) cube([3, 6, LED_Z - PISO]);
         // USB
@@ -149,12 +149,7 @@ module esp_buzzer() {
         translate([b_cx + s * 3.25, BUZ_Y, PISO + 1]) rotate([-90, 0, 0]) cylinder(d = 0.6, h = 9, $fn = 8);
     }
 }
-module esp_led() {
-    translate([b_cx, 0, LED_Z]) rotate([-90, 0, 0]) {
-        translate([0, 0, -1]) cylinder(d = 5.8, h = 1);
-        cylinder(d = 5, h = PARED + 6);
-    }
-}
+module esp_led() { led_5mm(b_cx, PARED + 6.5); }
 module esp_conector() {
     // conector JST-XH de 4 pines (cables al conector magnético) y transistor del buzzer, en la franja derecha
     translate([b_esp_x + ESP_A + 1.5, CON_Y - 6.2, PISO + PERF_ALTO + 1.6]) cube([5.8, 12.4, 7]);

@@ -35,9 +35,12 @@ PULS_ARRIBA = 8;        // bisel y cúpula por encima de la tapa
 PULS_ROSCA = 10;        // rosca, desde la cara de abajo del bisel
 PULS_PATAS = 4;         // terminales por debajo de la rosca
 
-// LED en el frente de cada unidad, siempre a la misma altura
+// LED de 5 mm en el frente de cada unidad, siempre a la misma altura. Entra desde el frente, con las patas primero,
+// por un agujero por el que pasa la pestaña; a LED_TOPE de profundidad un escalón la detiene y la cúpula asoma 3,5 mm.
 LED_Z = 14;
-LED_D = 5.2;
+LED_AGUJERO = 6;        // pasa la pestaña de Ø 5,8
+LED_TOPE = 5.1;         // profundidad del escalón (8,6 de LED - 3,5 que asoman)
+LED_PASO = 4;           // paso de las patas detrás del escalón
 
 // ---------- Unión entre unidades ----------
 // Conector magnético de 4 pines (paso 2,5 mm), macho y hembra. Medidas típicas: compruébalas con el tuyo.
@@ -88,6 +91,25 @@ module agujeros_pilares(lista) {
     for (p = lista) translate([p[0], p[1], 0]) {
         translate([0, 0, ALTO - TUERCA_H]) cylinder(d = TUERCA_E / cos(30), h = TUERCA_H + 1, $fn = 6);
         translate([0, 0, ALTO + TAPA - TORNILLO_L - 2]) cylinder(d = 3.4, h = TORNILLO_L);
+    }
+}
+
+// Agujero del LED en el frente; el paso de las patas llega hasta la profundidad indicada
+module agujero_led(x, fondo) {
+    translate([x, -1, LED_Z]) rotate([-90, 0, 0]) cylinder(d = LED_AGUJERO, h = LED_TOPE + 1);
+    translate([x, LED_TOPE - 0.01, LED_Z]) rotate([-90, 0, 0]) cylinder(d = LED_PASO, h = fondo - LED_TOPE + 0.01);
+}
+
+// Componentes (solo para ver el montaje): LED de 5 mm con cúpula, pestaña con el lado plano (cátodo) y patas
+module led_5mm(x, patas) {
+    translate([x, 0, LED_Z]) rotate([-90, 0, 0]) {
+        translate([0, 0, LED_TOPE - 8.6 + 2.5]) sphere(d = 5, $fn = 32);                       // cúpula
+        translate([0, 0, LED_TOPE - 8.6 + 2.5]) cylinder(d = 5, h = 8.6 - 2.5 - 1, $fn = 32);   // cuerpo
+        translate([0, 0, LED_TOPE - 1]) difference() {                                         // pestaña
+            cylinder(d = 5.8, h = 1, $fn = 32);
+            translate([2.6, -3, -1]) cube([2, 6, 3]);
+        }
+        for (s = [-1, 1]) translate([s * 1.27, 0, LED_TOPE]) cylinder(d = 0.5, h = patas - LED_TOPE, $fn = 8);
     }
 }
 

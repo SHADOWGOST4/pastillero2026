@@ -199,24 +199,36 @@
   "modelo": [
    [
     "LED",
-    "Ø 5 mm, con bisel de Ø 5,8 × 1 mm"
+    "Ø 5 mm, 8,6 mm de largo con la cúpula, pestaña de Ø 5,8 × 1 mm con un lado plano (cátodo)"
    ],
    [
-    "Altura",
-    "a 14 mm del fondo, centrado en el frente"
+    "Patas",
+    "la larga es el ánodo (+), la corta el cátodo (−)"
+   ],
+   [
+    "Asoma",
+    "3,5 mm por el frente, a 14 mm del fondo y centrado"
+   ],
+   [
+    "Color",
+    "verde"
    ]
   ],
   "hueco": [
    [
     "Agujero",
-    "Ø 5,2 mm, 8,9 mm de profundidad desde el frente"
+    "Ø 6 mm desde el frente: pasa la pestaña"
    ],
    [
-    "Paso de las patas",
-    "ranura de 3 mm hacia el fondo"
+    "Escalón",
+    "a 5,1 mm de profundidad, Ø 4 mm: detiene la pestaña y deja pasar las patas"
+   ],
+   [
+    "Patas",
+    "salen por detrás del soporte, hacia la placa perforada"
    ]
   ],
-  "comprobar": "Un LED de 5 mm mide Ø 5,0 mm (el bisel, 5,8 mm). Si el tuyo es difuso o más ancho, sube LED_D."
+  "comprobar": "Si es un verde brillante (unos 3 V), con 220 Ω casi no se verá: pruébalo antes y, si se ve tenue, usa 68–100 Ω."
  },
  "esp_conector": {
   "modelo": [
@@ -467,24 +479,36 @@
   "modelo": [
    [
     "LED",
-    "Ø 5 mm, 8,6 mm de largo, con bisel de Ø 5,8 × 1 mm"
+    "Ø 5 mm, 8,6 mm de largo con la cúpula, pestaña de Ø 5,8 × 1 mm con un lado plano (cátodo)"
    ],
    [
-    "Altura",
-    "a 14 mm del fondo, centrado en el frente"
+    "Patas",
+    "la larga es el ánodo (+), la corta el cátodo (−)"
+   ],
+   [
+    "Asoma",
+    "3,5 mm por el frente, a 14 mm del fondo y centrado"
+   ],
+   [
+    "Color",
+    "rojo"
    ]
   ],
   "hueco": [
    [
     "Agujero",
-    "Ø 5,2 mm, 5,6 mm de profundidad desde el frente"
+    "Ø 6 mm desde el frente: pasa la pestaña"
+   ],
+   [
+    "Escalón",
+    "a 5,1 mm de profundidad, Ø 4 mm: detiene la pestaña y deja pasar las patas"
    ],
    [
     "Patas",
-    "quedan en el pozo, junto a los cables del reed"
+    "salen al pozo y bajan con los cables del reed"
    ]
   ],
-  "comprobar": "Un LED de 5 mm mide Ø 5,0 mm (el bisel, 5,8 mm)."
+  "comprobar": "Mételo desde fuera con las patas primero hasta que la pestaña haga tope, y fíjalo con una gota de pegamento por dentro. Con 220 Ω a 3,3 V se ve bien."
  },
  "mod_pcf": {
   "modelo": [

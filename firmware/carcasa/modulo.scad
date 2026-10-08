@@ -104,8 +104,8 @@ module mod_base() {
         translate([m_tap_x0 - JUEGO / 2, m_tap_y0 - JUEGO / 2, ALTO - TAPITA_E]) cube([m_tap_x1 - m_tap_x0 + JUEGO, m_tap_y1 - m_tap_y0 + JUEGO, TAPITA_E + 1]);
         // pozo: los cables bajan del canal al fondo
         translate([m_cx - POZO_A / 2, POZO_Y0, PISO]) cube([POZO_A, CANAL_Y0 + CANAL_A - POZO_Y0, ALTO - PISO - CANAL_H + 1]);
-        // LED: entra por el frente y sus patas quedan en el pozo
-        translate([m_cx, -1, LED_Z]) rotate([-90, 0, 0]) cylinder(d = LED_D, h = POZO_Y0 + 1);
+        // LED: entra por el frente hasta el escalón; sus patas salen al pozo
+        agujero_led(m_cx, POZO_Y0 + 0.5);
         // canal recto y grande, del pozo a la bahía
         translate([m_cx - TUNEL_A / 2, POZO_Y0, PISO]) cube([TUNEL_A, m_bahia + 1 - POZO_Y0, TUNEL_H]);
     }
@@ -187,12 +187,7 @@ module mod_cable() {
 module mod_iman() {
     translate([REED_X, m_reed_y, ALTO]) cylinder(d = IMAN_D, h = IMAN_H);
 }
-module mod_led() {
-    translate([m_cx, 0, LED_Z]) rotate([-90, 0, 0]) {
-        translate([0, 0, -1]) cylinder(d = 5.8, h = 1);
-        cylinder(d = 5, h = 8.6);
-    }
-}
+module mod_led() { led_5mm(m_cx, POZO_Y0 + 1.4); }
 module mod_pulsador() { pulsador_panel(m_cx, m_boton_y); }
 module mod_tornillos() { tornillos(m_pilares); }
 module mod_tuercas() { tuercas(m_pilares); }
