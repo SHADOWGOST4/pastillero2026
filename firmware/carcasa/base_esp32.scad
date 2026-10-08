@@ -122,8 +122,7 @@ module esp_tapa() {
             for (i = [0, 1]) translate([b_botones[i][0], b_botones[i][1] - 5, 0])
                 text(ETIQUETAS_BOTONES[i], size = 3.2, halign = "center", valign = "top", font = "Liberation Sans:style=Bold");
             translate([b_esp_cx, FONDO - 7, 0]) text("USB", size = 3.2, halign = "center", valign = "center", font = "Liberation Sans:style=Bold");
-            translate([BV_X, BV_Y + PULS_BISEL / 2 + 12.5, 0]) text("VINCULAR", size = 2.8, halign = "center", valign = "center", font = "Liberation Sans:style=Bold");
-            translate([BV_X, BV_Y + PULS_BISEL / 2 + 9, 0]) text("MANTÉN 5 s", size = 2.8, halign = "center", valign = "center", font = "Liberation Sans:style=Bold");
+            translate([BV_X, BV_Y + PULS_BISEL / 2 + 10, 0]) text("VINCULAR", size = 2.8, halign = "center", valign = "center", font = "Liberation Sans:style=Bold");
         }
     }
 }
