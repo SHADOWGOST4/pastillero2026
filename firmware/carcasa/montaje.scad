@@ -30,7 +30,7 @@ module componentes_base() {
     color("#c8a47e") esp_resistencias();
     color("#333333") esp_cables();
     color("#d4a72c") esp_tornillos();
-    color("#b08d3c") esp_insertos();
+    color("#9aa3ad") esp_tuercas();
     color("#444") esp_usb();
     color("#c0c6cc") con_hembra();
     color("#8a939c") imanes_union(true);
@@ -43,7 +43,7 @@ module componentes_modulo(a = 0) {
     color("#333333") mod_cable();
     color("#f2c200") mod_pulsador();
     color("#d4a72c") mod_tornillos();
-    color("#b08d3c") mod_insertos();
+    color("#9aa3ad") mod_tuercas();
     color("#e8e8e8") mod_pasador();
     mod_abrir(a) color("#cfd4da") mod_iman();
     color("#c0c6cc") { con_macho(); con_hembra(); }
@@ -88,7 +88,7 @@ if (objeto != "") {
     if (objeto == "esp_led") esp_led();
     if (objeto == "esp_conector") esp_conector();
     if (objeto == "esp_tornillos") esp_tornillos();
-    if (objeto == "esp_insertos") esp_insertos();
+    if (objeto == "esp_tuercas") esp_tuercas();
     if (objeto == "esp_usb") esp_usb();
     if (objeto == "esp_boton_v") esp_boton_v();
     if (objeto == "esp_resistencias") esp_resistencias();
@@ -99,7 +99,7 @@ if (objeto != "") {
     if (objeto == "mod_led") mod_led();
     if (objeto == "mod_pulsador") mod_pulsador();
     if (objeto == "mod_tornillos") mod_tornillos();
-    if (objeto == "mod_insertos") mod_insertos();
+    if (objeto == "mod_tuercas") mod_tuercas();
     if (objeto == "mod_pasador") mod_pasador();
     if (objeto == "con_macho") { con_macho(); pines_macho(); }
     if (objeto == "con_hembra") con_hembra();

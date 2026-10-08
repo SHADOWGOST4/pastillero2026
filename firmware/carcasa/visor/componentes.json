@@ -19,7 +19,7 @@
    ],
    [
     "Pilares de las esquinas",
-    "Ø 8 mm unidos a las dos paredes, con alojamiento para inserto M3"
+    "Ø 8,6 mm unidos a las dos paredes, con hueco hexagonal para una tuerca M3"
    ]
   ],
   "hueco": [
@@ -270,7 +270,7 @@
   "modelo": [
    [
     "Tornillo",
-    "M3 × 8 mm de cabeza avellanada (DIN 7991), cabeza Ø 6,5 mm"
+    "M3 × 10 mm de cabeza avellanada (DIN 7991), cabeza Ø 6,5 mm"
    ],
    [
     "Posiciones",
@@ -284,10 +284,10 @@
    ],
    [
     "Reparto de la longitud",
-    "4 mm en la tapa y 4 mm en el inserto"
+    "4 mm en la tapa, 2,4 en la tuerca y 3,6 de punta en el agujero del pilar"
    ]
   ],
-  "comprobar": "Con un M3 × 10 también sirve: el agujero sigue 3 mm por debajo del inserto."
+  "comprobar": "Si usas M3 × 8, también vale: la rosca atraviesa la tuerca entera."
  },
  "mod_base": {
   "modelo": [
@@ -565,7 +565,7 @@
   "modelo": [
    [
     "Tornillo",
-    "M3 × 8 mm de cabeza avellanada (DIN 7991), cabeza Ø 6,5 mm"
+    "M3 × 10 mm de cabeza avellanada (DIN 7991), cabeza Ø 6,5 mm"
    ],
    [
     "Posiciones",
@@ -579,10 +579,10 @@
    ],
    [
     "Reparto de la longitud",
-    "4 mm en la tapa y 4 mm en el inserto"
+    "4 mm en la tapa, 2,4 en la tuerca y 3,6 de punta en el agujero del pilar"
    ]
   ],
-  "comprobar": "Con un M3 × 10 también sirve: el agujero sigue 3 mm por debajo del inserto."
+  "comprobar": "Si usas M3 × 8, también vale: la rosca atraviesa la tuerca entera."
  },
  "con_macho": {
   "modelo": [
@@ -822,68 +822,58 @@
   ],
   "comprobar": "Deja unos 60 mm de cable en el botón para poder abrir la tapa sin desoldar."
  },
- "esp_insertos": {
+ "esp_tuercas": {
   "modelo": [
    [
-    "Inserto",
-    "de latón termofijado M3, Ø 4,2 × 5,7 mm (medida típica)"
+    "Tuerca",
+    "M3 hexagonal normal (DIN 934): 5,5 mm entre caras y 2,4 mm de grosor"
    ]
   ],
   "hueco": [
    [
     "Pilar",
-    "Ø 8 mm unido a las dos paredes, sin huecos en la esquina"
+    "Ø 8,6 mm unido a las dos paredes, sin huecos en la esquina"
    ],
    [
-    "Agujero",
-    "Ø 4,2 mm, 6,5 mm de profundidad (5,7 del inserto + 0,8 para el plástico que desplaza)"
-   ],
-   [
-    "Chaflán de entrada",
-    "de Ø 5,4 a Ø 4,2, 0,6 mm"
+    "Hueco hexagonal",
+    "5,6 mm entre caras y 2,5 mm de fondo, en lo alto del pilar: la tuerca entra a presión y queda a ras"
    ],
    [
     "Debajo",
-    "agujero de Ø 3,2 × 3 mm para un tornillo más largo"
+    "agujero de Ø 3,4 mm para la punta del tornillo"
    ],
    [
     "Pared alrededor",
-    "1,9 mm hasta el exterior del pilar y 3,4 mm hasta la cara exterior de la caja"
+    "1,1 mm hacia el interior y 2,4 mm hacia la cara exterior de la caja"
    ]
   ],
-  "comprobar": "Usa el agujero que recomienda el vendedor para tu inserto (suele ser 4,0 a 4,2 mm para M3) y ajusta INSERTO_D e INSERTO_L. Se mete con el soldador a unos 220 °C, recto y sin apretar.",
-  "supuesta": true
+  "comprobar": "Mete la tuerca con una gota de epoxi (tipo Pegadit o Araldite), sin manchar la rosca, y deja secar antes de atornillar. No aprietes de más: el tornillo tira de la tuerca hacia la tapa."
  },
- "mod_insertos": {
+ "mod_tuercas": {
   "modelo": [
    [
-    "Inserto",
-    "de latón termofijado M3, Ø 4,2 × 5,7 mm (medida típica)"
+    "Tuerca",
+    "M3 hexagonal normal (DIN 934): 5,5 mm entre caras y 2,4 mm de grosor"
    ]
   ],
   "hueco": [
    [
     "Pilar",
-    "Ø 8 mm unido a las dos paredes, sin huecos en la esquina"
+    "Ø 8,6 mm unido a las dos paredes, sin huecos en la esquina"
    ],
    [
-    "Agujero",
-    "Ø 4,2 mm, 6,5 mm de profundidad (5,7 del inserto + 0,8 para el plástico que desplaza)"
-   ],
-   [
-    "Chaflán de entrada",
-    "de Ø 5,4 a Ø 4,2, 0,6 mm"
+    "Hueco hexagonal",
+    "5,6 mm entre caras y 2,5 mm de fondo, en lo alto del pilar: la tuerca entra a presión y queda a ras"
    ],
    [
     "Debajo",
-    "agujero de Ø 3,2 × 3 mm para un tornillo más largo"
+    "agujero de Ø 3,4 mm para la punta del tornillo"
    ],
    [
     "Pared alrededor",
-    "1,9 mm hasta el exterior del pilar y 3,4 mm hasta la cara exterior de la caja"
+    "1,1 mm hacia el interior y 2,4 mm hacia la cara exterior de la caja"
    ]
   ],
-  "comprobar": "Usa el agujero que recomienda el vendedor para tu inserto (suele ser 4,0 a 4,2 mm para M3) y ajusta INSERTO_D e INSERTO_L. Se mete con el soldador a unos 220 °C, recto y sin apretar.",
-  "supuesta": true
+  "comprobar": "Mete la tuerca con una gota de epoxi (tipo Pegadit o Araldite), sin manchar la rosca, y deja secar antes de atornillar. No aprietes de más: el tornillo tira de la tuerca hacia la tapa."
  }
 }

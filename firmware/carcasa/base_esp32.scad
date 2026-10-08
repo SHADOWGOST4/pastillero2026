@@ -179,7 +179,7 @@ module esp_cables() {
     recorrido([[b_esp_x + ESP_A + 4.4, CON_Y, b_perf_top() + 8.6], [ANCHO - fondo_con(true) - 4, CON_Y, b_perf_top() + 8.6], [ANCHO - fondo_con(true) - 2, CON_Y, CON_Z]], d = 3);
 }
 module esp_tornillos() { tornillos(b_pilares); }
-module esp_insertos() { insertos(b_pilares); }
+module esp_tuercas() { tuercas(b_pilares); }
 module esp_usb() {
     translate([b_esp_cx - 5.5, FONDO - 1.5, b_usb_z - 4]) cube([11, 18, 8]);
 }

@@ -195,7 +195,7 @@ module mod_led() {
 }
 module mod_pulsador() { pulsador_panel(m_cx, m_boton_y); }
 module mod_tornillos() { tornillos(m_pilares); }
-module mod_insertos() { insertos(m_pilares); }
+module mod_tuercas() { tuercas(m_pilares); }
 module mod_pasador() {
     translate([0.2, m_eje_y, m_eje_z]) rotate([0, 90, 0]) cylinder(d = 1.75, h = ANCHO - 1.5 - 0.4, $fn = 12);   // 58 mm
 }

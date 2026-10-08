@@ -19,15 +19,14 @@ PISO = 2.4;
 R_ESQ = 3;          // radio de las esquinas verticales
 JUEGO = 0.3;        // holgura entre piezas que encajan
 
-// Tapas atornilladas con tornillos M3 x 8 de cabeza avellanada sobre insertos de latón termofijados M3.
-// Medidas típicas de un inserto M3 x 5,7: compruébalas con el tuyo (el vendedor indica el agujero recomendado).
-INSERTO_D = 4.2;        // agujero del inserto
-INSERTO_L = 5.7;        // largo del inserto
-INSERTO_REBOSE = 0.8;   // fondo extra para el plástico que desplaza el inserto al calentarlo
-INSERTO_PASO = 3;       // agujero de Ø 3,2 debajo, para un tornillo más largo
+// Tapas atornilladas con tornillos M3 x 10 de cabeza avellanada sobre tuercas M3 normales (DIN 934). Cada tuerca
+// entra desde arriba en un hueco hexagonal de lo alto del pilar, a presión y a ras, y se pega con epoxi.
+TUERCA_E = 5.6;         // hueco entre caras (tuerca de 5,5 mm)
+TUERCA_H = 2.5;         // fondo del hueco (tuerca de 2,4 mm)
+TORNILLO_L = 10;        // largo del tornillo
 TORNILLO_PASO = 3.4;    // paso del M3 en la tapa
 TORNILLO_CABEZA = 6.5;  // cabeza avellanada del M3
-PILAR_D = 8;            // pilar de la esquina, unido a las dos paredes
+PILAR_D = 8.6;          // pilar de la esquina, unido a las dos paredes
 
 // Pulsador de panel de 12 mm (tipo PBS-33B), medido: los mismos en los módulos y en la base
 PULS_D = 12.2;          // agujero de la rosca M12
@@ -84,12 +83,11 @@ module pilares(lista) {
     }
 }
 
-// Alojamiento del inserto: chaflán de entrada, agujero del inserto con fondo extra y paso del tornillo debajo
+// Hueco de la tuerca en lo alto del pilar y, debajo, paso para la punta del tornillo
 module agujeros_pilares(lista) {
     for (p = lista) translate([p[0], p[1], 0]) {
-        translate([0, 0, ALTO - INSERTO_L - INSERTO_REBOSE]) cylinder(d = INSERTO_D, h = INSERTO_L + INSERTO_REBOSE + 1);
-        translate([0, 0, ALTO - 0.6]) cylinder(d1 = INSERTO_D, d2 = INSERTO_D + 1.2, h = 0.61);
-        translate([0, 0, ALTO - INSERTO_L - INSERTO_REBOSE - INSERTO_PASO]) cylinder(d = 3.2, h = INSERTO_PASO + 0.01);
+        translate([0, 0, ALTO - TUERCA_H]) cylinder(d = TUERCA_E / cos(30), h = TUERCA_H + 1, $fn = 6);
+        translate([0, 0, ALTO + TAPA - TORNILLO_L - 2]) cylinder(d = 3.4, h = TORNILLO_L);
     }
 }
 
@@ -104,18 +102,18 @@ module pulsador_panel(x, y) {
     for (s = [-1, 1]) translate([x + s * 2.5 - 0.4, y - 1.25, ALTO + TAPA - PULS_ROSCA - PULS_PATAS]) cube([0.8, 2.5, PULS_PATAS]);
 }
 
-// Componentes (solo para ver el montaje): insertos y tornillos M3 x 8 avellanados
-module insertos(lista) {
-    for (p = lista) translate([p[0], p[1], ALTO - INSERTO_L]) difference() {
-        cylinder(d = INSERTO_D - 0.1, h = INSERTO_L, $fn = 18);   // 0,1 menos: el real entra a presión al calentarlo
-        translate([0, 0, -1]) cylinder(d = 3, h = INSERTO_L + 2, $fn = 12);
+// Componentes (solo para ver el montaje): tuercas M3 y tornillos M3 x 10 avellanados
+module tuercas(lista) {
+    for (p = lista) translate([p[0], p[1], ALTO - 2.4]) difference() {
+        cylinder(d = 5.5 / cos(30), h = 2.4, $fn = 6);
+        translate([0, 0, -1]) cylinder(d = 3, h = 4.4, $fn = 12);
     }
 }
 module tornillos(lista) {
     cab = (TORNILLO_CABEZA - 2.9) / 2;
-    for (p = lista) translate([p[0], p[1], ALTO + TAPA - 8]) {
-        cylinder(d = 2.9, h = 8, $fn = 12);
-        translate([0, 0, 8 - cab]) cylinder(d1 = 2.9, d2 = TORNILLO_CABEZA, h = cab, $fn = 20);
+    for (p = lista) translate([p[0], p[1], ALTO + TAPA - TORNILLO_L]) {
+        cylinder(d = 2.9, h = TORNILLO_L, $fn = 12);
+        translate([0, 0, TORNILLO_L - cab]) cylinder(d1 = 2.9, d2 = TORNILLO_CABEZA, h = cab, $fn = 20);
     }
 }
 
