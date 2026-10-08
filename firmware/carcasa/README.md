@@ -11,7 +11,7 @@ de lado con imanes y un conector magnético lleva el bus de una a otra, así que
 | | |
 |---|---|
 | Cada unidad (base o módulo), con la tapa | 60 × 100 × 32 mm |
-| Pastillero con 2 módulos | 180 × 100 × 32 mm |
+| Pastillero con 2 módulos (uno a cada lado de la base) | 188 × 100 × 32 mm, con la tapa lateral de 8 mm |
 | Cámara de pastillas de cada módulo | 55 × 36 × 21 mm, unos 41 cm³ |
 | Bahía de la electrónica de cada módulo | 55 × 36 × 26 mm |
 | Paredes y fondo | 2,4 mm |
@@ -85,28 +85,31 @@ Si se cambia la posición del reed (`REED_X`), el imán, el canal y la tapita se
 
 ![Corte del módulo: borde del sensor con el pozo y el LED, canal recto, bisagra y bahía](vistas/corte_modulo.png)
 
-### Entre unidades: unión magnética
+### Entre unidades: imanes y tira de pines
 
 ![Cara derecha de la base y cara izquierda de un módulo](vistas/union.png)
 
-Cada cara lateral lleva lo mismo y a la misma altura en todas las unidades, así que cualquier módulo encaja a la
-derecha de cualquier otra unidad:
+Cada cara lateral lleva lo mismo y a la misma altura en todas las unidades, así que cualquier unidad encaja a cada lado
+de cualquier otra. El pastillero va así: **módulo 1, base, módulo 2**, con la **tapa lateral** en el extremo izquierdo.
 
-| | Cara izquierda (módulos) | Cara derecha (base y módulos) |
+| | Cara izquierda (base y módulos) | Cara derecha (base y módulos) |
 |---|---|---|
-| Conector magnético de 4 pines (3,3 V, GND, SDA, SCL) | Macho, con pines de resorte, a ras de la cara | Hembra, de contactos planos, hundida 0,3 mm |
+| Tira de pines de 2,54 mm, 4 pines (3,3 V, GND, SDA, SCL) | **Macho**: el plástico dentro de la pared, los pines sobresalen 6 mm | **Hembra** (11 × 2,5 × 8,5 mm), a ras de la pared |
 | Imanes de disco 8 × 3 mm | 2, a ras | 2, a ras |
 | Guía vertical | Saliente de 1,5 mm | Canal |
 
-- **Cableado dentro de cada módulo:** conector izquierdo → entrada de la PCF8574; salida de la PCF8574 → conector
-  derecho. El bus pasa de largo por cada módulo. En la base, el conector derecho se cablea al JST de la placa perforada.
+- **Cableado dentro de cada módulo:** tira macho de la izquierda → entrada de la PCF8574; salida de la PCF8574 →
+  tira hembra de la derecha. En la base, las dos tiras van al JST de la placa perforada (la de la izquierda por encima
+  del ESP32).
 - **Polaridad de los imanes:** pega primero los de las caras izquierdas, todos con la misma cara hacia fuera. Para
-  cada imán de una cara derecha, ponlo sobre uno de una cara izquierda: la cara que queda pegada es la que va hacia fuera.
-- **Montaje:** con todo apagado, acerca cada módulo por la derecha de la unidad anterior. La guía entra en su canal,
-  los imanes lo atrapan y los pines del conector se comprimen sobre la hembra. Para quitarlo, sepáralo tirando de lado.
-- Los contactos de la hembra del último módulo quedan a la vista pero hundidos en la pared.
-- Las medidas del conector son típicas (cara de 14 × 5,2 mm, 6 mm de fondo): ajusta `CON_A`, `CON_H` y `CON_P` en
-  `comun.scad` a las del que compres.
+  cada imán de una cara derecha (y de la tapa lateral), ponlo sobre uno de una cara izquierda: la cara que queda pegada
+  es la que va hacia fuera.
+- **Montaje:** con todo apagado, acerca cada unidad de frente a la de su lado. La guía entra en su canal, los pines del
+  macho entran en la hembra y los imanes las sujetan. Para separarlas, tira de lado sin torcer, para no doblar los pines.
+- **Tapa lateral:** se pega con 2 imanes a la cara izquierda del módulo del extremo. Tapa los pines macho, que llevan
+  corriente, y la entrada del pasador de su bisagra. La hembra del extremo derecho queda a ras y no necesita tapa.
+- La tira macho tiene medidas típicas (2,5 mm de plástico, 6 mm de pin por fuera y 3 por dentro): ajusta `MACHO_*` en
+  `comun.scad` a la tuya.
 
 ## Medidas de cada componente
 
@@ -117,7 +120,7 @@ La tabla se genera con `visor/exportar.py` a partir de `visor/componentes.json`:
 <!-- medidas:inicio -->
 | Pieza | Medidas del modelo | Hueco en la caja | Compáralo con el real |
 |---|---|---|---|
-| Caja de la base | Exterior: 60 × 100 × 28 mm (sin tapa)<br>Interior: 55,2 × 95,2 × 25,6 mm<br>Paredes y fondo: 2,4 mm<br>Abertura del USB: 13 × 10 mm, centrada a 21,2 mm de altura<br>Pilares de las esquinas: Ø 8,6 mm unidos a las dos paredes, con hueco hexagonal para una tuerca M3 | Cara izquierda: lisa: la base va en el extremo<br>Cara derecha: unión magnética (conector hembra e imanes) | Tras imprimir: 60 × 100 mm con una tolerancia de ±0,3 mm. Comprueba que el enchufe USB entra por la abertura. |
+| Caja de la base | Exterior: 60 × 100 × 28 mm (sin tapa)<br>Interior: 55,2 × 95,2 × 25,6 mm<br>Paredes y fondo: 2,4 mm<br>Abertura del USB: 13 × 10 mm, centrada a 21,2 mm de altura<br>Pilares de las esquinas: Ø 8,6 mm unidos a las dos paredes, con hueco hexagonal para una tuerca M3 | Cara izquierda: tira macho, 2 imanes y guía saliente: encaja un módulo a la izquierda<br>Cara derecha: tira hembra, 2 imanes y canal de la guía: encaja un módulo a la derecha | Tras imprimir: 60 × 100 mm con una tolerancia de ±0,3 mm. Comprueba que el enchufe USB entra por la abertura. |
 | Tapa de la base | Tamaño: 60 × 100 × 4 mm<br>Agujeros EN y BOOT: Ø 3,4 mm, a ±8,2 mm del centro del ESP32 y a 4,1 mm del borde de la placa donde está el USB<br>Botón de vinculación: agujero Ø 12,2 mm a 49 mm del lado izquierdo y 24 mm del frente<br>Rejilla del buzzer: 7 ranuras de 1,6 × 12 mm, paso 3 mm<br>Rótulos: BOOT, EN, USB, VINCULAR y MANTÉN 5 s, grabados 0,6 mm | Altura libre bajo la tapa: 5,2 mm sobre el módulo del ESP32 | Con el ESP32 puesto, pasa un clip por cada agujero: debe tocar el botón que lleva el mismo rótulo. |
 | Placa perforada *(supuesta)* | Placa: 40 × 60 × 1,6 mm<br>Posición: del frente: de 35,1 a 95,1 mm; a lo ancho: centrada | Apoyos: 4 postes de 3 mm de alto con escuadras, holgura 0,3 mm<br>Franja libre a la derecha del ESP32: 8,5 mm (conector JST y transistor)<br>Espacio debajo: 3 mm, para las soldaduras | Mide tu placa: debe ser de 40 × 60 mm (el formato de 4 × 6 cm). Si es de otro tamaño, cambia PERF_A y PERF_L. |
 | Zócalos hembra *(supuesta)* | Cada tira: 2,5 × 38,1 × 8,5 mm (15 pines, paso 2,54 mm)<br>Entre las dos tiras: 25,4 mm entre centros, igual que las filas del ESP32<br>Posición: el primer pin a 6,5 mm del borde de la antena del ESP32 | Alto sobre la placa perforada: 8,5 mm, y encima 2,5 mm del plástico de los pines del ESP32 | Usa tiras hembra de 8,5 mm de alto. Si las tuyas son más bajas o más altas, cambia ZOCALO. |
@@ -139,8 +142,9 @@ La tabla se genera con `visor/exportar.py` a partir de `visor/componentes.json`:
 | Pulsador | Pulsador: de panel de 12 mm, normalmente abierto (tipo PBS-33B, medido)<br>Por encima de la tapa: 8 mm: bisel negro de Ø 17 mm y cúpula<br>Rosca: Ø 12 × 10 mm (M12), con tuerca<br>Terminales: 2, de 4 mm, por debajo de la rosca<br>Por dentro de la caja: 10 mm (6 de rosca + 4 de terminales) | Agujero: Ø 12,2 mm en la cubierta, a 11 mm del borde trasero<br>Rosca en la cubierta: 4 mm; quedan 6 mm por debajo para la tuerca<br>Debajo: llega a 18 mm del fondo, detrás de la placa PCF8574: no se tocan | Mide la tuerca (entre caras y grosor) y aprieta sin pasarte: la rosca es de plástico. |
 | Tornillos de la cubierta | Tornillo: M3 × 10 mm de cabeza avellanada (DIN 7991), cabeza Ø 6,5 mm<br>Posiciones: 4 esquinas de la bahía | Paso en la tapa: Ø 3,4 mm con avellanado de Ø 6,9 mm: la cabeza queda a ras<br>Reparto de la longitud: 4 mm en la tapa, 2,4 en la tuerca y 3,6 de punta en el agujero del pilar | Si usas M3 × 8, también vale: la rosca atraviesa la tuerca entera. |
 | Tuercas del módulo | Tuerca: M3 hexagonal normal (DIN 934): 5,5 mm entre caras y 2,4 mm de grosor | Pilar: Ø 8,6 mm unido a las dos paredes, sin huecos en la esquina<br>Hueco hexagonal: 5,6 mm entre caras y 2,5 mm de fondo, en lo alto del pilar: la tuerca entra a presión y queda a ras<br>Debajo: agujero de Ø 3,4 mm para la punta del tornillo<br>Pared alrededor: 1,1 mm hacia el interior y 2,4 mm hacia la cara exterior de la caja | Mete la tuerca con una gota de epoxi (tipo Pegadit o Araldite), sin manchar la rosca, y deja secar antes de atornillar. No aprietes de más: el tornillo tira de la tuerca hacia la tapa. |
-| Conector magnético macho *(supuesta)* | Cuerpo: 14 × 5,2 × 6 mm<br>Pines: 4 de Ø 1 mm, paso 2,5 mm, sobresalen 0,3 mm<br>Posición: a 72 mm del frente y 14 mm de altura | Alojamiento: 14,4 × 5,6 × 6 mm (holgura 0,2 mm)<br>Espacio para los cables: 12,5 × 3,7 × 3 mm detrás del conector | Mide la cara del conector (largo y alto), su fondo y cuánto sobresalen los pines. Cambia según el fabricante: ajusta CON_A, CON_H y CON_P. |
-| Conector magnético hembra *(supuesta)* | Cuerpo: 14 × 5,2 × 6 mm<br>Contactos: 4 planos, paso 2,5 mm<br>Posición: a 72 mm del frente y 14 mm de altura | Alojamiento: 14,4 × 5,6 × 6,3 mm: queda hundido 0,3 mm<br>Espacio para los cables: 12,5 × 3,7 × 3 mm detrás del conector | Los pines del macho deben tocar los contactos al juntar las unidades. Pruébalo con un tester de continuidad. |
+| Tira de pines macho *(supuesta)* | Tira macho: 4 pines de 2,54 mm: plástico de 10,2 × 2,5 × 2,5 mm (medidas típicas)<br>Pines: 0,64 mm cuadrados: sobresalen 6 mm por fuera y 3 mm por dentro para soldar<br>Posición: cara izquierda, a 72 mm del frente y 14 mm de altura | Alojamiento: 10,6 × 2,9 × 2,5 mm: el plástico queda dentro de la pared<br>Por dentro: 4 mm libres detrás para soldar los cables | Mide cuánto sobresalen los pines por el lado largo (deberían ser unos 6 mm). Junta las unidades de frente, sin torcerlas, para no doblarlos. |
+| Tira de pines hembra | Tira hembra: 4 pines de 2,54 mm, 11 × 2,5 × 8,5 mm (medida)<br>Posición: cara derecha, a ras, a 72 mm del frente y 14 mm de altura | Alojamiento: 11,4 × 2,9 × 8,5 mm<br>Por dentro: 4 mm libres detrás para soldar los cables | Córtala sacrificando un pin, como los zócalos, y pégala a ras con una gota de epoxi. Prueba con un tester que cada pin del macho vecino toca su contacto. |
+| Tapa lateral | Tapa: 8 × 100 × 32 mm, con las esquinas redondeadas<br>Imanes: 2 de 8 × 3 mm, como una cara derecha | Pines: hueco de 11 × 3,3 × 6,5 mm para los pines macho del módulo del extremo<br>Guía: canal para la guía saliente de la cara izquierda | Se pega por imanes a la cara izquierda del módulo del extremo. Tapa los pines, que llevan corriente, y la entrada del pasador de la bisagra. |
 | Imanes de la cara izquierda | Imán: disco Ø 8 × 3 mm (medido)<br>Posiciones: 2 por cara: a 14 y a 87 mm del frente, a 7 mm de altura | Alojamiento: Ø 8,3 × 3,2 mm, a ras de la cara | Con los 2 pares de imanes las unidades deben sostenerse sin moverse, pero poder separarse tirando con la mano. |
 | Imanes de la cara derecha | Imán: disco Ø 8 × 3 mm (medido)<br>Posiciones: 2 por cara: a 14 y a 87 mm del frente, a 7 mm de altura | Alojamiento: Ø 8,3 × 3,2 mm, a ras de la cara | Antes de pegarlos, ponlos sobre un imán de una cara izquierda: la cara que queda pegada es la que va hacia fuera. |
 <!-- medidas:fin -->
@@ -189,6 +193,7 @@ por dentro. Los textos de la leyenda y de las señales están en las listas `ITE
 | Base del módulo | 2 | Tal cual, con el fondo en la cama | `stl/modulo_base.stl` |
 | Tapa del módulo 1 y del 2 | 1 + 1 | Boca abajo: el número contra la cama y el reborde hacia arriba | `stl/modulo_tapa_1.stl`, `stl/modulo_tapa_2.stl` |
 | Cubierta de la bahía | 2 | Plana | `stl/modulo_cubierta.stl` |
+| Tapa lateral | 1 | Con la cara exterior en la cama | `stl/modulo_tapa_lateral.stl` |
 | Tapita del sensor | 2 | Plana | `stl/modulo_tapita.stl` |
 
 PETG o PLA, capa de 0,2 mm, 3 perímetros, relleno 20 % y **sin soportes**. Las piezas ya están orientadas así en los STL.
@@ -204,7 +209,8 @@ punta del tornillo.
 
 ![Corte por un pilar: avellanado de la tapa, tornillo y tuerca](vistas/tuerca_corte.png)
 
-Para la unión, con la base y 2 módulos: 2 pares de conectores magnéticos de 4 pines y 8 imanes de 8 × 3 mm.
+Para la unión, con la base y 2 módulos: 3 tiras macho y 3 tiras hembra de 4 pines de 2,54 mm (una de cada por unidad) y
+14 imanes de 8 × 3 mm (2 por cara lateral de cada unidad y 2 para la tapa lateral).
 
 Imprime primero **una sola base de módulo con su tapa** y comprueba con las piezas reales la placa PCF8574,
 el reed, el imán y la bisagra antes de imprimir el resto.

@@ -199,6 +199,7 @@ if (parte == "base") mod_base();
 else if (parte == "tapa") translate([0, 0, ALTO + TAPA]) rotate([180, 0, 0]) mod_tapa();   // boca abajo: el reborde queda arriba
 else if (parte == "cubierta") translate([0, 0, -ALTO]) mod_cubierta();
 else if (parte == "tapita") translate([0, 0, -(ALTO - TAPITA_E)]) mod_tapita();
+else if (parte == "tapa_lateral") translate([0, 0, TAPA_LAT]) rotate([0, -90, 0]) tapa_lateral();   // cara exterior en la cama
 else if (parte == "todo") { mod_base(); mod_tapa(); mod_cubierta(); mod_tapita(); }
 else if (parte == "imprimir") {
     mod_base();

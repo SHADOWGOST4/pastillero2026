@@ -43,14 +43,21 @@ LED_TOPE = 5.1;         // profundidad del escalón (8,6 de LED - 3,5 que asoman
 LED_PASO = 4;           // paso de las patas detrás del escalón
 
 // ---------- Unión entre unidades ----------
-// Conector magnético de 4 pines (paso 2,5 mm), macho y hembra. Medidas típicas: compruébalas con el tuyo.
-CON_Y = 72;         // centro del conector
+// El bus pasa por tiras de pines de 2,54 mm de 4 pines (3,3 V, GND, SDA, SCL), a la misma altura en todas las unidades.
+//   Cara derecha: tira HEMBRA, a ras de la pared y con los agujeros hacia fuera (la de los zócalos, medida).
+//   Cara izquierda: tira MACHO; su plástico queda dentro de la pared y los pines sobresalen y entran en la hembra vecina.
+CON_Y = 72;             // centro del conector
 CON_Z = 14;
-CON_A = 14;         // largo de la cara del conector (en y)
-CON_H = 5.2;        // alto de la cara (en z)
-CON_P = 6;          // fondo del cuerpo
-CON_HUNDIDO = 0.3;  // la hembra queda hundida: los pines del macho se comprimen al juntar las unidades
 CON_HOLGURA = 0.2;
+HEMBRA_L = 11;          // largo de 4 pines (medido)
+HEMBRA_A = 2.5;         // ancho (medido)
+HEMBRA_P = 8.5;         // alto del plástico: lo que entra en la pared (medido)
+MACHO_L = 10.2;         // 4 pines
+MACHO_A = 2.5;
+MACHO_PLASTICO = 2.5;   // medidas típicas de una tira macho: compruébalas con la tuya
+MACHO_SALE = 6;         // pines por fuera de la cara: entran en la hembra vecina
+MACHO_DENTRO = 3;       // pines por dentro, para soldar los cables
+TAPA_LAT = 8;           // grosor de la tapa lateral que cubre la cara izquierda libre del extremo
 // Imanes de disco que sujetan las unidades
 IMAN_U_D = 8;
 IMAN_U_H = 3;
@@ -162,7 +169,9 @@ module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6) {
 }
 
 // ---------- Unión: todo se define en la cara izquierda (x = 0) y se refleja para la derecha ----------
-function fondo_con(derecha) = CON_P + (derecha ? CON_HUNDIDO : 0);
+function fondo_con(derecha) = derecha ? HEMBRA_P : MACHO_PLASTICO;
+function largo_con(derecha) = derecha ? HEMBRA_L : MACHO_L;
+function alto_con(derecha) = derecha ? HEMBRA_A : MACHO_A;
 IMAN_FONDO = IMAN_U_H + 0.2;
 
 // Lleva una pieza de la cara izquierda a la cara derecha
@@ -171,8 +180,10 @@ module a_la_derecha() { translate([ANCHO, 0, 0]) mirror([1, 0, 0]) children(); }
 // Refuerzos por dentro de la pared: marco del conector y alojamientos de los imanes (bajan hasta el fondo)
 module refuerzos_union(derecha) {
     fc = fondo_con(derecha);
+    cl = largo_con(derecha);
+    ch = alto_con(derecha);
     module r() {
-        translate([PARED - 0.01, CON_Y - CON_A / 2 - 2, PISO - 0.01]) cube([fc + 1 - PARED + 0.01, CON_A + 4, CON_Z + CON_H / 2 + 2 - PISO]);
+        translate([PARED - 0.01, CON_Y - cl / 2 - 2, PISO - 0.01]) cube([max(fc + 1 - PARED, 1) + 0.01, cl + 4, CON_Z + ch / 2 + 2 - PISO]);
         for (p = IMANES_U) hull() {
             translate([PARED - 0.01, p[0], p[1]]) rotate([0, 90, 0]) cylinder(d = IMAN_U_D + 3, h = IMAN_FONDO + 0.8 - PARED + 0.01);
             translate([PARED - 0.01, p[0] - (IMAN_U_D + 3) / 2, 0.5]) cube([IMAN_FONDO + 0.8 - PARED + 0.01, IMAN_U_D + 3, 0.1]);
@@ -181,12 +192,14 @@ module refuerzos_union(derecha) {
     if (derecha) a_la_derecha() r(); else r();
 }
 
-// Huecos: conector, cables por detrás del conector, imanes y, en la derecha, el canal de la guía
+// Huecos: tira de pines, espacio para soldar los cables detrás, imanes y, en la derecha, el canal de la guía
 module huecos_union(derecha) {
     fc = fondo_con(derecha);
+    cl = largo_con(derecha);
+    ch = alto_con(derecha);
     module h() {
-        translate([-1, CON_Y - CON_A / 2 - CON_HOLGURA, CON_Z - CON_H / 2 - CON_HOLGURA]) cube([fc + 1, CON_A + 2 * CON_HOLGURA, CON_H + 2 * CON_HOLGURA]);
-        translate([fc - 0.01, CON_Y - CON_A / 2 + 1.5, CON_Z - CON_H / 2 + 0.75]) cube([3, CON_A - 3, CON_H - 1.5]);
+        translate([-1, CON_Y - cl / 2 - CON_HOLGURA, CON_Z - ch / 2 - CON_HOLGURA]) cube([fc + 1, cl + 2 * CON_HOLGURA, ch + 2 * CON_HOLGURA]);
+        translate([fc - 0.01, CON_Y - cl / 2, CON_Z - ch / 2 - 1.5]) cube([4, cl, ch + 3]);
         for (p = IMANES_U) translate([-1, p[0], p[1]]) rotate([0, 90, 0]) cylinder(d = IMAN_U_D + 0.3, h = IMAN_FONDO + 1);
         if (derecha) translate([0, GUIA_Y, -1]) linear_extrude(ALTO + 2) offset(delta = JUEGO) polygon(perfil_guia());
     }
@@ -205,15 +218,36 @@ module refuerzo_guia() {
     a_la_derecha() translate([PARED - 0.01, GUIA_Y - 4, PISO - 0.01]) cube([GUIA_SALE + JUEGO + 1.2, 8, ALTO - PISO + 0.01]);
 }
 
+// Tapa lateral: cubre la cara izquierda de la unidad del extremo (los pines macho, que llevan corriente, y la entrada
+// del pasador de la bisagra). Se sujeta con 2 imanes como una cara derecha y tiene el canal de la guía.
+module tapa_lateral() {
+    difference() {
+        hull() {
+            for (y = [R_ESQ, FONDO - R_ESQ]) translate([-TAPA_LAT + R_ESQ, y, 0]) cylinder(r = R_ESQ, h = ALTO + TAPA);
+            translate([-0.01, 0, 0]) cube([0.01, FONDO, ALTO + TAPA]);
+        }
+        // pines del macho
+        translate([-MACHO_SALE - 0.5, CON_Y - MACHO_L / 2 - 0.4, CON_Z - MACHO_A / 2 - 0.4]) cube([MACHO_SALE + 1, MACHO_L + 0.8, MACHO_A + 0.8]);
+        // imanes, a ras de su cara
+        for (p = IMANES_U) translate([-IMAN_FONDO, p[0], p[1]]) rotate([0, 90, 0]) cylinder(d = IMAN_U_D + 0.3, h = IMAN_FONDO + 1);
+        // canal de la guía
+        translate([0, GUIA_Y, -1]) mirror([1, 0, 0]) linear_extrude(ALTO + TAPA + 2) offset(delta = JUEGO)
+            polygon([[-1, -GUIA_BASE / 2], [GUIA_SALE, -GUIA_PUNTA / 2], [GUIA_SALE, GUIA_PUNTA / 2], [-1, GUIA_BASE / 2]]);
+    }
+}
+
 // ---------- Componentes de la unión (solo para ver el montaje) ----------
-module con_macho() {
-    translate([0, CON_Y - CON_A / 2, CON_Z - CON_H / 2]) cube([CON_P, CON_A, CON_H]);
+module con_macho() {   // plástico de la tira macho, dentro de la pared izquierda
+    translate([0, CON_Y - MACHO_L / 2, CON_Z - MACHO_A / 2]) cube([MACHO_PLASTICO, MACHO_L, MACHO_A]);
 }
-module pines_macho() {
-    for (i = [0 : 3]) translate([-CON_HUNDIDO, CON_Y + (i - 1.5) * 2.5, CON_Z]) rotate([0, 90, 0]) cylinder(d = 1, h = CON_HUNDIDO, $fn = 12);
+module pines_macho() { // 4 pines cuadrados de 0,64 mm: sobresalen por fuera y asoman por dentro para soldar
+    for (i = [0 : 3]) translate([-MACHO_SALE, CON_Y + (i - 1.5) * 2.54 - 0.32, CON_Z - 0.32]) cube([MACHO_SALE + MACHO_PLASTICO + MACHO_DENTRO, 0.64, 0.64]);
 }
-module con_hembra() {
-    a_la_derecha() translate([CON_HUNDIDO, CON_Y - CON_A / 2, CON_Z - CON_H / 2]) cube([CON_P, CON_A, CON_H]);
+module con_hembra() {  // tira hembra a ras de la cara derecha, con los agujeros de los pines
+    a_la_derecha() difference() {
+        translate([0, CON_Y - HEMBRA_L / 2, CON_Z - HEMBRA_A / 2]) cube([HEMBRA_P, HEMBRA_L, HEMBRA_A]);
+        for (i = [0 : 3]) translate([-1, CON_Y + (i - 1.5) * 2.54 - 0.5, CON_Z - 0.5]) cube([MACHO_SALE + 1.5, 1, 1]);
+    }
 }
 module imanes_union(derecha) {
     module i() for (p = IMANES_U) translate([0, p[0], p[1]]) rotate([0, 90, 0]) cylinder(d = IMAN_U_D, h = IMAN_U_H);

@@ -1,4 +1,4 @@
-// Montaje del pastillero completo: la base con el ESP32 a la izquierda y los módulos a su derecha.
+// Montaje del pastillero completo: un módulo a cada lado de la base con el ESP32, y la tapa lateral en el extremo izquierdo.
 // Las piezas impresas van en gris azulado y cada componente en su color (los componentes no se imprimen).
 //
 //   vista = "fila"      : todo montado y cerrado
@@ -32,8 +32,9 @@ module componentes_base() {
     color("#d4a72c") esp_tornillos();
     color("#9aa3ad") esp_tuercas();
     color("#444") esp_usb();
-    color("#c0c6cc") con_hembra();
-    color("#8a939c") imanes_union(true);
+    color("#c0c6cc") { con_hembra(); con_macho(); }
+    color("#d4a72c") pines_macho();
+    color("#8a939c") { imanes_union(true); imanes_union(false); }
 }
 
 module componentes_modulo(a = 0) {
@@ -66,8 +67,11 @@ module unidad_modulo(n, a = 0, dz = 0) {
 }
 
 module fila(a = 0, dz = 0, separa = 0) {
-    unidad_base(dz);
-    for (i = [1 : modulos]) translate([i * (ANCHO + separa), 0, 0]) unidad_modulo(i, a, dz);
+    // módulo 1 a la izquierda (con la tapa lateral), base en el centro y módulo 2 a la derecha
+    unidad_modulo(1, a, dz);
+    color(C_PIEZA) translate([-0.8 * separa, 0, 0]) tapa_lateral();
+    translate([ANCHO + separa, 0, 0]) unidad_base(dz);
+    translate([2 * (ANCHO + separa), 0, 0]) unidad_modulo(2, a, dz);
 }
 
 if (objeto != "") {
@@ -102,6 +106,7 @@ if (objeto != "") {
     if (objeto == "mod_tuercas") mod_tuercas();
     if (objeto == "mod_pasador") mod_pasador();
     if (objeto == "con_macho") { con_macho(); pines_macho(); }
+    if (objeto == "tapa_lateral") tapa_lateral();
     if (objeto == "con_hembra") con_hembra();
     if (objeto == "imanes_izq") imanes_union(false);
     if (objeto == "imanes_der") imanes_union(true);

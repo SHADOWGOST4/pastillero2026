@@ -103,7 +103,7 @@ def piezas_impresion():
     print("== piezas para imprimir ==")
     trabajos = [
         ("modulo_base", "modulo", "base"), ("modulo_tapa_1", "modulo", "tapa"), ("modulo_cubierta", "modulo", "cubierta"),
-        ("modulo_tapita", "modulo", "tapita"),
+        ("modulo_tapita", "modulo", "tapita"), ("modulo_tapa_lateral", "modulo", "tapa_lateral"),
         ("base_caja", "base_esp32", "caja"), ("base_tapa", "base_esp32", "tapa"),
     ]
     os.makedirs(os.path.join(CARCASA, "stl"), exist_ok=True)
@@ -216,6 +216,19 @@ def interferencias():
         ("fila: base / pines del modulo 1", "esp_caja()", "translate([60,0,0]) pines_macho()"),
         ("fila: conector hembra / macho del vecino", "con_hembra()", "translate([60,0,0]) con_macho()"),
         ("fila: imanes de la base / imanes del modulo", "imanes_union(true)", "translate([60,0,0]) imanes_union(false)"),
+        ("fila: modulo izquierdo / base", M, "translate([60,0,0]) esp_caja()"),
+        ("fila: modulo izquierdo / pines de la base", M, "translate([60,0,0]) pines_macho()"),
+        ("fila: hembra del modulo / pines de la base", "con_hembra()", "translate([60,0,0]) pines_macho()"),
+        ("base: caja / tira macho", "esp_caja()", "union() { con_macho(); pines_macho(); }"),
+        ("base: caja / imanes izquierda", "esp_caja()", "imanes_union(false)"),
+        ("base: ESP32 / cables del bus", "esp_esp32()", "esp_cables()"),
+        ("base: zocalos / cables del bus", "esp_zocalos()", "esp_cables()"),
+        ("base: tapa / cables del bus", "esp_tapa()", "esp_cables()"),
+        ("tapa lateral / modulo", "tapa_lateral()", M),
+        ("tapa lateral / pines", "tapa_lateral()", "pines_macho()"),
+        ("tapa lateral / imanes", "tapa_lateral()", "imanes_union(false)"),
+        ("tapa lateral / tapa del modulo", "tapa_lateral()", "mod_tapa(1)"),
+        ("tapa lateral / cubierta", "tapa_lateral()", "mod_cubierta()"),
     ]
     resultados = en_paralelo(lambda p: interseccion(re.sub(r"\W+", "_", p[0]), p[1], p[2]), pares)
     for (nombre, _a, _b), (vol, cj) in zip(pares, resultados):

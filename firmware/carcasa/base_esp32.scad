@@ -6,7 +6,8 @@
 //   Atrás ................. placa perforada de 40 x 60 mm sobre 4 postes. En ella, sobre dos tiras de zócalo hembra,
 //                           el ESP32 DevKit (30 pines, USB-C) con el USB hacia la pared trasera; a su derecha, el transistor del
 //                           buzzer y los cables del bus hacia el conector de la cara derecha.
-//   Cara derecha .......... unión magnética con el primer módulo: conector hembra del bus, imanes y canal de la guía.
+//   Caras laterales ....... unión con un módulo a cada lado: a la derecha, tira hembra, imanes y canal de la guía; a la
+//                           izquierda, tira macho, imanes y guía saliente, igual que la cara izquierda de un módulo.
 //   Tapa .................. rejilla del buzzer, botón de vinculación de 12 mm (mantener 5 s para conectar el Wi-Fi
 //                           con la app) y agujeros para pulsar EN y BOOT con un clip, con sus rótulos grabados.
 //
@@ -91,10 +92,13 @@ module esp_caja() {
                 translate([b_cx - (LED_AGUJERO + 2.4) / 2, PARED - 0.01, PISO - 0.01]) cube([LED_AGUJERO + 2.4, 6.5, 0.1]);
             }
             refuerzos_union(true);
+            refuerzos_union(false);
             refuerzo_guia();
+            guia();
         }
         agujeros_pilares(b_pilares);
         huecos_union(true);
+        huecos_union(false);
         // LED de estado
         agujero_led(b_cx, PARED + 7);
         // paso de las patas del LED hacia atrás
@@ -171,7 +175,9 @@ module esp_cables() {
     recorrido([[b_cx, PARED + 7.5, LED_Z], [b_cx, PARED + 12, LED_Z + 3], [xs, b_perf_y - 2, LED_Z + 3], [xs, b_perf_y + 3, b_perf_top() + 0.8]]);
     recorrido([[BV_X, BV_Y, ALTO + TAPA - PULS_ROSCA - PULS_PATAS - 0.8], [BV_X, b_perf_y - 3, 13], [xs + 2, b_perf_y + 3, b_perf_top() + 0.8]]);
     recorrido([[b_cx, BUZ_Y + 9.8, PISO + 1], [b_cx + 6, b_perf_y - 4, PISO + 2], [b_cx + 10, b_perf_y - 1.6, PISO + 6.6], [xs - 2, b_perf_y + 4, b_perf_top() + 0.8]]);
-    recorrido([[b_esp_x + ESP_A + 4.4, CON_Y, b_perf_top() + 8.6], [ANCHO - fondo_con(true) - 4, CON_Y, b_perf_top() + 8.6], [ANCHO - fondo_con(true) - 2, CON_Y, CON_Z]], d = 3);
+    // bus: del JST a la tira hembra de la derecha y, por encima del ESP32, a la tira macho de la izquierda
+    recorrido([[b_esp_x + ESP_A + 4.4, CON_Y, b_perf_top() + 8.6], [ANCHO - fondo_con(true) - 4, CON_Y, b_perf_top() + 8.6], [ANCHO - fondo_con(true) - 2, CON_Y, CON_Z + 1.2]], d = 2.4);
+    recorrido([[b_esp_x + ESP_A + 3, CON_Y, b_perf_top() + 8.6], [b_esp_x + ESP_A + 3, CON_Y, ALTO - 2.5], [fondo_con(false) + MACHO_DENTRO + 3, CON_Y, ALTO - 2.5], [fondo_con(false) + MACHO_DENTRO + 1.4, CON_Y, CON_Z + 1.4]], d = 2.4);
 }
 module esp_tornillos() { tornillos(b_pilares); }
 module esp_tuercas() { tuercas(b_pilares); }

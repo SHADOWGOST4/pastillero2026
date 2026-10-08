@@ -22,7 +22,7 @@ OBJETOS = [
     "esp_caja", "esp_tapa", "esp_perforada", "esp_zocalos", "esp_esp32", "esp_buzzer", "esp_led", "esp_conector",
     "esp_tornillos", "esp_tuercas", "esp_usb", "esp_boton_v", "esp_resistencias", "esp_cables",
     "mod_base", "mod_tapa_1", "mod_tapa_2", "mod_cubierta", "mod_pasador", "mod_iman", "mod_reed", "mod_led",
-    "mod_pcf", "mod_pulsador", "mod_tornillos", "mod_tuercas", "mod_tapita", "mod_cable", "con_macho", "con_hembra", "imanes_izq", "imanes_der",
+    "mod_pcf", "mod_pulsador", "mod_tornillos", "mod_tuercas", "mod_tapita", "mod_cable", "con_macho", "con_hembra", "imanes_izq", "imanes_der", "tapa_lateral",
 ]
 
 
@@ -74,7 +74,7 @@ def tabla_markdown():
         "mod_base": "Base del módulo", "mod_tapa": "Tapa del módulo", "mod_cubierta": "Cubierta de la bahía",
         "mod_pasador": "Pasador de la bisagra", "mod_iman": "Imán de la tapa", "mod_reed": "Reed", "mod_led": "LED del módulo",
         "mod_pcf": "Placa PCF8574", "mod_pulsador": "Pulsador", "mod_tornillos": "Tornillos de la cubierta", "mod_tuercas": "Tuercas del módulo",
-        "con_macho": "Conector magnético macho", "con_hembra": "Conector magnético hembra",
+        "con_macho": "Tira de pines macho", "con_hembra": "Tira de pines hembra", "tapa_lateral": "Tapa lateral",
         "imanes_izq": "Imanes de la cara izquierda", "imanes_der": "Imanes de la cara derecha",
     }
     lineas = ["| Pieza | Medidas del modelo | Hueco en la caja | Compáralo con el real |", "|---|---|---|---|"]

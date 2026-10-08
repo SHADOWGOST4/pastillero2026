@@ -129,7 +129,7 @@ td.num { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; font-
   <header>
     <div class="ruta">firmware/carcasa · OpenSCAD</div>
     <h1>Carcasa del pastillero</h1>
-    <p class="entrada">La base con el ESP32 va a la izquierda y los módulos de medicamento a su derecha. <b>Todas las unidades miden 60 × 100 × 32 mm</b> y se unen de lado: unos imanes las sujetan y un conector magnético lleva el bus I2C de una a otra, sin abrir nada. Los números señalan piezas y componentes; las letras, partes de la caja.</p>
+    <p class="entrada">La base con el ESP32 va a la izquierda y los módulos de medicamento a su derecha. <b>Todas las unidades miden 60 × 100 × 32 mm</b> y se unen de lado: unos imanes las sujetan y una tira de pines lleva el bus I2C de una a otra, sin abrir nada. Va un módulo a cada lado de la base. Los números señalan piezas y componentes; las letras, partes de la caja.</p>
   </header>
 
   <section class="visor" aria-label="Vista 3D">
@@ -159,20 +159,20 @@ td.num { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; font-
       <h2>Medidas generales</h2>
       <dl class="medidas">
         <dt>Cada unidad<small>Base del ESP32 o módulo, con la tapa puesta</small></dt><dd>60 × 100 × 32 mm</dd>
-        <dt>Pastillero con 2 módulos</dt><dd>180 × 100 × 32 mm</dd>
+        <dt>Pastillero con 2 módulos<small>Un módulo a cada lado de la base, con la tapa lateral en el extremo izquierdo</small></dt><dd>188 × 100 × 32 mm</dd>
         <dt>Cámara de pastillas<small>Por módulo, detrás del borde del sensor</small></dt><dd>55 × 36 × 21 mm · ≈ 41 cm³</dd>
         <dt>Bahía de la electrónica<small>Por módulo, debajo de la cubierta</small></dt><dd>55 × 36 × 26 mm</dd>
         <dt>Paredes y fondo</dt><dd>2,4 mm</dd>
         <dt>Tapas<small>Todas iguales y a ras</small></dt><dd>4 mm</dd>
         <dt>LED del frente<small>Misma altura en todas las unidades</small></dt><dd>Ø 5 mm a 14 mm</dd>
-        <dt>Unión entre unidades<small>Por cara: conector de 4 pines y 2 imanes, a la misma altura en todas</small></dt><dd>Imanes Ø 8 × 3 mm</dd>
+        <dt>Unión entre unidades<small>Por cara: tira de 4 pines de 2,54 mm y 2 imanes de Ø 8 × 3, a la misma altura en todas</small></dt><dd>Macho a la izquierda, hembra a la derecha</dd>
         <dt>Holgura entre piezas que encajan</dt><dd>0,3 mm</dd>
       </dl>
     </div>
     <div class="bloque">
       <h2>Cómo se arma</h2>
-      <p><b>Cada unidad, una vez, en el banco.</b> Se pegan los conectores y los imanes en sus alojamientos de las caras laterales y se cablean por dentro: en cada módulo, el conector izquierdo va a la entrada de la PCF8574 y la salida al conector derecho, así el bus pasa de largo. Después se mete el pasador de la bisagra por la izquierda y se atornilla la cubierta.</p>
-      <p><b>El pastillero.</b> Con todo apagado, cada módulo se acerca por la derecha de la unidad anterior: la guía entra en su canal y los imanes lo atrapan. Al quedar juntos, los pines del conector se comprimen sobre los contactos de la hembra y el bus queda conectado. No hace falta abrir nada.</p>
+      <p><b>Cada unidad, una vez, en el banco.</b> Se pegan las tiras de pines y los imanes en sus alojamientos de las caras laterales y se cablean por dentro: en cada módulo, la tira macho de la izquierda va a la entrada de la PCF8574 y su salida a la tira hembra de la derecha, así el bus pasa de largo. En la base, las dos tiras van al JST de la placa perforada. Después se mete el pasador de la bisagra por la izquierda y se atornilla la cubierta.</p>
+      <p><b>El pastillero.</b> Con todo apagado, cada módulo se acerca por la derecha de la unidad anterior: la guía entra en su canal y los imanes lo atrapan. Al quedar juntos, los pines de la tira macho entran en la hembra y el bus queda conectado. En el extremo izquierdo se pone la tapa lateral, que tapa los pines. No hace falta abrir nada.</p>
       <p><b>Añadir o quitar un módulo.</b> Se separa tirando de lado, con el pastillero apagado.</p>
       <p><b>El sensor.</b> El borde del frente ocupa todo el ancho del módulo. Arriba tiene un canal abierto: el reed se echa dentro, junto al frente, y sus cables van por el carril de atrás hasta el pozo. El LED entra por la pared del frente y también asoma al pozo. Los cuatro hilos bajan juntos y siguen un único canal recto y grande bajo la cámara hasta la bahía. La tapita cubre el reed y los cables; la tapa cerrada la mantiene en su sitio.</p>
       <p>La tapa se queda abierta a unos 100° sin tocar el pulsador.</p>
@@ -193,6 +193,7 @@ td.num { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; font-
             <tr><td>Base del módulo</td><td class="num">2</td><td>Tal cual, con el fondo en la cama</td><td class="num">modulo_base.stl</td></tr>
             <tr><td>Tapa del módulo 1 y 2</td><td class="num">1 + 1</td><td>Boca abajo: el número queda contra la cama y el reborde hacia arriba</td><td class="num">modulo_tapa_1.stl · modulo_tapa_2.stl</td></tr>
             <tr><td>Cubierta de la bahía</td><td class="num">2</td><td>Plana</td><td class="num">modulo_cubierta.stl</td></tr>
+            <tr><td>Tapa lateral</td><td class="num">1</td><td>Con la cara exterior en la cama</td><td class="num">modulo_tapa_lateral.stl</td></tr>
             <tr><td>Tapita del sensor</td><td class="num">2</td><td>Plana</td><td class="num">modulo_tapita.stl</td></tr>
           </tbody>
         </table>
@@ -218,7 +219,8 @@ import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer
 
 const ANCHO = 60, FONDO = 100, ALTO = 28, TAPA = 4, MODULOS = 2;
 const EJE = [0, 55.4, 29];                  // bisagra del módulo (y, z)
-const PASO = 28;                           // desplazamiento al desarmar
+const PASO = 28;
+const PUESTO = [1, 0, 2];                  // posición en la fila de la base (0) y de los módulos 1 y 2                           // desplazamiento al desarmar
 const SEPARA = 30;                         // separación entre unidades al desarmar
 
 // u: en qué unidades aparece (0 = base, 1 y 2 = módulos); e: hacia dónde se mueve al desarmar (x, y, z)
@@ -252,9 +254,10 @@ const ITEMS = [
   { id: 'mod_tuercas', g: 'modulo', c: '#9aa3ad', n: 31, nombre: 'Tuercas M3', donde: 'Una en lo alto de cada pilar de la bahía, a ras y pegada con epoxi. Los tornillos de la cubierta roscan en ellas.', medida: '4 × M3 (5,5 × 2,4 mm)', u: [1, 2], e: [0, 0, 1.9], p: [4, 63, 29], dentro: true },
   { id: 'mod_tapita', g: 'modulo', impresa: true, n: 25, nombre: 'Tapita del sensor', donde: 'Cubre el canal entero: el reed, sus cables y el pozo. Queda a ras y la tapa cerrada la mantiene en su sitio; con la tapa abierta se saca con la uña.', medida: '32,9 × 7,2 × 1,2 mm', u: [1, 2], e: [0, 0, 2.6], p: [20, 6, 34] },
   { id: 'mod_cable', g: 'modulo', c: '#333333', n: 26, nombre: 'Cable del reed y del LED', donde: 'Un mazo de 4 hilos que sigue un solo camino recto: el carril del canal abierto, el pozo y el canal recto hasta la bahía.', medida: 'Mazo Ø 3 mm', u: [1, 2], e: [0, 0, 1.2], p: [30, 30, 5], dentro: true },
-  { id: 'con_macho', g: 'union', c: '#c0c6cc', n: 21, nombre: 'Conector magnético macho', donde: 'En la cara izquierda de cada módulo, a ras. Sus pines con resorte tocan la hembra de la unidad de la izquierda y llevan el bus: 3,3 V, GND, SDA y SCL.', medida: '4 pines, paso 2,5 mm', u: [1, 2], e: [0, 0, 0], p: [-0.6, 72, 18], dentro: true },
-  { id: 'con_hembra', g: 'union', c: '#c0c6cc', n: 22, nombre: 'Conector magnético hembra', donde: 'En la cara derecha de la base y de cada módulo, hundido 0,3 mm para que los pines del vecino se compriman.', medida: '4 contactos planos', u: [0, 1, 2], e: [0, 0, 0], p: [60.6, 72, 18], dentro: true },
-  { id: 'imanes_izq', g: 'union', c: '#8a939c', n: 23, nombre: 'Imanes de la cara izquierda', donde: 'Dos por cara, a ras, en sus alojamientos. Sujetan la unidad a la de su izquierda.', medida: 'Disco 8 × 3 mm, N35', u: [1, 2], e: [0, 0, 0], p: [-0.6, 14, 12], dentro: true },
+  { id: 'con_macho', g: 'union', c: '#c0c6cc', n: 21, nombre: 'Tira de pines macho', donde: 'En la cara izquierda de la base y de cada módulo. Sus pines sobresalen 6 mm y entran en la hembra de la unidad de la izquierda: 3,3 V, GND, SDA y SCL.', medida: '4 pines, 2,54 mm', u: [0, 1, 2], e: [0, 0, 0], p: [-0.6, 72, 18], dentro: true },
+  { id: 'con_hembra', g: 'union', c: '#c0c6cc', n: 22, nombre: 'Tira de pines hembra', donde: 'En la cara derecha de la base y de cada módulo, a ras de la pared. Recibe los pines del macho de la unidad de la derecha.', medida: '4 pines, 11 × 2,5 × 8,5 mm', u: [0, 1, 2], e: [0, 0, 0], p: [60.6, 72, 18], dentro: true },
+  { id: 'imanes_izq', g: 'union', c: '#8a939c', n: 23, nombre: 'Imanes de la cara izquierda', donde: 'Dos por cara, a ras, en sus alojamientos. Sujetan la unidad a la de su izquierda.', medida: 'Disco 8 × 3 mm, N35', u: [0, 1, 2], e: [0, 0, 0], p: [-0.6, 14, 12], dentro: true },
+  { id: 'tapa_lateral', g: 'union', impresa: true, n: 32, nombre: 'Tapa lateral', donde: 'En la cara izquierda del módulo del extremo, sujeta con 2 imanes. Tapa los pines macho, que llevan corriente, y la entrada del pasador de la bisagra.', medida: '8 × 100 × 32 mm', u: [1], e: [-0.8, 0, 0], p: [-8, 50, 22] },
   { id: 'imanes_der', g: 'union', c: '#8a939c', n: 24, nombre: 'Imanes de la cara derecha', donde: 'Dos por cara. Antes de pegarlos, ponlos sobre un imán de una cara izquierda: la cara que queda pegada a él es la que va hacia fuera.', medida: 'Disco 8 × 3 mm, N35', u: [0, 1, 2], e: [0, 0, 0], p: [60.6, 87, 12], dentro: true },
 ];
 
@@ -439,10 +442,11 @@ function cota(a, b, texto, extension) {
   cotas.add(etiqueta);
 }
 const TOTAL = ANCHO * (MODULOS + 1);
-cota([0, -16, 0], [TOTAL, -16, 0], `${TOTAL} mm en total`, [0, 6, 0]);
+const TAPA_LAT = 8;
+cota([-TAPA_LAT, -16, 0], [TOTAL, -16, 0], `${TOTAL + TAPA_LAT} mm en total`, [0, 6, 0]);
 for (let u = 0; u <= MODULOS; u++) cota([u * ANCHO + 1, -7, 0], [(u + 1) * ANCHO - 1, -7, 0], `${ANCHO}`, [0, 3, 0]);
-cota([-9, 0, 0], [-9, FONDO, 0], `${FONDO} mm`, [5, 0, 0]);
-cota([-9, 0, 0], [-9, 0, ALTO + TAPA], `${ALTO + TAPA} mm`, [5, 0, 0]);
+cota([-17, 0, 0], [-17, FONDO, 0], `${FONDO} mm`, [5, 0, 0]);
+cota([-17, 0, 0], [-17, 0, ALTO + TAPA], `${ALTO + TAPA} mm`, [5, 0, 0]);
 
 // ---------- Leyenda ----------
 const leyenda = document.getElementById('leyenda');
@@ -697,7 +701,7 @@ function cuadro() {
       n.nodo.position.set(ex * PASO * anim.desarmar, ey * PASO * anim.desarmar, ez * PASO * anim.desarmar);
       if (n.pivote) n.pivote.rotation.x = -THREE.MathUtils.degToRad(100) * anim.abrir;
     }
-    unidades.forEach((g, u) => { g.position.x = u * (ANCHO + SEPARA * anim.desarmar); });
+    unidades.forEach((g, u) => { g.position.x = PUESTO[u] * (ANCHO + SEPARA * anim.desarmar); });
     pendiente = true;
   }
   cotas.visible = estado.cotas && anim.desarmar < 0.02;
@@ -713,7 +717,7 @@ function cuadro() {
   capa.render(scene, camera);
 }
 
-unidades.forEach((g, u) => { g.position.x = u * ANCHO; });
+unidades.forEach((g, u) => { g.position.x = PUESTO[u] * ANCHO; });
 aplicarTema();
 new MutationObserver(aplicarTema).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', aplicarTema);

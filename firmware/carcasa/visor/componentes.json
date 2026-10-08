@@ -25,11 +25,11 @@
   "hueco": [
    [
     "Cara izquierda",
-    "lisa: la base va en el extremo"
+    "tira macho, 2 imanes y guía saliente: encaja un módulo a la izquierda"
    ],
    [
     "Cara derecha",
-    "unión magnética (conector hembra e imanes)"
+    "tira hembra, 2 imanes y canal de la guía: encaja un módulo a la derecha"
    ]
   ],
   "comprobar": "Tras imprimir: 60 × 100 mm con una tolerancia de ±0,3 mm. Comprueba que el enchufe USB entra por la abertura."
@@ -611,58 +611,53 @@
  "con_macho": {
   "modelo": [
    [
-    "Cuerpo",
-    "14 × 5,2 × 6 mm"
+    "Tira macho",
+    "4 pines de 2,54 mm: plástico de 10,2 × 2,5 × 2,5 mm (medidas típicas)"
    ],
    [
     "Pines",
-    "4 de Ø 1 mm, paso 2,5 mm, sobresalen 0,3 mm"
+    "0,64 mm cuadrados: sobresalen 6 mm por fuera y 3 mm por dentro para soldar"
    ],
    [
     "Posición",
-    "a 72 mm del frente y 14 mm de altura"
+    "cara izquierda, a 72 mm del frente y 14 mm de altura"
    ]
   ],
   "hueco": [
    [
     "Alojamiento",
-    "14,4 × 5,6 × 6 mm (holgura 0,2 mm)"
+    "10,6 × 2,9 × 2,5 mm: el plástico queda dentro de la pared"
    ],
    [
-    "Espacio para los cables",
-    "12,5 × 3,7 × 3 mm detrás del conector"
+    "Por dentro",
+    "4 mm libres detrás para soldar los cables"
    ]
   ],
-  "comprobar": "Mide la cara del conector (largo y alto), su fondo y cuánto sobresalen los pines. Cambia según el fabricante: ajusta CON_A, CON_H y CON_P.",
+  "comprobar": "Mide cuánto sobresalen los pines por el lado largo (deberían ser unos 6 mm). Junta las unidades de frente, sin torcerlas, para no doblarlos.",
   "supuesta": true
  },
  "con_hembra": {
   "modelo": [
    [
-    "Cuerpo",
-    "14 × 5,2 × 6 mm"
-   ],
-   [
-    "Contactos",
-    "4 planos, paso 2,5 mm"
+    "Tira hembra",
+    "4 pines de 2,54 mm, 11 × 2,5 × 8,5 mm (medida)"
    ],
    [
     "Posición",
-    "a 72 mm del frente y 14 mm de altura"
+    "cara derecha, a ras, a 72 mm del frente y 14 mm de altura"
    ]
   ],
   "hueco": [
    [
     "Alojamiento",
-    "14,4 × 5,6 × 6,3 mm: queda hundido 0,3 mm"
+    "11,4 × 2,9 × 8,5 mm"
    ],
    [
-    "Espacio para los cables",
-    "12,5 × 3,7 × 3 mm detrás del conector"
+    "Por dentro",
+    "4 mm libres detrás para soldar los cables"
    ]
   ],
-  "comprobar": "Los pines del macho deben tocar los contactos al juntar las unidades. Pruébalo con un tester de continuidad.",
-  "supuesta": true
+  "comprobar": "Córtala sacrificando un pin, como los zócalos, y pégala a ras con una gota de epoxi. Prueba con un tester que cada pin del macho vecino toca su contacto."
  },
  "imanes_izq": {
   "modelo": [
@@ -835,7 +830,7 @@
    ],
    [
     "Bus I2C",
-    "4 hilos del JST al conector magnético: 3,3 V, GND, SDA (GPIO 21) y SCL (GPIO 22), unos 15 mm"
+    "4 hilos del JST a la tira hembra de la derecha (unos 15 mm) y 4 a la tira macho de la izquierda, por encima del ESP32 (unos 60 mm): 3,3 V, GND, SDA (GPIO 21) y SCL (GPIO 22)"
    ]
   ],
   "hueco": [
@@ -899,5 +894,28 @@
    ]
   ],
   "comprobar": "Mete la tuerca con una gota de epoxi (tipo Pegadit o Araldite), sin manchar la rosca, y deja secar antes de atornillar. No aprietes de más: el tornillo tira de la tuerca hacia la tapa."
+ },
+ "tapa_lateral": {
+  "modelo": [
+   [
+    "Tapa",
+    "8 × 100 × 32 mm, con las esquinas redondeadas"
+   ],
+   [
+    "Imanes",
+    "2 de 8 × 3 mm, como una cara derecha"
+   ]
+  ],
+  "hueco": [
+   [
+    "Pines",
+    "hueco de 11 × 3,3 × 6,5 mm para los pines macho del módulo del extremo"
+   ],
+   [
+    "Guía",
+    "canal para la guía saliente de la cara izquierda"
+   ]
+  ],
+  "comprobar": "Se pega por imanes a la cara izquierda del módulo del extremo. Tapa los pines, que llevan corriente, y la entrada del pasador de la bisagra."
  }
 }
