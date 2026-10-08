@@ -7,7 +7,7 @@
 //                           el ESP32 DevKit (30 pines, USB-C) con el USB hacia la pared trasera; a su derecha, el transistor del
 //                           buzzer y los cables del bus hacia el conector de la cara derecha.
 //   Cara derecha .......... unión magnética con el primer módulo: conector hembra del bus, imanes y canal de la guía.
-//   Tapa .................. rejilla del buzzer, botón de vinculación hundido (mantener 5 s para conectar el Wi-Fi
+//   Tapa .................. rejilla del buzzer, botón de vinculación de 12 mm (mantener 5 s para conectar el Wi-Fi
 //                           con la app) y agujeros para pulsar EN y BOOT con un clip, con sus rótulos grabados.
 //
 // Conexiones (firmware esp32_pillbox): LED de estado en GPIO 18 con 220 ohm; botón de vinculación entre GPIO 27 y
@@ -41,12 +41,9 @@ BOTONES_D = 3.4;
 ETIQUETAS_BOTONES = ["BOOT", "EN"];
 
 // ---------- Botón de vinculación (GPIO 27) ----------
-// Pulsador de panel mini de 7 mm (tipo PBS-110). Va hundido en la tapa para que no se pulse sin querer.
-BV_X = 48;
-BV_Y = 26;
-BV_D = 7.2;             // agujero de la rosca
-BV_HUECO_D = 13;        // rebaje alrededor del botón
-BV_HUECO_H = 2.5;       // profundidad del rebaje: la rosca agarra en los 1,5 mm de tapa que quedan
+// El mismo pulsador de panel de 12 mm que los módulos. No hace falta hundirlo: es duro y hay que mantenerlo 5 s.
+BV_X = 49;              // el bisel queda a 0,7 mm de la rejilla del buzzer y a 2,5 mm del borde de la tapa
+BV_Y = 24;
 
 // ---------- Buzzer ----------
 BUZ_D = 12.4;           // hueco del anillo (buzzer de Ø 12 mm, medido)
@@ -114,16 +111,15 @@ module esp_tapa() {
         for (b = b_botones) translate([b[0], b[1], ALTO - 1]) cylinder(d = BOTONES_D, h = TAPA + 2);
         // rejilla del buzzer
         for (i = [-3 : 3]) translate([b_cx + i * 3 - 0.8, BUZ_Y - 6, ALTO - 1]) cube([1.6, 12, TAPA + 2]);
-        // botón de vinculación, hundido
-        translate([BV_X, BV_Y, ALTO - 1]) cylinder(d = BV_D, h = TAPA + 2);
-        translate([BV_X, BV_Y, ALTO + TAPA - BV_HUECO_H]) cylinder(d = BV_HUECO_D, h = BV_HUECO_H + 1);
+        // botón de vinculación
+        translate([BV_X, BV_Y, ALTO - 1]) cylinder(d = PULS_D, h = TAPA + 2);
         // rótulos grabados
         translate([0, 0, ALTO + TAPA - 0.6]) linear_extrude(1) {
             for (i = [0, 1]) translate([b_botones[i][0], b_botones[i][1] - 5, 0])
                 text(ETIQUETAS_BOTONES[i], size = 3.2, halign = "center", valign = "top", font = "Liberation Sans:style=Bold");
             translate([b_esp_cx, FONDO - 7, 0]) text("USB", size = 3.2, halign = "center", valign = "center", font = "Liberation Sans:style=Bold");
-            translate([BV_X, BV_Y + BV_HUECO_D / 2 + 7.5, 0]) text("VINCULAR", size = 2.8, halign = "center", valign = "center", font = "Liberation Sans:style=Bold");
-            translate([BV_X, BV_Y + BV_HUECO_D / 2 + 3.5, 0]) text("MANTÉN 5 s", size = 2.8, halign = "center", valign = "center", font = "Liberation Sans:style=Bold");
+            translate([BV_X, BV_Y + PULS_BISEL / 2 + 12.5, 0]) text("VINCULAR", size = 2.8, halign = "center", valign = "center", font = "Liberation Sans:style=Bold");
+            translate([BV_X, BV_Y + PULS_BISEL / 2 + 9, 0]) text("MANTÉN 5 s", size = 2.8, halign = "center", valign = "center", font = "Liberation Sans:style=Bold");
         }
     }
 }
@@ -165,10 +161,7 @@ module esp_conector() {
     translate([b_esp_x + ESP_A + 2, b_perf_y + 6, PISO + PERF_ALTO + 1.6]) cube([4.6, 3.6, 5]);
 }
 module esp_boton_v() {
-    // cabeza, tuerca por debajo y cuerpo con los terminales
-    translate([BV_X, BV_Y, ALTO + TAPA - BV_HUECO_H]) { cylinder(d = 9, h = 0.8); cylinder(d = 5, h = 4.5); }
-    translate([BV_X, BV_Y, ALTO - 2]) cylinder(d = 10, h = 2, $fn = 6);
-    translate([BV_X, BV_Y, ALTO - 15]) cylinder(d = 7, h = 15 + TAPA - BV_HUECO_H);
+    pulsador_panel(BV_X, BV_Y);
 }
 // Resistencias en la franja derecha de la placa perforada: 220 ohm del LED y 1 kohm de la base del transistor
 module esp_resistencias() {
@@ -181,7 +174,7 @@ function b_perf_top() = PISO + PERF_ALTO + 1.6;
 module esp_cables() {
     xs = b_esp_x + ESP_A + 3;
     recorrido([[b_cx, PARED + 7.5, LED_Z], [b_cx, PARED + 12, LED_Z + 3], [xs, b_perf_y - 2, LED_Z + 3], [xs, b_perf_y + 3, b_perf_top() + 0.8]]);
-    recorrido([[BV_X, BV_Y, ALTO - 16.5], [BV_X, b_perf_y - 3, 13], [xs + 2, b_perf_y + 3, b_perf_top() + 0.8]]);
+    recorrido([[BV_X, BV_Y, ALTO + TAPA - PULS_ROSCA - PULS_PATAS - 0.8], [BV_X, b_perf_y - 3, 13], [xs + 2, b_perf_y + 3, b_perf_top() + 0.8]]);
     recorrido([[b_cx, BUZ_Y + 9.8, PISO + 1], [b_cx + 6, b_perf_y - 4, PISO + 2], [b_cx + 10, b_perf_y - 1.6, PISO + 6.6], [xs - 2, b_perf_y + 4, b_perf_top() + 0.8]]);
     recorrido([[b_esp_x + ESP_A + 4.4, CON_Y, b_perf_top() + 8.6], [ANCHO - fondo_con(true) - 4, CON_Y, b_perf_top() + 8.6], [ANCHO - fondo_con(true) - 2, CON_Y, CON_Z]], d = 3);
 }

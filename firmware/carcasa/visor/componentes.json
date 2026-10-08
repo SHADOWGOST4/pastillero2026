@@ -46,7 +46,7 @@
    ],
    [
     "Botón de vinculación",
-    "Ø 7,2 mm en un rebaje de Ø 13 × 2,5 mm, a 48 mm del lado izquierdo y 26 mm del frente"
+    "agujero Ø 12,2 mm a 49 mm del lado izquierdo y 24 mm del frente"
    ],
    [
     "Rejilla del buzzer",
@@ -315,7 +315,7 @@
   "hueco": [
    [
     "Canal abierto del sensor",
-    "30,5 × 4,8 × 4,8 mm, solo del reed al pozo, desde 4,4 mm del frente"
+    "30,5 × 4,8 × 3,8 mm, solo del reed al pozo, desde 4,4 mm del frente"
    ],
    [
     "Rebaje de la tapita",
@@ -358,7 +358,7 @@
   "hueco": [
    [
     "Alojamiento del imán",
-    "Ø 6,5 × 3,3 mm abierto por debajo, a 14 mm del lado izquierdo y a 6,1 mm del frente"
+    "Ø 6,5 × 2,3 mm abierto por debajo, a 16 mm del lado izquierdo y a 5,6 mm del frente; 1,7 mm de piel arriba"
    ],
    [
     "Bisagra",
@@ -413,53 +413,55 @@
   "modelo": [
    [
     "Imán",
-    "disco Ø 6 × 3 mm, a 14 mm del lado izquierdo y a 6,1 mm del frente"
+    "disco Ø 6 × 2 mm (medido), a 16 mm del lado izquierdo y a 5,6 mm del frente, justo encima del reed"
    ]
   ],
   "hueco": [
    [
     "Alojamiento",
-    "Ø 6,5 × 3,3 mm"
+    "Ø 6,5 × 2,3 mm; quedan 1,7 mm de tapa por encima"
    ],
    [
     "Distancia al reed",
     "1,8 mm con la tapa cerrada (la tapita de 1,2 mm queda en medio)"
    ]
   ],
-  "comprobar": "Con la tapa cerrada el reed debe cerrar; levantada unos 8 mm, abrir. Si no cierra, prueba con un imán más grande (8 × 3 mm): la tapita añade 1,2 mm de plástico.",
-  "supuesta": true
+  "comprobar": "Antes de imprimir, acerca el imán al reed con 1,8 mm de plástico en medio y mide con un tester que cierra. Si no, usa uno de 8 × 3 mm o baja la tapita a 1 mm."
  },
  "mod_reed": {
   "modelo": [
    [
     "Cuerpo de vidrio",
-    "14 × 3 mm"
+    "14 × 2 mm (medido)"
    ],
    [
     "Patas",
-    "Ø 0,6 mm, salen 3 mm por cada extremo"
+    "salen por los extremos; se doblan a más de 2 mm del vidrio"
    ],
    [
     "Posición",
-    "centro a 14 mm del lado izquierdo, pegado al frente del canal (6,1 mm del frente)"
+    "centro a 16 mm del lado izquierdo, pegado al frente del canal (5,6 mm del frente)"
    ]
   ],
   "hueco": [
    [
     "Canal abierto",
-    "30,5 × 4,8 × 4,8 mm, del reed al pozo; si cambias REED_X, el canal y la tapita se mueven con él"
+    "30,5 × 4,8 × 3,8 mm, del reed al pozo; si cambias REED_X, el canal y la tapita se mueven con él"
+   ],
+   [
+    "Margen para doblar las patas",
+    "5 mm de canal libre a la izquierda del vidrio y 3 mm a la derecha antes del pozo"
    ],
    [
     "Carril de los cables",
-    "1,8 mm detrás del reed, dentro del mismo canal"
+    "2,6 mm detrás del reed, dentro del mismo canal"
    ],
    [
     "Distancia a la tapita",
     "0,6 mm"
    ]
   ],
-  "comprobar": "Mide el cuerpo de vidrio (largo y diámetro) sin contar las patas. Debe ser un reed normalmente abierto.",
-  "supuesta": true
+  "comprobar": "No dobles las patas pegadas al vidrio: sujétalas con unos alicates entre el vidrio y el doblez, porque el vidrio se raja con facilidad."
  },
  "mod_led": {
   "modelo": [
@@ -523,38 +525,41 @@
  "mod_pulsador": {
   "modelo": [
    [
-    "Cabeza",
-    "Ø 9 × 5 mm sobre la cubierta"
+    "Pulsador",
+    "de panel de 12 mm, normalmente abierto (tipo PBS-33B, medido)"
    ],
    [
-    "Bisel",
-    "Ø 16 × 2 mm"
+    "Por encima de la tapa",
+    "8 mm: bisel negro de Ø 17 mm y cúpula"
    ],
    [
-    "Cuerpo roscado",
-    "Ø 12 mm, 20 mm de largo (4 mm de panel + 16 mm por debajo)"
+    "Rosca",
+    "Ø 12 × 10 mm (M12), con tuerca"
    ],
    [
-    "Tuerca hexagonal",
-    "Ø 15 mm (13 mm entre caras) × 2,5 mm"
+    "Terminales",
+    "2, de 4 mm, por debajo de la rosca"
+   ],
+   [
+    "Por dentro de la caja",
+    "10 mm (6 de rosca + 4 de terminales)"
    ]
   ],
   "hueco": [
    [
     "Agujero",
-    "Ø 12,2 mm, a 11 mm del borde trasero"
+    "Ø 12,2 mm en la cubierta, a 11 mm del borde trasero"
    ],
    [
-    "Rosca útil en la cubierta",
-    "4 mm"
+    "Rosca en la cubierta",
+    "4 mm; quedan 6 mm por debajo para la tuerca"
    ],
    [
-    "Debajo del pulsador",
-    "el cuerpo llega a 12 mm de altura; la placa PCF8574 termina a 82 mm del frente y el pulsador está a 86,6 mm, así que no se tocan"
+    "Debajo",
+    "llega a 18 mm del fondo, detrás de la placa PCF8574: no se tocan"
    ]
   ],
-  "comprobar": "Mide el diámetro de la rosca (12 mm), cuánta rosca tiene sobre el panel y el tamaño de la tuerca.",
-  "supuesta": true
+  "comprobar": "Mide la tuerca (entre caras y grosor) y aprieta sin pasarte: la rosca es de plástico."
  },
  "mod_tornillos": {
   "modelo": [
@@ -639,7 +644,7 @@
   "modelo": [
    [
     "Imán",
-    "disco Ø 8 × 3 mm"
+    "disco Ø 8 × 3 mm (medido)"
    ],
    [
     "Posiciones",
@@ -652,14 +657,13 @@
     "Ø 8,3 × 3,2 mm, a ras de la cara"
    ]
   ],
-  "comprobar": "Con los 2 pares de imanes las unidades deben sostenerse sin moverse, pero poder separarse tirando con la mano.",
-  "supuesta": true
+  "comprobar": "Con los 2 pares de imanes las unidades deben sostenerse sin moverse, pero poder separarse tirando con la mano."
  },
  "imanes_der": {
   "modelo": [
    [
     "Imán",
-    "disco Ø 8 × 3 mm"
+    "disco Ø 8 × 3 mm (medido)"
    ],
    [
     "Posiciones",
@@ -672,8 +676,7 @@
     "Ø 8,3 × 3,2 mm, a ras de la cara"
    ]
   ],
-  "comprobar": "Antes de pegarlos, ponlos sobre un imán de una cara izquierda: la cara que queda pegada es la que va hacia fuera.",
-  "supuesta": true
+  "comprobar": "Antes de pegarlos, ponlos sobre un imán de una cara izquierda: la cara que queda pegada es la que va hacia fuera."
  },
  "mod_tapita": {
   "modelo": [
@@ -734,15 +737,23 @@
   "modelo": [
    [
     "Pulsador",
-    "de panel mini, rosca Ø 7 mm (tipo PBS-110), normalmente abierto"
+    "de panel de 12 mm, normalmente abierto (tipo PBS-33B, medido)"
    ],
    [
-    "Cabeza",
-    "Ø 5 mm, sobresale unos 2 mm de la tapa"
+    "Por encima de la tapa",
+    "8 mm: bisel negro de Ø 17 mm y cúpula"
    ],
    [
-    "Cuerpo",
-    "Ø 7 mm, unos 15 mm por debajo de la tapa"
+    "Rosca",
+    "Ø 12 × 10 mm (M12), con tuerca"
+   ],
+   [
+    "Terminales",
+    "2, de 4 mm, por debajo de la rosca"
+   ],
+   [
+    "Por dentro de la caja",
+    "10 mm (6 de rosca + 4 de terminales)"
    ],
    [
     "Conexión",
@@ -752,19 +763,18 @@
   "hueco": [
    [
     "Agujero",
-    "Ø 7,2 mm, a 48 mm del lado izquierdo y 26 mm del frente"
+    "Ø 12,2 mm en la tapa, a 49 mm del lado izquierdo y 24 mm del frente"
    ],
    [
-    "Rebaje",
-    "Ø 13 × 2,5 mm: la cabeza queda hundida y no se pulsa sin querer"
+    "Bisel",
+    "a 0,7 mm de la rejilla del buzzer y a 2,5 mm del borde de la tapa"
    ],
    [
-    "Rosca útil",
-    "1,5 mm de tapa bajo el rebaje"
+    "Por dentro",
+    "la tuerca queda a 0,6 mm de la pared derecha; el cuerpo baja hasta 18 mm del fondo, por encima de los imanes y del buzzer"
    ]
   ],
-  "comprobar": "Mide la rosca (7 mm) y cuánto sobresale la cabeza. Mantenlo pulsado 5 s: el LED parpadea 3 veces y el ESP32 entra en modo de vinculación.",
-  "supuesta": true
+  "comprobar": "Mantenlo pulsado 5 s: el LED parpadea 3 veces y el ESP32 entra en modo de vinculación."
  },
  "esp_resistencias": {
   "modelo": [

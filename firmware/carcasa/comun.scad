@@ -29,6 +29,13 @@ TORNILLO_PASO = 3.4;    // paso del M3 en la tapa
 TORNILLO_CABEZA = 6.5;  // cabeza avellanada del M3
 PILAR_D = 8;            // pilar de la esquina, unido a las dos paredes
 
+// Pulsador de panel de 12 mm (tipo PBS-33B), medido: los mismos en los módulos y en la base
+PULS_D = 12.2;          // agujero de la rosca M12
+PULS_BISEL = 17;        // bisel negro, apoyado sobre la tapa
+PULS_ARRIBA = 8;        // bisel y cúpula por encima de la tapa
+PULS_ROSCA = 10;        // rosca, desde la cara de abajo del bisel
+PULS_PATAS = 4;         // terminales por debajo de la rosca
+
 // LED en el frente de cada unidad, siempre a la misma altura
 LED_Z = 14;
 LED_D = 5.2;
@@ -84,6 +91,17 @@ module agujeros_pilares(lista) {
         translate([0, 0, ALTO - 0.6]) cylinder(d1 = INSERTO_D, d2 = INSERTO_D + 1.2, h = 0.61);
         translate([0, 0, ALTO - INSERTO_L - INSERTO_REBOSE - INSERTO_PASO]) cylinder(d = 3.2, h = INSERTO_PASO + 0.01);
     }
+}
+
+// Componentes (solo para ver el montaje): pulsador de panel de 12 mm montado en una tapa
+module pulsador_panel(x, y) {
+    translate([x, y, ALTO + TAPA]) {
+        cylinder(d = PULS_BISEL, h = PULS_ARRIBA - 3);                 // bisel
+        translate([0, 0, PULS_ARRIBA - 3]) cylinder(d = 11, h = 3);   // cúpula
+    }
+    translate([x, y, ALTO + TAPA - PULS_ROSCA]) cylinder(d = 12, h = PULS_ROSCA);   // rosca
+    translate([x, y, ALTO - 2.2]) cylinder(d = 15, h = 2, $fn = 6);              // tuerca M12
+    for (s = [-1, 1]) translate([x + s * 2.5 - 0.4, y - 1.25, ALTO + TAPA - PULS_ROSCA - PULS_PATAS]) cube([0.8, 2.5, PULS_PATAS]);
 }
 
 // Componentes (solo para ver el montaje): insertos y tornillos M3 x 8 avellanados

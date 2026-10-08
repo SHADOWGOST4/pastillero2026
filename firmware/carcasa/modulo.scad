@@ -27,16 +27,17 @@ TUNEL_H = 3.5;
 RAIL = 12;              // fondo del borde, desde el frente
 CANAL_Y0 = 4.4;         // el canal abierto empieza aquí...
 CANAL_A = 4.8;          // ...mide esto de ancho (en y)...
-CANAL_H = 4.8;          // ...y esto de profundo; a lo largo va del reed al pozo y nada más
+CANAL_H = 3.8;          // ...y esto de profundo; a lo largo va del reed al pozo y nada más
 POZO_A = 8;             // pozo por donde los cables bajan al canal recto (centrado)
 POZO_Y0 = 5.6;
-REED_X = 14;            // posición del reed y del imán; el canal y la tapita se ajustan solos
-REED_L = 14;            // cuerpo de vidrio del reed
-REED_D = 3;
+REED_X = 16;            // posición del reed y del imán; el canal y la tapita se ajustan solos
+REED_L = 14;            // cuerpo de vidrio del reed (medido)
+REED_PATAS = 5;         // canal libre a cada lado del vidrio para doblar las patas sin forzarlo
+REED_D = 2;             // medido: 14 x 2 mm
 TAPITA_E = 1.2;         // grosor de la tapita; queda a ras y la tapa cerrada la sujeta
 TAPITA_H = 1.2;         // apoyo de la tapita a cada lado del canal
-IMAN_D = 6;             // imán de neodimio en disco 6 x 3 mm
-IMAN_H = 3;
+IMAN_D = 6;             // imán de neodimio en disco 6 x 2 mm (medido)
+IMAN_H = 2;
 
 // ---------- Bisagra ----------
 BIS_R = 3;
@@ -47,7 +48,7 @@ PASADOR = 2.1;          // filamento de 1,75 mm
 PCF_L = 40;             // placa PCF8574
 PCF_A = 20;
 PCF_ALTO = 4;           // altura de los postes de la placa
-BOTON_D = 12.2;         // pulsador de panel de 12 mm
+BOTON_D = PULS_D;       // pulsador de panel de 12 mm (ver comun.scad)
 
 // ---------- Derivadas ----------
 m_cx = ANCHO / 2;
@@ -56,7 +57,7 @@ m_bahia = m_div0 + DIV;                 // empieza la bahía
 m_eje_y = m_div0 + DIV / 2;
 m_eje_z = ALTO + TAPA - BIS_R;          // los nudillos quedan a ras de la tapa
 m_reed_y = CANAL_Y0 + REED_D / 2 + 0.2;   // el reed va junto al frente del canal; detrás queda un carril para los cables
-m_canal_x0 = REED_X - REED_L / 2 - 3;    // deja sitio para doblar la pata del reed
+m_canal_x0 = REED_X - REED_L / 2 - REED_PATAS;   // deja sitio para doblar la pata del reed
 m_canal_x1 = m_cx + POZO_A / 2 + 0.5;    // termina justo pasado el pozo
 m_tap_x0 = m_canal_x0 - TAPITA_H;
 m_tap_x1 = m_canal_x1 + TAPITA_H;
@@ -173,7 +174,7 @@ module mod_pcf() {
 module mod_reed() {
     z = ALTO - CANAL_H + REED_D / 2;
     translate([REED_X - REED_L / 2, m_reed_y, z]) rotate([0, 90, 0]) cylinder(d = REED_D, h = REED_L, $fn = 20);
-    for (s = [-1, 1]) translate([REED_X + s * REED_L / 2, m_reed_y, z]) rotate([0, 90 * s, 0]) cylinder(d = 0.6, h = 3, $fn = 8);
+    for (s = [-1, 1]) translate([REED_X + s * REED_L / 2, m_reed_y, z]) rotate([0, 90 * s, 0]) cylinder(d = 0.5, h = 3, $fn = 8);
 }
 // Cables del reed y del LED: por el canal abierto, el pozo y el canal recto hasta la bahía
 module mod_cable() {
@@ -192,14 +193,7 @@ module mod_led() {
         cylinder(d = 5, h = 8.6);
     }
 }
-module mod_pulsador() {
-    translate([m_cx, m_boton_y, ALTO + TAPA]) {
-        cylinder(d = 16, h = 2);
-        cylinder(d = 9, h = 5);
-    }
-    translate([m_cx, m_boton_y, ALTO - 16]) cylinder(d = 12, h = 16 + TAPA);
-    translate([m_cx, m_boton_y, ALTO - 3]) cylinder(d = 15, h = 2.5, $fn = 6);
-}
+module mod_pulsador() { pulsador_panel(m_cx, m_boton_y); }
 module mod_tornillos() { tornillos(m_pilares); }
 module mod_insertos() { insertos(m_pilares); }
 module mod_pasador() {
