@@ -12,7 +12,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from comprobar import C, OPENSCAD, TMP, a_binario, scad  # noqa: E402
+from comprobar import C, MOTOR, OPENSCAD, TMP, a_binario, en_paralelo, scad  # noqa: E402
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 MODELOS = os.path.join(AQUI, "modelos")
@@ -28,17 +28,20 @@ OBJETOS = [
 
 def exportar(nombres):
     os.makedirs(MODELOS, exist_ok=True)
-    for nombre in nombres:
+
+    def uno(nombre):
         ruta = scad("v_" + nombre, f'include <{C}/montaje.scad>\nobjeto = "{nombre}";\n')
         tmp = os.path.join(TMP, "v_" + nombre + ".stl")
         if os.path.exists(tmp):
             os.remove(tmp)
-        r = subprocess.run([OPENSCAD, "-o", tmp, ruta], capture_output=True, text=True)
+        r = subprocess.run([OPENSCAD, *MOTOR, "-o", tmp, ruta], capture_output=True, text=True)
         if not os.path.exists(tmp):
-            print(nombre, "ERROR", (r.stdout + r.stderr)[-300:])
-            continue
+            return f"{nombre} ERROR {(r.stdout + r.stderr)[-300:]}"
         n = a_binario(tmp, os.path.join(MODELOS, nombre + ".stl"))
-        print(f"{nombre:16s} {n:6d} triángulos")
+        return f"{nombre:16s} {n:6d} triángulos"
+
+    for linea in en_paralelo(uno, nombres):
+        print(linea)
 
 
 def armar_pagina():

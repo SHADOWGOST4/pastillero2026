@@ -4,7 +4,9 @@ Uso:  python comprobar.py            (piezas para imprimir y choques)
       python comprobar.py piezas     (solo exporta los STL de ../stl)
       python comprobar.py choques    (solo comprueba que nada se pise)
 
-OpenSCAD se busca en la variable de entorno OPENSCAD, en la ruta de instalación de Windows o en el PATH.
+OpenSCAD se busca en la variable de entorno OPENSCAD, en la ruta de instalación de Windows o en el PATH. Se prefiere una
+versión reciente (2024 o posterior) con el motor Manifold, decenas de veces más rápido que el CGAL de la 2021.
+Los trabajos se reparten entre los núcleos del procesador (variable TRABAJOS para cambiar cuántos a la vez).
 """
 import os
 import re
@@ -13,11 +15,24 @@ import struct
 import subprocess
 import sys
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 
 OPENSCAD = os.environ.get("OPENSCAD") or next(
-    (r for r in (r"C:\Program Files\OpenSCAD\openscad.com", shutil.which("openscad")) if r and os.path.exists(r)),
+    (r for r in (r"C:\Program Files\OpenSCAD (Nightly)\openscad.com", r"C:\Program Files\OpenSCAD\openscad.com",
+                 shutil.which("openscad")) if r and os.path.exists(r)),
     "openscad",
 )
+# El motor Manifold solo existe en las versiones nuevas; con la 2021 se usa el de siempre
+MANIFOLD = "--backend" in subprocess.run([OPENSCAD, "--help"], capture_output=True, text=True).stdout + \
+    subprocess.run([OPENSCAD, "--help"], capture_output=True, text=True).stderr
+MOTOR = ["--backend=Manifold"] if MANIFOLD else []
+TRABAJOS = int(os.environ.get("TRABAJOS") or max(1, (os.cpu_count() or 2) - 2))
+
+
+def en_paralelo(funcion, lista):
+    """Aplica la función a cada elemento repartiendo el trabajo; devuelve los resultados en el mismo orden."""
+    with ThreadPoolExecutor(max_workers=TRABAJOS) as grupo:
+        return list(grupo.map(funcion, lista))
 CARCASA = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TMP = os.path.join(tempfile.gettempdir(), "pastillero_carcasa")
 os.makedirs(TMP, exist_ok=True)
@@ -32,7 +47,7 @@ def scad(nombre, codigo):
 
 
 def render(ruta, salida, extra=()):
-    r = subprocess.run([OPENSCAD, "-o", salida, *extra, ruta], capture_output=True, text=True)
+    r = subprocess.run([OPENSCAD, *MOTOR, "-o", salida, *extra, ruta], capture_output=True, text=True)
     log = r.stdout + r.stderr
     return log
 
@@ -92,16 +107,24 @@ def piezas_impresion():
         ("base_caja", "base_esp32", "caja"), ("base_tapa", "base_esp32", "tapa"),
     ]
     os.makedirs(os.path.join(CARCASA, "stl"), exist_ok=True)
-    for salida, archivo, parte in trabajos:
+
+    def una(trabajo):
+        salida, archivo, parte = trabajo
         ruta = scad(salida, f'include <{C}/{archivo}.scad>\nparte = "{parte}";\n')
         tmp = os.path.join(TMP, salida + ".stl")
         log = render(ruta, tmp)
+        # CGAL dice "Simple: yes"; Manifold, "Status: NoError". Una pieza sin operaciones no dice nada.
         simple = re.search(r"Simple:\s+(\w+)", log)
+        estado = re.search(r"Status:\s+(\w+)", log)
+        valido = "si" if (simple and simple.group(1) == "yes") or (estado and estado.group(1) == "NoError") else ("?" if not (simple or estado) else "NO")
         errores = [l for l in log.splitlines() if "ERROR" in l or "WARNING: Object may not" in l or "Ignoring unknown" in l]
         tris = leer_stl(tmp)
         mn, mx = caja(tris)
-        print(f"{salida:18s} simple={simple.group(1) if simple else '?'}  tamaño={[round(mx[k]-mn[k],1) for k in range(3)]}  zmin={mn[2]:.2f}  {errores[:2]}")
         a_binario(tmp, os.path.join(CARCASA, "stl", salida + ".stl"))
+        return f"{salida:18s} valido={valido}  tamaño={[round(mx[k]-mn[k],1) for k in range(3)]}  zmin={mn[2]:.2f}  {errores[:2]}"
+
+    for linea in en_paralelo(una, trabajos):
+        print(linea)
     # tapa del módulo 2 (otro número)
     ruta = scad("modulo_tapa_2", f'include <{C}/modulo.scad>\nparte = "tapa";\nnumero = 2;\n')
     tmp = os.path.join(TMP, "modulo_tapa_2.stl")
@@ -194,8 +217,8 @@ def interferencias():
         ("fila: conector hembra / macho del vecino", "con_hembra()", "translate([60,0,0]) con_macho()"),
         ("fila: imanes de la base / imanes del modulo", "imanes_union(true)", "translate([60,0,0]) imanes_union(false)"),
     ]
-    for nombre, a, b in pares:
-        vol, cj = interseccion(re.sub(r"\W+", "_", nombre), a, b)
+    resultados = en_paralelo(lambda p: interseccion(re.sub(r"\W+", "_", p[0]), p[1], p[2]), pares)
+    for (nombre, _a, _b), (vol, cj) in zip(pares, resultados):
         detalle = "" if cj is None else f"  zona {[round(x,1) for x in cj[0]]} -> {[round(x,1) for x in cj[1]]}"
         marca = "OK " if vol < 0.01 else "XX "
         print(f"{marca}{nombre:38s} {vol:9.2f}{detalle}")

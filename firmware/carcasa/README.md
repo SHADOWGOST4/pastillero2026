@@ -162,6 +162,9 @@ Para volver a exportar una pieza: abrir el archivo en OpenSCAD, elegir `parte`, 
 
 En `visor/` están las herramientas que generan los STL, comprueban el diseño y arman una vista 3D interactiva con cada
 pieza señalada. Necesitan Python 3 y OpenSCAD (se busca en la variable `OPENSCAD`, en la ruta de Windows o en el PATH).
+Conviene una versión reciente de OpenSCAD (2024 o posterior, por ejemplo la *Nightly*): los scripts usan su motor
+Manifold y reparten el trabajo entre los núcleos del procesador, y la comprobación completa tarda unos 10 s en lugar de
+unos 20 minutos con la 2021.
 
 ```bash
 python visor/comprobar.py
