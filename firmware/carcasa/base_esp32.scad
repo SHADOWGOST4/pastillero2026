@@ -1,7 +1,8 @@
 // Base del pastillero (60 x 100 x 32 mm con la tapa): va a la izquierda de la fila.
 //
 //   Frente (y = 0) ........ LED de estado, a la misma altura que el LED de cada módulo.
-//   Delante, en el piso ... buzzer en su anillo, debajo de la rejilla de la tapa.
+//   Delante, en el piso ... buzzer en su anillo, apoyado en un escalón, debajo de la rejilla de la tapa. Sus patas
+//                           salen por debajo y pasan por una ranura del anillo hacia la placa perforada.
 //   Atrás ................. placa perforada de 40 x 60 mm sobre 4 postes. En ella, sobre dos tiras de zócalo hembra,
 //                           el ESP32 DevKit (30 pines, USB-C) con el USB hacia la pared trasera; a su derecha, el transistor del
 //                           buzzer y los cables del bus hacia el conector de la cara derecha.
@@ -48,8 +49,11 @@ BV_HUECO_D = 13;        // rebaje alrededor del botón
 BV_HUECO_H = 2.5;       // profundidad del rebaje: la rosca agarra en los 1,5 mm de tapa que quedan
 
 // ---------- Buzzer ----------
-BUZ_D = 12.4;
-BUZ_H = 7;              // alto del anillo que lo sujeta
+BUZ_D = 12.4;           // hueco del anillo (buzzer de Ø 12 mm, medido)
+BUZ_ALTO = 9;           // alto del buzzer sin las patas (medido)
+BUZ_ESCALON = 3;        // el buzzer apoya en un escalón a esta altura: debajo quedan sus patas
+BUZ_H = BUZ_ESCALON + 5;   // alto del anillo que lo sujeta
+BUZ_RANURA = 9;         // ranura del anillo por donde salen las patas, hacia la placa perforada
 BUZ_Y = 22;
 
 // ---------- Derivadas ----------
@@ -75,8 +79,14 @@ module esp_caja() {
             apoyos_placa(b_perf_x, b_perf_y, PERF_A, PERF_L, PERF_ALTO);
             // anillo del buzzer
             translate([b_cx, BUZ_Y, PISO - 0.01]) difference() {
-                cylinder(d = BUZ_D + 2.4, h = BUZ_H);
-                translate([0, 0, -1]) cylinder(d = BUZ_D, h = BUZ_H + 2);
+                union() {
+                    cylinder(d = BUZ_D + 2.4, h = BUZ_H);
+                }
+                // hueco del buzzer por encima del escalón y, por debajo, uno más estrecho que deja el escalón
+                translate([0, 0, BUZ_ESCALON]) cylinder(d = BUZ_D, h = BUZ_H);
+                translate([0, 0, -1]) cylinder(d = BUZ_D - 2.4, h = BUZ_ESCALON + 1.01);
+                // ranura para las patas, mirando a la placa perforada (hacia atrás)
+                translate([-BUZ_RANURA / 2, 0, -1]) cube([BUZ_RANURA, BUZ_D, BUZ_ESCALON + 1]);
             }
             // soporte del LED de estado, detrás del frente
             hull() {
@@ -136,7 +146,12 @@ module esp_esp32() {
     }
 }
 module esp_buzzer() {
-    translate([b_cx, BUZ_Y, PISO]) cylinder(d = 12, h = 9.5);
+    translate([b_cx, BUZ_Y, PISO + BUZ_ESCALON]) cylinder(d = 12, h = BUZ_ALTO);
+    // patas: bajan del buzzer y se doblan hacia atrás por la ranura del anillo
+    for (s = [-1, 1]) {
+        translate([b_cx + s * 3.25, BUZ_Y, PISO + 1]) cylinder(d = 0.6, h = BUZ_ESCALON - 1, $fn = 8);
+        translate([b_cx + s * 3.25, BUZ_Y, PISO + 1]) rotate([-90, 0, 0]) cylinder(d = 0.6, h = 9, $fn = 8);
+    }
 }
 module esp_led() {
     translate([b_cx, 0, LED_Z]) rotate([-90, 0, 0]) {
@@ -165,9 +180,9 @@ module recorrido(puntos, d = 1.4) { for (i = [0 : len(puntos) - 2]) tramo(puntos
 function b_perf_top() = PISO + PERF_ALTO + 1.6;
 module esp_cables() {
     xs = b_esp_x + ESP_A + 3;
-    recorrido([[b_cx, PARED + 7.5, LED_Z], [b_cx, PARED + 12, LED_Z], [xs, b_perf_y - 2, LED_Z], [xs, b_perf_y + 3, b_perf_top() + 0.8]]);
+    recorrido([[b_cx, PARED + 7.5, LED_Z], [b_cx, PARED + 12, LED_Z + 3], [xs, b_perf_y - 2, LED_Z + 3], [xs, b_perf_y + 3, b_perf_top() + 0.8]]);
     recorrido([[BV_X, BV_Y, ALTO - 16.5], [BV_X, b_perf_y - 3, 13], [xs + 2, b_perf_y + 3, b_perf_top() + 0.8]]);
-    recorrido([[b_cx + 3, BUZ_Y, PISO + 9.5 + 1.2], [b_cx + 8, b_perf_y - 4, 12], [xs - 2, b_perf_y + 4, b_perf_top() + 0.8]]);
+    recorrido([[b_cx, BUZ_Y + 9.8, PISO + 1], [b_cx + 6, b_perf_y - 4, PISO + 2], [b_cx + 10, b_perf_y - 1.6, PISO + 6.6], [xs - 2, b_perf_y + 4, b_perf_top() + 0.8]]);
     recorrido([[b_esp_x + ESP_A + 4.4, CON_Y, b_perf_top() + 8.6], [ANCHO - fondo_con(true) - 4, CON_Y, b_perf_top() + 8.6], [ANCHO - fondo_con(true) - 2, CON_Y, CON_Z]], d = 3);
 }
 module esp_tornillos() { tornillos(b_pilares); }

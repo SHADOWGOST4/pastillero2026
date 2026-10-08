@@ -164,25 +164,36 @@
   "modelo": [
    [
     "Buzzer",
-    "Ø 12 × 9,5 mm"
+    "Ø 12 × 9 mm sin las patas (medido)"
+   ],
+   [
+    "Patas",
+    "salen por debajo, separadas unos 6,5 mm"
    ],
    [
     "Posición",
-    "centrado a 22 mm del frente"
+    "centrado a 22 mm del frente, apoyado a 3 mm del fondo"
    ]
   ],
   "hueco": [
    [
     "Anillo",
-    "Ø interior 12,4 mm, exterior 14,8 mm, 7 mm de alto"
+    "Ø interior 12,4 mm, exterior 14,8 mm, 8 mm de alto"
+   ],
+   [
+    "Escalón",
+    "a 3 mm del fondo: el buzzer apoya en él y debajo quedan 3 mm para doblar las patas"
+   ],
+   [
+    "Ranura de las patas",
+    "9 × 3 mm en el anillo, mirando hacia la placa perforada"
    ],
    [
     "Altura libre sobre el buzzer",
-    "16 mm hasta la tapa, bajo la rejilla"
+    "13,6 mm hasta la tapa, bajo la rejilla"
    ]
   ],
-  "comprobar": "Mide el diámetro y el alto de tu buzzer. Los activos de 12 mm suelen medir 9,5 mm de alto.",
-  "supuesta": true
+  "comprobar": "Dobla las patas 90° hacia atrás antes de encajarlo, para que salgan por la ranura. Suelda un cable a cada pata o llévalas directas a la placa perforada."
  },
  "esp_led": {
   "modelo": [
@@ -786,7 +797,7 @@
    ],
    [
     "Buzzer",
-    "2 hilos, al transistor (unos 25 mm)"
+    "2 hilos, desde las patas que salen por la ranura del anillo hasta el transistor (unos 25 mm)"
    ],
    [
     "Bus I2C",
