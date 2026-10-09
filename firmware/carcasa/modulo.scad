@@ -86,7 +86,7 @@ module mod_base() {
                 translate([x0, m_eje_y - BIS_R, ALTO - 3]) cube([BIS_K, 2 * BIS_R, 1]);
             }
             pilares(m_pilares);
-            apoyos_placa(m_pcf_x, m_pcf_y, PCF_L, PCF_A, PCF_ALTO, limites = [PARED, m_bahia, ANCHO - PARED, FONDO - PARED]);
+            apoyos_placa(m_pcf_x, m_pcf_y, PCF_L, PCF_A, PCF_ALTO, limites = [PARED, m_bahia, ANCHO - PARED, FONDO - PARED], pilares = m_pilares);
             refuerzos_union(false);
             refuerzos_union(true);
             guia();
@@ -170,6 +170,10 @@ module mod_pcf() {
         translate([PCF_L / 2 - 4, PCF_A / 2 - 5, 1.6]) cube([8, 10, 2]);             // chip
         for (x = [1, PCF_L - 3]) translate([x, PCF_A / 2 - 5, 1.6]) cube([2, 10, 8]); // conectores del bus
     }
+}
+// Espacio que necesita la placa PCF8574 con su holgura (para comprobar que nada de la caja lo invade)
+module mod_hueco_pcf() {
+    translate([m_pcf_x - JUEGO + 0.05, m_pcf_y - JUEGO + 0.05, PISO + PCF_ALTO + 0.05]) cube([PCF_L + 2 * JUEGO - 0.1, PCF_A + 2 * JUEGO - 0.1, 1.6 + 2]);
 }
 module mod_reed() {
     z = ALTO - CANAL_H + REED_D / 2;

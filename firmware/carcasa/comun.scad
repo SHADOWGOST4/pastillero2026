@@ -70,8 +70,8 @@ GUIA_SALE = 1.5;
 
 $fn = 48;
 
-// Centro del pilar a esta distancia de las dos paredes interiores (5,6 mm del borde exterior)
-PILAR_O = 3.2;
+// Centro del pilar a esta distancia de las dos paredes interiores (5,2 mm del borde exterior)
+PILAR_O = 2.8;   // deja 0,5 mm entre el pilar y las placas de la base y de los módulos
 
 module caja_redondeada(a, f, h, r = R_ESQ) {
     hull() for (x = [r, a - r], y = [r, f - r]) translate([x, y, 0]) cylinder(r = r, h = h);
@@ -164,7 +164,8 @@ module agujeros_tapa(lista) {
 // Apoyos de una placa: en cada esquina, una sola pieza sólida. Por debajo de la placa es un bloque que va desde fuera de
 // su borde hasta 3 mm hacia dentro (la placa apoya en él); por encima, una escuadra en L rodea la esquina con holgura.
 // limites = [x mín, y mín, x máx, y máx] de las paredes: si un apoyo queda a menos de 3 mm, llega hasta la pared.
-module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6, limites = [-1e3, -1e3, 1e3, 1e3]) {
+// pilares: si hay un pilar junto a la esquina, el apoyo llega hasta las paredes y se une a él (sin rendijas).
+module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6, limites = [-1e3, -1e3, 1e3, 1e3], pilares = []) {
     e = 1.2;      // grosor de la escuadra
     lado = 5;     // largo de cada brazo de la escuadra
     for (sx = [0, 1], sy = [0, 1]) {
@@ -176,8 +177,9 @@ module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6, limites = [-1e3, -1e3
         fy0 = y - dy * (JUEGO + e);
         px = sx == 0 ? limites[0] : limites[2];
         py = sy == 0 ? limites[1] : limites[3];
-        fx = abs(fx0 - px) < 3 ? px - dx * 0.5 : fx0;
-        fy = abs(fy0 - py) < 3 ? py - dy * 0.5 : fy0;
+        con_pilar = len([for (q = pilares) if (norm([q[0] - x, q[1] - y]) < PILAR_D / 2 + 6) 1]) > 0;
+        fx = (con_pilar || abs(fx0 - px) < 3) ? px - dx * 0.5 : fx0;
+        fy = (con_pilar || abs(fy0 - py) < 3) ? py - dy * 0.5 : fy0;
         union() {
             // bloque bajo la placa: une el apoyo y el pie de la escuadra
             translate([min(fx, x + 3 * dx), min(fy, y + 3 * dy), PISO - 0.01]) cube([abs(x + 3 * dx - fx), abs(y + 3 * dy - fy), alto + 0.01]);

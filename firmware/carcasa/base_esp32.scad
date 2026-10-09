@@ -74,7 +74,7 @@ module esp_caja() {
                 translate([PARED, PARED, PISO]) cube([ANCHO - 2 * PARED, FONDO - 2 * PARED, ALTO]);
             }
             pilares(b_pilares);
-            apoyos_placa(b_perf_x, b_perf_y, PERF_A, PERF_L, PERF_ALTO, limites = [PARED, PARED, ANCHO - PARED, FONDO - PARED]);
+            apoyos_placa(b_perf_x, b_perf_y, PERF_A, PERF_L, PERF_ALTO, limites = [PARED, PARED, ANCHO - PARED, FONDO - PARED], pilares = b_pilares);
             // anillo del buzzer
             translate([b_cx, BUZ_Y, PISO - 0.01]) difference() {
                 union() {
@@ -130,6 +130,10 @@ module esp_tapa() {
 // ---------- Componentes (solo para ver el montaje; no se imprimen) ----------
 module esp_perforada() {
     translate([b_perf_x, b_perf_y, PISO + PERF_ALTO]) cube([PERF_A, PERF_L, 1.6]);
+}
+// Espacio que necesita la placa perforada con su holgura (para comprobar que nada de la caja lo invade)
+module esp_hueco_perforada() {
+    translate([b_perf_x - JUEGO + 0.05, b_perf_y - JUEGO + 0.05, PISO + PERF_ALTO + 0.05]) cube([PERF_A + 2 * JUEGO - 0.1, PERF_L + 2 * JUEGO - 0.1, 1.6 + 2]);
 }
 module esp_zocalos() {
     for (s = [-1, 1]) translate([b_esp_cx + s * ESP_FILAS / 2 - 1.25, b_esp_y + ESP_PIN0 - 1.27, PISO + PERF_ALTO + 1.6]) cube([2.5, 15 * 2.54, ZOCALO]);

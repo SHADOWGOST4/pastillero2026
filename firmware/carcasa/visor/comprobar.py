@@ -183,6 +183,8 @@ def interferencias():
         ("base: caja / LED", "esp_caja()", "esp_led()"),
         ("base: caja / conector", "esp_caja()", "esp_conector()"),
         ("base: caja / cable USB", "esp_caja()", "esp_usb()"),
+        ("base: holgura de la placa perforada", "esp_caja()", "esp_hueco_perforada()"),
+        ("modulo: holgura de la PCF8574", M, "mod_hueco_pcf()"),
         ("base: ESP32 / conector", "esp_esp32()", "esp_conector()"),
         ("base: caja / tuercas", "esp_caja()", "esp_tuercas()"),
         ("base: tapa / tornillos", "esp_tapa()", "esp_tornillos()"),
