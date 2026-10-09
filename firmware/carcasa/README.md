@@ -184,6 +184,14 @@ Exporta cada pieza y componente por separado y arma `visor/carcasa.html` a parti
 sola página, con los modelos dentro, que usa three.js para girar el pastillero, abrir las tapas, desarmarlo y ver
 por dentro. Los textos de la leyenda y de las señales están en las listas `ITEMS` y `ZONAS` de la plantilla.
 
+```bash
+python visor/rendijas.py
+```
+
+Corta cada pieza en rodajas horizontales y avisa de las rendijas de menos de 1,4 mm entre partes sólidas (que no
+sirven y se imprimen mal); con `RENDIJA=2.4` busca hasta 2,4 mm. Los agujeros redondos horizontales (LED, pasador) y
+las ranuras de la rejilla salen en la lista porque al cortarlos dan franjas estrechas: no son rendijas.
+
 ## Qué se imprime
 
 | Pieza | Cantidad | Cómo se imprime | Archivo |

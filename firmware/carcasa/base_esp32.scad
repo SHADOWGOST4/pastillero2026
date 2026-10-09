@@ -74,7 +74,7 @@ module esp_caja() {
                 translate([PARED, PARED, PISO]) cube([ANCHO - 2 * PARED, FONDO - 2 * PARED, ALTO]);
             }
             pilares(b_pilares);
-            apoyos_placa(b_perf_x, b_perf_y, PERF_A, PERF_L, PERF_ALTO);
+            apoyos_placa(b_perf_x, b_perf_y, PERF_A, PERF_L, PERF_ALTO, limites = [PARED, PARED, ANCHO - PARED, FONDO - PARED]);
             // anillo del buzzer
             translate([b_cx, BUZ_Y, PISO - 0.01]) difference() {
                 union() {

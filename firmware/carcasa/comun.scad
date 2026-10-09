@@ -81,15 +81,21 @@ module caja_redondeada(a, f, h, r = R_ESQ) {
 function pilares_en(x0, y0, x1, y1) = [for (x = [x0, x1], y = [y0, y1])
     [x == x0 ? x + PILAR_O : x - PILAR_O, y == y0 ? y + PILAR_O : y - PILAR_O, x, y]];
 
-// El pilar rellena la esquina entera: un cilindro unido por un bloque a las dos paredes, sin huecos entre medias
+// El pilar rellena la esquina entera y se une a cada pared con una cara plana, en ángulo recto: así no quedan cuñas
+// finas entre el cilindro y la pared, que se imprimen mal. Solo la cara que mira al interior es redonda.
 module pilares(lista) {
-    for (p = lista) hull() {
-        translate([p[0], p[1], PISO - 0.01]) cylinder(d = PILAR_D, h = ALTO - PISO + 0.01);
-        xa = min(p[0], p[2]) - (p[2] < p[0] ? 0.5 : 0);
-        xb = max(p[0], p[2]) + (p[2] > p[0] ? 0.5 : 0);
-        ya = min(p[1], p[3]) - (p[3] < p[1] ? 0.5 : 0);
-        yb = max(p[1], p[3]) + (p[3] > p[1] ? 0.5 : 0);
-        translate([xa, ya, PISO - 0.01]) cube([xb - xa, yb - ya, ALTO - PISO + 0.01]);
+    r = PILAR_D / 2;
+    for (p = lista) {
+        sx = p[0] > p[2] ? 1 : -1;     // hacia el interior de la caja
+        sy = p[1] > p[3] ? 1 : -1;
+        hull() {
+            translate([p[0], p[1], PISO - 0.01]) cylinder(d = PILAR_D, h = ALTO - PISO + 0.01);
+            // a lo largo de la pared vertical (x = esquina) y de la horizontal (y = esquina), hasta el borde del cilindro
+            translate([min(p[2] - sx * 0.5, p[0]), min(p[3] - sy * 0.5, p[1] + sy * r), PISO - 0.01])
+                cube([abs(p[0] - p[2] + sx * 0.5), abs(p[1] + sy * r - p[3] + sy * 0.5), ALTO - PISO + 0.01]);
+            translate([min(p[2] - sx * 0.5, p[0] + sx * r), min(p[3] - sy * 0.5, p[1]), PISO - 0.01])
+                cube([abs(p[0] + sx * r - p[2] + sx * 0.5), abs(p[1] - p[3] + sy * 0.5), ALTO - PISO + 0.01]);
+        }
     }
 }
 
@@ -157,7 +163,8 @@ module agujeros_tapa(lista) {
 
 // Apoyos de una placa: en cada esquina, una sola pieza sólida. Por debajo de la placa es un bloque que va desde fuera de
 // su borde hasta 3 mm hacia dentro (la placa apoya en él); por encima, una escuadra en L rodea la esquina con holgura.
-module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6) {
+// limites = [x mín, y mín, x máx, y máx] de las paredes: si un apoyo queda a menos de 3 mm, llega hasta la pared.
+module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6, limites = [-1e3, -1e3, 1e3, 1e3]) {
     e = 1.2;      // grosor de la escuadra
     lado = 5;     // largo de cada brazo de la escuadra
     for (sx = [0, 1], sy = [0, 1]) {
@@ -165,14 +172,18 @@ module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6) {
         y = y0 + sy * ancho;
         dx = sx == 0 ? 1 : -1;   // hacia dentro de la placa
         dy = sy == 0 ? 1 : -1;
-        fx = x - dx * (JUEGO + e);   // borde exterior de la escuadra
-        fy = y - dy * (JUEGO + e);
+        fx0 = x - dx * (JUEGO + e);   // borde exterior de la escuadra
+        fy0 = y - dy * (JUEGO + e);
+        px = sx == 0 ? limites[0] : limites[2];
+        py = sy == 0 ? limites[1] : limites[3];
+        fx = abs(fx0 - px) < 3 ? px - dx * 0.5 : fx0;
+        fy = abs(fy0 - py) < 3 ? py - dy * 0.5 : fy0;
         union() {
             // bloque bajo la placa: une el apoyo y el pie de la escuadra
             translate([min(fx, x + 3 * dx), min(fy, y + 3 * dy), PISO - 0.01]) cube([abs(x + 3 * dx - fx), abs(y + 3 * dy - fy), alto + 0.01]);
             // escuadra en L por encima, alrededor de la esquina
-            translate([min(fx, fx + dx * e), min(fy, y + lado * dy), PISO - 0.01]) cube([e, abs(y + lado * dy - fy), alto + pcb + 2]);
-            translate([min(fx, x + lado * dx), min(fy, fy + dy * e), PISO - 0.01]) cube([abs(x + lado * dx - fx), e, alto + pcb + 2]);
+            translate([min(fx, x - dx * JUEGO), min(fy, y + lado * dy), PISO - 0.01]) cube([abs(x - dx * JUEGO - fx), abs(y + lado * dy - fy), alto + pcb + 2]);
+            translate([min(fx, x + lado * dx), min(fy, y - dy * JUEGO), PISO - 0.01]) cube([abs(x + lado * dx - fx), abs(y - dy * JUEGO - fy), alto + pcb + 2]);
         }
     }
 }
@@ -192,11 +203,12 @@ module refuerzos_union(derecha) {
     cl = largo_con(derecha);
     ch = alto_con(derecha);
     module r() {
-        translate([PARED - 0.01, CON_Y - cl / 2 - 2, PISO - 0.01]) cube([max(fc + 1 - PARED, 1) + 0.01, cl + 4, CON_Z + ch / 2 + 2 - PISO]);
-        for (p = IMANES_U) hull() {
-            translate([PARED - 0.01, p[0], p[1]]) rotate([0, 90, 0]) cylinder(d = IMAN_U_D + 3, h = IMAN_FONDO + 0.8 - PARED + 0.01);
-            translate([PARED - 0.01, p[0] - (IMAN_U_D + 3) / 2, 0.5]) cube([IMAN_FONDO + 0.8 - PARED + 0.01, IMAN_U_D + 3, 0.1]);
-        }
+        // marco del conector: se alarga hasta el refuerzo del imán trasero para no dejar una rendija entre los dos
+        hasta = max(CON_Y + cl / 2 + 2, IMANES_U[1][0] - (IMAN_U_D + 3) / 2 + 0.5);
+        translate([PARED - 0.01, CON_Y - cl / 2 - 2, PISO - 0.01]) cube([max(fc + 1 - PARED, 1) + 0.01, hasta - (CON_Y - cl / 2 - 2), CON_Z + ch / 2 + 2 - PISO]);
+        // imanes: bloque de techo plano (un techo curvo dejaría una V contra los pilares)
+        for (p = IMANES_U) translate([PARED - 0.01, p[0] - (IMAN_U_D + 3) / 2, 0.5])
+            cube([IMAN_FONDO + 0.8 - PARED + 0.01, IMAN_U_D + 3, p[1] + (IMAN_U_D + 3) / 2 - 0.5]);
     }
     if (derecha) a_la_derecha() r(); else r();
 }

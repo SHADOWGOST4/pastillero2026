@@ -86,7 +86,7 @@ module mod_base() {
                 translate([x0, m_eje_y - BIS_R, ALTO - 3]) cube([BIS_K, 2 * BIS_R, 1]);
             }
             pilares(m_pilares);
-            apoyos_placa(m_pcf_x, m_pcf_y, PCF_L, PCF_A, PCF_ALTO);
+            apoyos_placa(m_pcf_x, m_pcf_y, PCF_L, PCF_A, PCF_ALTO, limites = [PARED, m_bahia, ANCHO - PARED, FONDO - PARED]);
             refuerzos_union(false);
             refuerzos_union(true);
             guia();
