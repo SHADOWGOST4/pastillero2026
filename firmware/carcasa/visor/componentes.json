@@ -46,7 +46,7 @@
    ],
    [
     "Botón de vinculación",
-    "agujero Ø 12,2 mm a 49 mm del lado izquierdo y 24 mm del frente"
+    "agujero Ø 12,5 mm a 49 mm del lado izquierdo y 24 mm del frente"
    ],
    [
     "Rejilla del buzzer",
@@ -217,7 +217,7 @@
   "hueco": [
    [
     "Agujero",
-    "Ø 6 mm desde el frente: pasa la pestaña"
+    "Ø 6,3 mm desde el frente: pasa la pestaña con holgura"
    ],
    [
     "Escalón",
@@ -331,7 +331,7 @@
    ],
    [
     "Rebaje de la tapita",
-    "33,2 × 7,5 mm, 1,2 mm de profundidad, a ras de lo alto del borde"
+    "33,4 × 7,7 mm, 1,2 mm de profundidad, a ras de lo alto del borde"
    ],
    [
     "Pozo",
@@ -387,7 +387,7 @@
    ],
    [
     "Agujero del pulsador",
-    "Ø 12,2 mm, a 11 mm del borde trasero"
+    "Ø 12,5 mm, a 11 mm del borde trasero"
    ],
    [
     "Agujeros de tornillo",
@@ -497,7 +497,7 @@
   "hueco": [
    [
     "Agujero",
-    "Ø 6 mm desde el frente: pasa la pestaña"
+    "Ø 6,3 mm desde el frente: pasa la pestaña con holgura"
    ],
    [
     "Escalón",
@@ -572,7 +572,7 @@
   "hueco": [
    [
     "Agujero",
-    "Ø 12,2 mm en la cubierta, a 11 mm del borde trasero"
+    "Ø 12,5 mm en la cubierta, a 11 mm del borde trasero"
    ],
    [
     "Rosca en la cubierta",
@@ -673,7 +673,7 @@
   "hueco": [
    [
     "Alojamiento",
-    "Ø 8,3 × 3,2 mm, a ras de la cara"
+    "Ø 8,4 × 3,2 mm, a ras de la cara"
    ]
   ],
   "comprobar": "Con los 2 pares de imanes las unidades deben sostenerse sin moverse, pero poder separarse tirando con la mano."
@@ -692,7 +692,7 @@
   "hueco": [
    [
     "Alojamiento",
-    "Ø 8,3 × 3,2 mm, a ras de la cara"
+    "Ø 8,4 × 3,2 mm, a ras de la cara"
    ]
   ],
   "comprobar": "Antes de pegarlos, ponlos sobre un imán de una cara izquierda: la cara que queda pegada es la que va hacia fuera."
@@ -711,7 +711,7 @@
   "hueco": [
    [
     "Rebaje",
-    "33,2 × 7,5 × 1,2 mm: 0,15 mm de holgura por lado"
+    "33,4 × 7,7 × 1,2 mm: 0,25 mm de holgura por lado"
    ],
    [
     "Apoyo",
@@ -782,7 +782,7 @@
   "hueco": [
    [
     "Agujero",
-    "Ø 12,2 mm en la tapa, a 49 mm del lado izquierdo y 24 mm del frente"
+    "Ø 12,5 mm en la tapa, a 49 mm del lado izquierdo y 24 mm del frente"
    ],
    [
     "Bisel",
@@ -855,7 +855,7 @@
    ],
    [
     "Hueco hexagonal",
-    "5,6 mm entre caras y 2,5 mm de fondo, en lo alto del pilar: la tuerca entra a presión y queda a ras"
+    "5,8 mm entre caras y 2,5 mm de fondo, en lo alto del pilar: la tuerca entra sin forzar y queda a ras"
    ],
    [
     "Debajo",
@@ -863,7 +863,7 @@
    ],
    [
     "Pared alrededor",
-    "1,1 mm hacia el interior y 2 mm hacia la cara exterior de la caja"
+    "1 mm hacia el interior y 2 mm hacia la cara exterior de la caja"
    ]
   ],
   "comprobar": "Mete la tuerca con una gota de epoxi (tipo Pegadit o Araldite), sin manchar la rosca, y deja secar antes de atornillar. No aprietes de más: el tornillo tira de la tuerca hacia la tapa."
@@ -882,7 +882,7 @@
    ],
    [
     "Hueco hexagonal",
-    "5,6 mm entre caras y 2,5 mm de fondo, en lo alto del pilar: la tuerca entra a presión y queda a ras"
+    "5,8 mm entre caras y 2,5 mm de fondo, en lo alto del pilar: la tuerca entra sin forzar y queda a ras"
    ],
    [
     "Debajo",
@@ -890,7 +890,7 @@
    ],
    [
     "Pared alrededor",
-    "1,1 mm hacia el interior y 2 mm hacia la cara exterior de la caja"
+    "1 mm hacia el interior y 2 mm hacia la cara exterior de la caja"
    ]
   ],
   "comprobar": "Mete la tuerca con una gota de epoxi (tipo Pegadit o Araldite), sin manchar la rosca, y deja secar antes de atornillar. No aprietes de más: el tornillo tira de la tuerca hacia la tapa."

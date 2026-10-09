@@ -101,7 +101,7 @@ module mod_base() {
         // canal abierto, del reed al pozo: el reed va dentro y sus cables corren por él; la tapita lo cubre entero
         translate([m_canal_x0, CANAL_Y0, ALTO - CANAL_H]) cube([m_canal_x1 - m_canal_x0, CANAL_A, CANAL_H + 1]);
         // rebaje en el que apoya la tapita, a ras con lo alto del borde
-        translate([m_tap_x0 - JUEGO / 2, m_tap_y0 - JUEGO / 2, ALTO - TAPITA_E]) cube([m_tap_x1 - m_tap_x0 + JUEGO, m_tap_y1 - m_tap_y0 + JUEGO, TAPITA_E + 1]);
+        translate([m_tap_x0 - 0.25, m_tap_y0 - 0.25, ALTO - TAPITA_E]) cube([m_tap_x1 - m_tap_x0 + 0.5, m_tap_y1 - m_tap_y0 + 0.5, TAPITA_E + 1]);
         // pozo: los cables bajan del canal al fondo
         translate([m_cx - POZO_A / 2, POZO_Y0, PISO]) cube([POZO_A, CANAL_Y0 + CANAL_A - POZO_Y0, ALTO - PISO - CANAL_H + 1]);
         // LED: entra por el frente hasta el escalón; sus patas salen al pozo

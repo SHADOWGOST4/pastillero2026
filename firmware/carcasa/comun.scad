@@ -21,7 +21,7 @@ JUEGO = 0.3;        // holgura entre piezas que encajan
 
 // Tapas atornilladas con tornillos M3 x 10 de cabeza avellanada sobre tuercas M3 normales (DIN 934). Cada tuerca
 // entra desde arriba en un hueco hexagonal de lo alto del pilar, a presión y a ras, y se pega con epoxi.
-TUERCA_E = 5.6;         // hueco entre caras (tuerca de 5,5 mm)
+TUERCA_E = 5.8;         // hueco entre caras (tuerca de 5,5 mm; más ancho dejaría el pilar con menos de 1 mm de pared)
 TUERCA_H = 2.5;         // fondo del hueco (tuerca de 2,4 mm)
 TORNILLO_L = 10;        // largo del tornillo
 TORNILLO_PASO = 3.4;    // paso del M3 en la tapa
@@ -29,7 +29,7 @@ TORNILLO_CABEZA = 6.5;  // cabeza avellanada del M3
 PILAR_D = 8.6;          // pilar de la esquina, unido a las dos paredes
 
 // Pulsador de panel de 12 mm (tipo PBS-33B), medido: los mismos en los módulos y en la base
-PULS_D = 12.2;          // agujero de la rosca M12
+PULS_D = 12.5;          // agujero de la rosca M12 (0,25 mm por lado: los agujeros impresos salen más pequeños)
 PULS_BISEL = 17;        // bisel negro, apoyado sobre la tapa
 PULS_ARRIBA = 8;        // bisel y cúpula por encima de la tapa
 PULS_ROSCA = 10;        // rosca, desde la cara de abajo del bisel
@@ -38,7 +38,7 @@ PULS_PATAS = 4;         // terminales por debajo de la rosca
 // LED de 5 mm en el frente de cada unidad, siempre a la misma altura. Entra desde el frente, con las patas primero,
 // por un agujero por el que pasa la pestaña; a LED_TOPE de profundidad un escalón la detiene y la cúpula asoma 3,5 mm.
 LED_Z = 14;
-LED_AGUJERO = 6;        // pasa la pestaña de Ø 5,8
+LED_AGUJERO = 6.3;      // pasa la pestaña de Ø 5,8 con 0,25 mm por lado
 LED_TOPE = 5.1;         // profundidad del escalón (8,6 de LED - 3,5 que asoman)
 LED_PASO = 4;           // paso de las patas detrás del escalón
 
@@ -223,7 +223,7 @@ module huecos_union(derecha) {
     module h() {
         translate([-1, CON_Y - cl / 2 - CON_HOLGURA, CON_Z - ch / 2 - CON_HOLGURA]) cube([fc + 1, cl + 2 * CON_HOLGURA, ch + 2 * CON_HOLGURA]);
         translate([fc - 0.01, CON_Y - cl / 2, CON_Z - ch / 2 - 1.5]) cube([4, cl, ch + 3]);
-        for (p = IMANES_U) translate([-1, p[0], p[1]]) rotate([0, 90, 0]) cylinder(d = IMAN_U_D + 0.3, h = IMAN_FONDO + 1);
+        for (p = IMANES_U) translate([-1, p[0], p[1]]) rotate([0, 90, 0]) cylinder(d = IMAN_U_D + 0.4, h = IMAN_FONDO + 1);
         if (derecha) translate([0, GUIA_Y, -1]) linear_extrude(ALTO + 2) offset(delta = JUEGO) polygon(perfil_guia());
     }
     if (derecha) a_la_derecha() h(); else h();
@@ -252,7 +252,7 @@ module tapa_lateral() {
         // pines del macho
         translate([-MACHO_SALE - 0.5, CON_Y - MACHO_L / 2 - 0.4, CON_Z - MACHO_A / 2 - 0.4]) cube([MACHO_SALE + 1, MACHO_L + 0.8, MACHO_A + 0.8]);
         // imanes, a ras de su cara
-        for (p = IMANES_U) translate([-IMAN_FONDO, p[0], p[1]]) rotate([0, 90, 0]) cylinder(d = IMAN_U_D + 0.3, h = IMAN_FONDO + 1);
+        for (p = IMANES_U) translate([-IMAN_FONDO, p[0], p[1]]) rotate([0, 90, 0]) cylinder(d = IMAN_U_D + 0.4, h = IMAN_FONDO + 1);
         // canal de la guía
         translate([0, GUIA_Y, -1]) mirror([1, 0, 0]) linear_extrude(ALTO + TAPA + 2) offset(delta = JUEGO)
             polygon([[-1, -GUIA_BASE / 2], [GUIA_SALE, -GUIA_PUNTA / 2], [GUIA_SALE, GUIA_PUNTA / 2], [-1, GUIA_BASE / 2]]);

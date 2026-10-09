@@ -2,7 +2,8 @@
 
 Uso:  python comprobar.py            (piezas para imprimir y choques)
       python comprobar.py piezas     (solo exporta los STL de ../stl)
-      python comprobar.py choques    (solo comprueba que nada se pise)
+      python comprobar.py choques    (solo comprueba que nada se pise, y las holguras)
+      python comprobar.py holguras   (solo las holguras de las piezas que encajan; HOLGURA=0.2 para pedir más)
 
 OpenSCAD se busca en la variable de entorno OPENSCAD, en la ruta de instalación de Windows o en el PATH. Se prefiere una
 versión reciente (2024 o posterior) con el motor Manifold, decenas de veces más rápido que el CGAL de la 2021.
@@ -239,9 +240,63 @@ def interferencias():
         print(f"{marca}{nombre:38s} {vol:9.2f}{detalle}")
 
 
+HOLGURA = float(os.environ.get("HOLGURA", 0.15))   # mm libres por lado que necesita una pieza para entrar en su hueco
+
+
+def holguras():
+    """Agranda cada componente HOLGURA mm hacia los lados (no en la dirección en que se mete ni sobre lo que apoya) y
+    mira si toca la carcasa: si toca, su hueco queda demasiado justo para una pieza impresa."""
+    print(f"== holguras (cada pieza necesita {HOLGURA} mm libres por lado) ==")
+    M = "mod_base()"
+    # dirección en que se mete cada pieza: se agranda con un disco perpendicular a ella (con un cubo, las diagonales
+    # crecerían 1,4 veces más); "y" es solo para el reed, que apoya en el fondo del canal
+    XY, XZ, YZ, Y = "z", "y", "x", "solo_y"
+    lista = [
+        ("modulo: pulsador en la cubierta", "mod_cubierta()", "mod_pulsador()", XY),
+        ("modulo: pulsador en la caja", M, "mod_pulsador()", XY),
+        ("modulo: LED en su agujero", M, "mod_led()", XZ),
+        ("modulo: reed en el canal", M, "mod_reed()", Y),
+        ("modulo: tapita en su rebaje", M, "mod_tapita()", XY),
+        ("modulo: iman en la tapa", "mod_tapa(1)", "mod_iman()", XY),
+        ("modulo: tuercas en los pilares", M, "mod_tuercas()", XY),
+        ("modulo: tira macho en la pared", M, "con_macho()", YZ),
+        ("modulo: tira hembra en la pared", M, "con_hembra()", YZ),
+        ("modulo: imanes de la izquierda", M, "imanes_union(false)", YZ),
+        ("modulo: imanes de la derecha", M, "imanes_union(true)", YZ),
+        ("tapa lateral: imanes", "tapa_lateral()", "translate([-IMAN_U_H, 0, 0]) imanes_union(false)", YZ),
+        ("base: ESP32 en la caja", "esp_caja()", "esp_esp32()", XY),
+        ("base: zocalos en la caja", "esp_caja()", "esp_zocalos()", XY),
+        ("base: buzzer en su anillo", "esp_caja()", "esp_buzzer()", XY),
+        ("base: LED en su agujero", "esp_caja()", "esp_led()", XZ),
+        ("base: boton de vinculacion", "esp_caja()", "esp_boton_v()", XY),
+        ("base: boton en la tapa", "esp_tapa()", "esp_boton_v()", XY),
+        ("base: tuercas en los pilares", "esp_caja()", "esp_tuercas()", XY),
+        ("base: tira macho en la pared", "esp_caja()", "con_macho()", YZ),
+        ("base: tira hembra en la pared", "esp_caja()", "con_hembra()", YZ),
+        ("base: imanes de la izquierda", "esp_caja()", "imanes_union(false)", YZ),
+        ("base: imanes de la derecha", "esp_caja()", "imanes_union(true)", YZ),
+    ]
+    pares = []
+    r = HOLGURA
+    giro = {"z": "[0, 0, 0]", "y": "[90, 0, 0]", "x": "[0, 90, 0]"}
+    for nombre, pieza, comp, eje in lista:
+        if eje == "solo_y":
+            herramienta = f"cube([1e-5, {2 * HOLGURA}, 1e-5], center = true)"
+        else:
+            herramienta = f"rotate({giro[eje]}) cylinder(r = {r:.4f}, h = 1e-5, center = true, $fn = 16)"
+        pares.append((nombre, pieza, f"minkowski() {{ {comp}; {herramienta}; }}"))
+    resultados = en_paralelo(lambda p: interseccion("h_" + re.sub(r"\W+", "_", p[0]), p[1], p[2]), pares)
+    for (nombre, _a, _b), (vol, cj) in zip(pares, resultados):
+        detalle = "" if cj is None else f"  zona {[round(x,1) for x in cj[0]]} -> {[round(x,1) for x in cj[1]]}"
+        marca = "OK " if vol < 0.01 else "XX "
+        print(f"{marca}{nombre:38s} {vol:9.2f}{detalle}")
+
+
 if __name__ == "__main__":
     que = sys.argv[1] if len(sys.argv) > 1 else "todo"
     if que in ("todo", "piezas"):
         piezas_impresion()
     if que in ("todo", "choques"):
         interferencias()
+    if que in ("todo", "choques", "holguras"):
+        holguras()
