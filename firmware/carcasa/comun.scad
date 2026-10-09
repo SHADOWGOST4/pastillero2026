@@ -155,16 +155,25 @@ module agujeros_tapa(lista) {
     }
 }
 
-// Apoyos de una placa: un poste en cada esquina y escuadras que no la dejan moverse
+// Apoyos de una placa: en cada esquina, una sola pieza sólida. Por debajo de la placa es un bloque que va desde fuera de
+// su borde hasta 3 mm hacia dentro (la placa apoya en él); por encima, una escuadra en L rodea la esquina con holgura.
 module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6) {
+    e = 1.2;      // grosor de la escuadra
+    lado = 5;     // largo de cada brazo de la escuadra
     for (sx = [0, 1], sy = [0, 1]) {
         x = x0 + sx * largo;
         y = y0 + sy * ancho;
-        dx = sx == 0 ? 1 : -1;
+        dx = sx == 0 ? 1 : -1;   // hacia dentro de la placa
         dy = sy == 0 ? 1 : -1;
-        translate([min(x, x + 3 * dx), min(y, y + 3 * dy), PISO - 0.01]) cube([3, 3, alto + 0.01]);
-        translate([sx == 0 ? x - JUEGO - 1.2 : x + JUEGO, min(y, y + 5 * dy), PISO - 0.01]) cube([1.2, 5, alto + pcb + 2]);
-        translate([min(x, x + 5 * dx), sy == 0 ? y - JUEGO - 1.2 : y + JUEGO, PISO - 0.01]) cube([5, 1.2, alto + pcb + 2]);
+        fx = x - dx * (JUEGO + e);   // borde exterior de la escuadra
+        fy = y - dy * (JUEGO + e);
+        union() {
+            // bloque bajo la placa: une el apoyo y el pie de la escuadra
+            translate([min(fx, x + 3 * dx), min(fy, y + 3 * dy), PISO - 0.01]) cube([abs(x + 3 * dx - fx), abs(y + 3 * dy - fy), alto + 0.01]);
+            // escuadra en L por encima, alrededor de la esquina
+            translate([min(fx, fx + dx * e), min(fy, y + lado * dy), PISO - 0.01]) cube([e, abs(y + lado * dy - fy), alto + pcb + 2]);
+            translate([min(fx, x + lado * dx), min(fy, fy + dy * e), PISO - 0.01]) cube([abs(x + lado * dx - fx), e, alto + pcb + 2]);
+        }
     }
 }
 
