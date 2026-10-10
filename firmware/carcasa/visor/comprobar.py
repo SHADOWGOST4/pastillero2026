@@ -259,6 +259,7 @@ def holguras():
         ("modulo: tapita en su rebaje", M, "mod_tapita()", XY),
         ("modulo: iman en la tapa", "mod_tapa(1)", "mod_iman()", XY),
         ("modulo: tuercas en los pilares", M, "mod_tuercas()", XY),
+        ("modulo: PCF8574 en la bahia", M, "mod_pcf()", XY),
         ("modulo: tira macho en la pared", M, "con_macho()", YZ),
         ("modulo: tira hembra en la pared", M, "con_hembra()", YZ),
         ("modulo: imanes de la izquierda", M, "imanes_union(false)", YZ),

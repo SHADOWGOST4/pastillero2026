@@ -514,36 +514,48 @@
   "modelo": [
    [
     "Placa",
-    "40 × 20 × 1,6 mm"
+    "adaptador I2C para LCD1602 con PCF8574T: 41,5 × 19,3 × 1,6 mm"
    ],
    [
-    "Chip",
-    "8 × 10 × 2 mm"
+    "Tira de 16 pines",
+    "hacia abajo, a lo largo del borde trasero: 2,5 mm de plástico y 6 mm de pines"
    ],
    [
-    "Conectores del bus",
-    "2 × 10 × 8 mm, en los extremos largos"
+    "Conector del bus",
+    "4 pines en ángulo recto (GND, VCC, SDA, SCL) en el extremo izquierdo: salen 6 mm"
+   ],
+   [
+    "Encima",
+    "chip, potenciómetro azul (unos 5 mm de alto) y puente de la luz (8,5 mm con el capuchón)"
+   ],
+   [
+    "Pines que se usan",
+    "4, 5 y 6 de la tira (P0 LED, P1 reed, P2 botón); el P3 va al transistor de la luz: no se usa"
    ]
   ],
   "hueco": [
    [
-    "Alojamiento",
-    "40,6 × 20,6 mm (holgura 0,3 mm)"
-   ],
-   [
     "Apoyos",
-    "4 postes de 4 mm de alto con escuadras"
+    "4 postes de 12,5 mm con escuadras, holgura 0,3 mm; los traseros se corren hacia dentro para dejar libre la tira"
    ],
    [
-    "Altura libre sobre la placa",
-    "20 mm hasta la cubierta"
+    "Posición",
+    "a 6,3 mm de la pared izquierda y 7,6 mm detrás del bloque divisor, pegada al refuerzo de la tira hembra"
    ],
    [
-    "Bahía",
-    "55,2 × 36,2 mm: sobran 14 mm de ancho y 15 de fondo"
+    "Bajo la tira",
+    "4 mm libres hasta el fondo"
+   ],
+   [
+    "Conector del bus",
+    "sus pines pasan 0,2 mm por encima del refuerzo de la tira macho (llega a 17,25 mm)"
+   ],
+   [
+    "Pulsador",
+    "sus patas quedan 0,5 mm por encima de las soldaduras de la tira"
    ]
   ],
-  "comprobar": "Mide tu placa PCF8574: largo, ancho y dónde quedan los conectores. Las comunes miden entre 35 y 40 mm de largo.",
+  "comprobar": "Mide tu placa: largo, ancho, cuánto bajan los pines de la tira de 16 y cuánto salen los del bus. Los cables van soldados en la punta de los pines (no hay sitio para conectores dupont). Dirección I2C: 0x27 de fábrica (0x3F si el chip es PCF8574A); une el puente A0 en uno de los dos módulos para que quede en 0x26.",
   "supuesta": true
  },
  "mod_pulsador": {
@@ -580,7 +592,7 @@
    ],
    [
     "Debajo",
-    "llega a 18 mm del fondo, detrás de la placa PCF8574: no se tocan"
+    "llega a 18 mm de altura, encima del borde trasero de la placa PCF8574: quedan 0,5 mm"
    ]
   ],
   "comprobar": "Mide la tuerca (entre caras y grosor) y aprieta sin pasarte: la rosca es de plástico."

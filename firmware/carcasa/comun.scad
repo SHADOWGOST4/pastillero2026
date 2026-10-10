@@ -165,7 +165,8 @@ module agujeros_tapa(lista) {
 // su borde hasta 3 mm hacia dentro (la placa apoya en él); por encima, una escuadra en L rodea la esquina con holgura.
 // limites = [x mín, y mín, x máx, y máx] de las paredes: si un apoyo queda a menos de 3 mm, llega hasta la pared.
 // pilares: si hay un pilar junto a la esquina, el apoyo llega hasta las paredes y se une a él (sin rendijas).
-module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6, limites = [-1e3, -1e3, 1e3, 1e3], pilares = []) {
+// tira: franja libre bajo la placa junto a su borde trasero (una tira de pines hacia abajo): ahí el bloque se corre hacia dentro.
+module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6, limites = [-1e3, -1e3, 1e3, 1e3], pilares = [], tira = 0) {
     e = 1.2;      // grosor de la escuadra
     lado = 5;     // largo de cada brazo de la escuadra
     for (sx = [0, 1], sy = [0, 1]) {
@@ -182,7 +183,10 @@ module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6, limites = [-1e3, -1e3
         fy = (con_pilar || abs(fy0 - py) < 3) ? py - dy * 0.5 : fy0;
         union() {
             // bloque bajo la placa: une el apoyo y el pie de la escuadra
-            translate([min(fx, x + 3 * dx), min(fy, y + 3 * dy), PISO - 0.01]) cube([abs(x + 3 * dx - fx), abs(y + 3 * dy - fy), alto + 0.01]);
+            if (sy == 1 && tira > 0)
+                translate([min(fx, x + 3 * dx), y - tira - 3, PISO - 0.01]) cube([abs(x + 3 * dx - fx), 3, alto + 0.01]);
+            else
+                translate([min(fx, x + 3 * dx), min(fy, y + 3 * dy), PISO - 0.01]) cube([abs(x + 3 * dx - fx), abs(y + 3 * dy - fy), alto + 0.01]);
             // escuadra en L por encima, alrededor de la esquina
             translate([min(fx, x - dx * JUEGO), min(fy, y + lado * dy), PISO - 0.01]) cube([abs(x - dx * JUEGO - fx), abs(y + lado * dy - fy), alto + pcb + 2]);
             translate([min(fx, x + lado * dx), min(fy, y - dy * JUEGO), PISO - 0.01]) cube([abs(x + lado * dx - fx), abs(y - dy * JUEGO - fy), alto + pcb + 2]);

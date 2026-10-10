@@ -45,9 +45,14 @@ BIS_K = 10;             // ancho de cada nudillo de la base
 PASADOR = 2.1;          // filamento de 1,75 mm
 
 // ---------- Bahía ----------
-PCF_L = 40;             // placa PCF8574
-PCF_A = 20;
-PCF_ALTO = 4;           // altura de los postes de la placa
+// Placa PCF8574: el adaptador I2C para pantallas LCD1602 (PCF8574T). Medidas típicas: compruébalas con la tuya.
+PCF_L = 41.5;
+PCF_A = 19.3;
+PCF_ALTO = 12.5;        // altura de los postes: la tira de 16 pines (hacia abajo) queda 4 mm sobre el fondo y los pines
+                        // del bus pasan por encima del refuerzo de la tira macho (llega a 17,25 mm)
+PCF_TIRA_P = 2.5;       // plástico de la tira de 16 pines, bajo la placa, a lo largo del borde trasero
+PCF_TIRA_SALE = 6;      // pines por debajo de ese plástico
+PCF_BUS_SALE = 6;       // pines del conector del bus (GND, VCC, SDA, SCL): salen en horizontal por el extremo izquierdo
 BOTON_D = PULS_D;       // pulsador de panel de 12 mm (ver comun.scad)
 
 // ---------- Derivadas ----------
@@ -63,8 +68,8 @@ m_tap_x0 = m_canal_x0 - TAPITA_H;
 m_tap_x1 = m_canal_x1 + TAPITA_H;
 m_tap_y0 = CANAL_Y0 - TAPITA_H;
 m_tap_y1 = CANAL_Y0 + CANAL_A + TAPITA_H;
-m_pcf_x = m_cx - PCF_L / 2;
-m_pcf_y = m_bahia + 0.6;
+m_pcf_x = ANCHO - PARED - 7.4 - PCF_L;   // contra el refuerzo de la tira hembra; el conector del bus mira a la izquierda
+m_pcf_y = m_bahia + 7.6;                // detrás de los pilares delanteros
 m_boton_y = FONDO - PARED - 11;
 m_pilares = pilares_en(PARED, m_bahia, ANCHO - PARED, FONDO - PARED);
 
@@ -86,9 +91,13 @@ module mod_base() {
                 translate([x0, m_eje_y - BIS_R, ALTO - 3]) cube([BIS_K, 2 * BIS_R, 1]);
             }
             pilares(m_pilares);
-            apoyos_placa(m_pcf_x, m_pcf_y, PCF_L, PCF_A, PCF_ALTO, limites = [PARED, m_bahia, ANCHO - PARED, FONDO - PARED], pilares = m_pilares);
+            apoyos_placa(m_pcf_x, m_pcf_y, PCF_L, PCF_A, PCF_ALTO, limites = [PARED, m_bahia, ANCHO - PARED, FONDO - PARED], pilares = m_pilares, tira = 2.9);
             refuerzos_union(false);
             refuerzos_union(true);
+            // relleno entre el refuerzo de cada cara y el apoyo trasero de la placa (si no, quedan rendijas de 0,4-1,3 mm);
+            // llega solo hasta lo alto del refuerzo: por encima pasan los pines del bus
+            relleno_apoyo(false);
+            a_la_derecha() relleno_apoyo(true);
             guia();
         }
         agujeros_pilares(m_pilares);
@@ -163,12 +172,26 @@ module mod_abrir(angulo) {
     translate([0, m_eje_y, m_eje_z]) rotate([-angulo, 0, 0]) translate([0, -m_eje_y, -m_eje_z]) children();
 }
 
+// Bloque de la cara izquierda (x = 0) que une el refuerzo de la unión con el apoyo trasero de la placa PCF8574
+module relleno_apoyo(derecha) {
+    translate([PARED - 0.01, CON_Y, PISO - 0.01])
+        cube([fondo_con(derecha) + 1 - PARED + 0.01, m_pcf_y + PCF_A - 5 + 0.5 - CON_Y, CON_Z + alto_con(derecha) / 2 + 2 - PISO]);
+}
+
 // ---------- Componentes (solo para ver el montaje; no se imprimen) ----------
 module mod_pcf() {
+    ty = PCF_A - 1.27;   // fila de la tira de 16 pines
     translate([m_pcf_x, m_pcf_y, PISO + PCF_ALTO]) {
         cube([PCF_L, PCF_A, 1.6]);
-        translate([PCF_L / 2 - 4, PCF_A / 2 - 5, 1.6]) cube([8, 10, 2]);             // chip
-        for (x = [1, PCF_L - 3]) translate([x, PCF_A / 2 - 5, 1.6]) cube([2, 10, 8]); // conectores del bus
+        translate([(PCF_L - 40.64) / 2, ty - 1.25, -PCF_TIRA_P]) cube([40.64, 2.5, PCF_TIRA_P]);            // tira de 16
+        for (i = [0 : 15]) translate([(PCF_L - 40.64) / 2 + 1.27 + i * 2.54 - 0.32, ty - 0.32, -PCF_TIRA_P - PCF_TIRA_SALE])
+            cube([0.64, 0.64, PCF_TIRA_P + PCF_TIRA_SALE + 2.6]);
+        translate([14, 2, 1.6]) cube([10, 7.5, 1.75]);                                                    // chip PCF8574T
+        translate([3.5, 9, 1.6]) cube([6.6, 7, 5]);                                                       // potenciómetro azul
+        translate([PCF_L - 3.5, 12, 1.6]) cube([2.5, 5, 8.5]);                                            // puente de la luz
+        // conector del bus en ángulo recto: plástico sobre la placa y pines hacia fuera
+        translate([0, PCF_A / 2 - 5.1, 1.6]) cube([2.5, 10.2, 2.5]);
+        for (i = [0 : 3]) translate([-PCF_BUS_SALE, PCF_A / 2 + (i - 1.5) * 2.54 - 0.32, 1.6 + 1.25 - 0.32]) cube([PCF_BUS_SALE + 2.5, 0.64, 0.64]);
     }
 }
 // Espacio que necesita la placa PCF8574 con su holgura (para comprobar que nada de la caja lo invade)
