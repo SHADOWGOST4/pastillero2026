@@ -92,8 +92,8 @@ module mod_base() {
                 translate([x0, m_eje_y - BIS_R, ALTO - 3]) cube([BIS_K, 2 * BIS_R, 1]);
             }
             pilares(m_pilares);
-            // la placa apoya a la izquierda en dos escuadras y a la derecha en el refuerzo de la unión, que hace de repisa
-            apoyos_placa(m_pcf_x, m_pcf_y, PCF_L, PCF_A, PCF_ALTO, limites = [PARED, m_bahia, ANCHO - PARED, FONDO - PARED], pilares = m_pilares, tira = 2.9, lados = [0]);
+            // la placa apoya a la izquierda en un pedestal y a la derecha en el refuerzo de la unión, que hace de repisa
+            pedestal_pcf();
             refuerzos_union(false);
             refuerzos_union(true, alto = PISO + PCF_ALTO);
             reborde_pcf();
@@ -186,10 +186,25 @@ module reborde_pcf() {
     // la esquina trasera llega hasta el pilar, para no dejar una rendija entre los dos
     translate([x0, m_pcf_y + PCF_A + JUEGO, z0]) cube([ANCHO - PARED + 0.01 - x0, FONDO - PARED - PILAR_O - (m_pcf_y + PCF_A + JUEGO), h]);
 }
-// Muesca de la repisa por donde baja la tira de 16 pines de la placa
+// Pedestal de la izquierda: un solo bloque bajo el borde izquierdo de la placa, de delante atrás, con un reborde en sus
+// dos esquinas; en medio del reborde queda un hueco para los pines del conector del bus, que salen por ese lado
+PED_E = 2;      // grosor del reborde, a ras de la cara del pedestal
+PED_DENTRO = 4; // cuánto entra el pedestal bajo la placa
+module pedestal_pcf() {
+    x0 = m_pcf_x - JUEGO - PED_E;
+    ya = m_pcf_y - JUEGO - 1.2;
+    yb = m_pcf_y + PCF_A + JUEGO + 1.2;
+    z0 = PISO + PCF_ALTO;
+    h = 1.6 + 2;
+    bus = [m_pcf_y + PCF_A / 2 - 5.1 - 1, m_pcf_y + PCF_A / 2 + 5.1 + 1];   // el conector del bus con 1 mm a cada lado
+    translate([x0, ya, PISO - 0.01]) cube([m_pcf_x + PED_DENTRO - x0, yb - ya, PCF_ALTO + 0.01]);
+    for (t = [[ya, bus[0]], [bus[1], yb]]) translate([x0, t[0], z0 - 0.01]) cube([PED_E, t[1] - t[0], h + 0.01]);
+    for (y = [ya, yb - 1.2]) translate([x0, y, z0 - 0.01]) cube([m_pcf_x + PED_DENTRO - x0, 1.2, h + 0.01]);
+}
+// Muesca por donde baja la tira de 16 pines de la placa: cruza el pedestal y la repisa
 module muesca_tira_pcf() {
-    translate([m_pcf_x + PCF_L - 8, m_pcf_y + PCF_A - 2.9, PISO + PCF_ALTO - PCF_TIRA_P - PCF_TIRA_SALE - 0.5])
-        cube([8 + JUEGO, 2.9 + JUEGO, PCF_TIRA_P + PCF_TIRA_SALE + 1]);
+    translate([m_pcf_x - JUEGO, m_pcf_y + PCF_A - 2.9, PISO + PCF_ALTO - PCF_TIRA_P - PCF_TIRA_SALE - 0.5])
+        cube([PCF_L + 2 * JUEGO, 2.9 + JUEGO, PCF_TIRA_P + PCF_TIRA_SALE + 1]);
 }
 
 // ---------- Componentes (solo para ver el montaje; no se imprimen) ----------
