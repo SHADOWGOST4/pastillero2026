@@ -1,0 +1,933 @@
+{
+ "esp_caja": {
+  "modelo": [
+   [
+    "Exterior",
+    "70 × 100 × 28 mm (sin tapa)"
+   ],
+   [
+    "Interior",
+    "65,2 × 95,2 × 25,6 mm"
+   ],
+   [
+    "Paredes y fondo",
+    "2,4 mm"
+   ],
+   [
+    "Abertura del USB",
+    "13 × 10 mm, centrada a 21,2 mm de altura"
+   ],
+   [
+    "Pilares de las esquinas",
+    "Ø 8,6 mm unidos a las dos paredes, con hueco hexagonal para una tuerca M3"
+   ]
+  ],
+  "hueco": [
+   [
+    "Cara izquierda",
+    "tira macho, 2 imanes y guía saliente: encaja un módulo a la izquierda"
+   ],
+   [
+    "Cara derecha",
+    "tira hembra, 2 imanes y canal de la guía: encaja un módulo a la derecha"
+   ]
+  ],
+  "comprobar": "Tras imprimir: 70 × 100 mm con una tolerancia de ±0,3 mm. Comprueba que el enchufe USB entra por la abertura."
+ },
+ "esp_tapa": {
+  "modelo": [
+   [
+    "Tamaño",
+    "70 × 100 × 4 mm"
+   ],
+   [
+    "Agujeros EN y BOOT",
+    "Ø 3,4 mm, a ±8,2 mm del centro del ESP32 y a 4,1 mm del borde de la placa donde está el USB"
+   ],
+   [
+    "Botón de vinculación",
+    "agujero Ø 12,5 mm a 57,4 mm del lado izquierdo y 24 mm del frente"
+   ],
+   [
+    "Rejilla del buzzer",
+    "7 ranuras de 1,6 × 12 mm, paso 3 mm"
+   ],
+   [
+    "Rótulos",
+    "BOOT, EN, USB y VINCULAR, grabados 0,6 mm"
+   ]
+  ],
+  "hueco": [
+   [
+    "Altura libre bajo la tapa",
+    "5,2 mm sobre el módulo del ESP32"
+   ]
+  ],
+  "comprobar": "Con el ESP32 puesto, pasa un clip por cada agujero: debe tocar el botón que lleva el mismo rótulo."
+ },
+ "esp_perforada": {
+  "modelo": [
+   [
+    "Placa",
+    "40 × 60 × 1,6 mm"
+   ],
+   [
+    "Posición",
+    "del frente: de 35,1 a 95,1 mm; a lo ancho: centrada"
+   ]
+  ],
+  "hueco": [
+   [
+    "Apoyos",
+    "4 postes de 3 mm de alto con escuadras, holgura 0,3 mm"
+   ],
+   [
+    "Franja libre a la derecha del ESP32",
+    "8,5 mm (conector JST y transistor)"
+   ],
+   [
+    "Espacio debajo",
+    "3 mm, para las soldaduras"
+   ]
+  ],
+  "comprobar": "Mide tu placa: debe ser de 40 × 60 mm (el formato de 4 × 6 cm). Si es de otro tamaño, cambia PERF_A y PERF_L.",
+  "supuesta": true
+ },
+ "esp_zocalos": {
+  "modelo": [
+   [
+    "Cada tira",
+    "2,5 × 38,1 × 8,5 mm (15 pines, paso 2,54 mm)"
+   ],
+   [
+    "Entre las dos tiras",
+    "25,4 mm entre centros, igual que las filas del ESP32"
+   ],
+   [
+    "Posición",
+    "el primer pin a 6,5 mm del borde de la antena del ESP32"
+   ]
+  ],
+  "hueco": [
+   [
+    "Alto sobre la placa perforada",
+    "8,5 mm, y encima 2,5 mm del plástico de los pines del ESP32"
+   ]
+  ],
+  "comprobar": "Usa tiras hembra de 8,5 mm de alto. Si las tuyas son más bajas o más altas, cambia ZOCALO.",
+  "supuesta": true
+ },
+ "esp_esp32": {
+  "modelo": [
+   [
+    "Placa",
+    "52,5 × 28 × 1,6 mm (medida en tus fotos, ±0,5 mm)"
+   ],
+   [
+    "Módulo WROOM-32",
+    "18 × 25,5 × 3,2 mm, con la antena en el borde del frente"
+   ],
+   [
+    "Conector USB-C",
+    "9 × 7,5 × 3,2 mm, sobresale 1,9 mm del borde"
+   ],
+   [
+    "Pines",
+    "2 filas de 15, paso 2,54 mm, a 25,4 mm entre filas; el primero a 6,5 mm del borde de la antena"
+   ],
+   [
+    "Botones EN y BOOT",
+    "a ±8,2 mm del centro y a 4,1 mm del borde del USB; BOOT a la izquierda mirando desde el frente"
+   ],
+   [
+    "Agujeros de la placa",
+    "4 de unos Ø 3 mm en las esquinas (no se usan: la sujetan los zócalos)"
+   ],
+   [
+    "Altura total sobre la perforada",
+    "8,5 de zócalo + 2,5 de pines + 1,6 + 3,2 = 15,8 mm"
+   ]
+  ],
+  "hueco": [
+   [
+    "Espacio al USB-C",
+    "0,6 mm entre el conector y la pared trasera"
+   ],
+   [
+    "Altura libre sobre el módulo",
+    "5,2 mm hasta la tapa"
+   ]
+  ],
+  "comprobar": "Medido en tus fotos sobre papel milimetrado. Confirma con un calibre el largo (52,5 mm), el ancho (28 mm) y la distancia entre filas de pines (25,4 mm)."
+ },
+ "esp_buzzer": {
+  "modelo": [
+   [
+    "Buzzer",
+    "Ø 12 × 9 mm sin las patas (medido)"
+   ],
+   [
+    "Patas",
+    "salen por debajo, separadas unos 6,5 mm"
+   ],
+   [
+    "Posición",
+    "centrado a 22 mm del frente, apoyado a 3 mm del fondo"
+   ]
+  ],
+  "hueco": [
+   [
+    "Anillo",
+    "Ø interior 12,4 mm, exterior 15,6 mm, 8 mm de alto"
+   ],
+   [
+    "Escalón",
+    "a 3 mm del fondo: el buzzer apoya en él y debajo quedan 3 mm para doblar las patas"
+   ],
+   [
+    "Ranura de las patas",
+    "9 × 3 mm en el anillo, mirando hacia la placa perforada"
+   ],
+   [
+    "Altura libre sobre el buzzer",
+    "13,6 mm hasta la tapa, bajo la rejilla"
+   ]
+  ],
+  "comprobar": "Dobla las patas 90° hacia atrás antes de encajarlo, para que salgan por la ranura. Suelda un cable a cada pata o llévalas directas a la placa perforada."
+ },
+ "esp_led": {
+  "modelo": [
+   [
+    "LED",
+    "Ø 5 mm, 8,6 mm de largo con la cúpula, pestaña de Ø 5,8 × 1 mm con un lado plano (cátodo)"
+   ],
+   [
+    "Patas",
+    "la larga es el ánodo (+), la corta el cátodo (−)"
+   ],
+   [
+    "Asoma",
+    "4,4 mm por el frente, a 14 mm del fondo y centrado"
+   ],
+   [
+    "Color",
+    "verde"
+   ]
+  ],
+  "hueco": [
+   [
+    "Agujero",
+    "Ø 6,3 mm desde el frente: pasa la pestaña con holgura"
+   ],
+   [
+    "Escalón",
+    "a 4,2 mm de profundidad, Ø 4 mm: detiene la pestaña y deja pasar las patas"
+   ],
+   [
+    "Patas",
+    "salen por detrás del soporte, hacia la placa perforada"
+   ]
+  ],
+  "comprobar": "Si es un verde brillante (unos 3 V), con 220 Ω casi no se verá: pruébalo antes y, si se ve tenue, usa 68–100 Ω."
+ },
+ "esp_conector": {
+  "modelo": [
+   [
+    "JST-XH de 4 pines",
+    "5,8 × 12,4 × 7 mm, a 72 mm del frente"
+   ],
+   [
+    "Transistor",
+    "4,6 × 3,6 × 5 mm, a 42 mm del frente"
+   ]
+  ],
+  "hueco": [
+   [
+    "Franja de la perforada",
+    "a la derecha del ESP32: 8,5 mm"
+   ],
+   [
+    "Cables al conector magnético",
+    "4 hilos de unos 40 mm"
+   ]
+  ],
+  "comprobar": "Mide tu JST-XH (suele ser 5,75 × 12,4 mm con 4 pines) y comprueba que el transistor sea un TO-92.",
+  "supuesta": true
+ },
+ "esp_usb": {
+  "modelo": [
+   [
+    "Enchufe USB-C",
+    "11 × 8 mm de cuerpo en el modelo, 18 mm de largo"
+   ]
+  ],
+  "hueco": [
+   [
+    "Abertura",
+    "13 × 10 mm"
+   ],
+   [
+    "Holgura",
+    "1 mm a cada lado y 1 mm en vertical"
+   ],
+   [
+    "Hasta el conector",
+    "2,4 mm de pared y 0,6 mm de aire"
+   ]
+  ],
+  "comprobar": "Mide el cuerpo del enchufe USB-C de tu cable: los comunes miden unos 12 × 6,5 mm y entran por la abertura hasta el conector.",
+  "supuesta": true
+ },
+ "esp_tornillos": {
+  "modelo": [
+   [
+    "Tornillo",
+    "M3 × 10 mm de cabeza avellanada (DIN 7991), cabeza Ø 6,5 mm"
+   ],
+   [
+    "Posiciones",
+    "4 esquinas, a 5,2 mm de los bordes exteriores"
+   ]
+  ],
+  "hueco": [
+   [
+    "Paso en la tapa",
+    "Ø 3,4 mm con avellanado de Ø 6,9 mm: la cabeza queda a ras"
+   ],
+   [
+    "Reparto de la longitud",
+    "4 mm en la tapa, 2,4 en la tuerca y 3,6 de punta en el agujero del pilar"
+   ]
+  ],
+  "comprobar": "Si usas M3 × 8, también vale: la rosca atraviesa la tuerca entera."
+ },
+ "mod_base": {
+  "modelo": [
+   [
+    "Exterior",
+    "70 × 100 × 28 mm; 32 mm con los nudillos de la bisagra; +1,5 mm de guía en la cara izquierda"
+   ],
+   [
+    "Cámara de pastillas",
+    "65,2 × 36,4 mm, 20,6 mm de profundidad (≈ 49 cm³)"
+   ],
+   [
+    "Borde del sensor",
+    "a todo el ancho (70 mm), 12 mm de fondo, al frente"
+   ],
+   [
+    "Bahía de la electrónica",
+    "65,2 × 36,2 × 25,6 mm"
+   ],
+   [
+    "Bloque divisor",
+    "12 mm; bisagra a 55,4 mm del frente"
+   ]
+  ],
+  "hueco": [
+   [
+    "Canal abierto del sensor",
+    "35,5 × 4,8 × 3,8 mm, solo del reed al pozo, desde 4,4 mm del frente"
+   ],
+   [
+    "Rebaje de la tapita",
+    "38,4 × 7,7 mm, 1,2 mm de profundidad, a ras de lo alto del borde"
+   ],
+   [
+    "Pozo",
+    "8 × 3,6 mm, baja del canal al fondo"
+   ],
+   [
+    "Canal recto de cables",
+    "12 × 3,5 mm, del pozo a la bahía (unos 57 mm), bajo el fondo de la cámara"
+   ],
+   [
+    "Fondo de la cámara",
+    "elevado a 7,4 mm"
+   ]
+  ],
+  "comprobar": "Tras imprimir: 70 × 100 mm (±0,3 mm). Pasa un cable de 4 hilos por el canal recto: debe correr sin forzar. Prueba la guía y el canal de la unión con otra unidad."
+ },
+ "mod_tapa": {
+  "modelo": [
+   [
+    "Placa",
+    "70 × 61,4 × 4,5 mm"
+   ],
+   [
+    "Reborde",
+    "2 mm de alto, entra en la cámara (detrás del borde del sensor) con 0,3 mm de holgura"
+   ],
+   [
+    "Lengüeta",
+    "24 mm de ancho, sale 3 mm"
+   ],
+   [
+    "Número grabado",
+    "0,8 mm de profundidad"
+   ]
+  ],
+  "hueco": [
+   [
+    "Alojamiento del imán",
+    "Ø 6,5 × 2,3 mm abierto por debajo, a 16 mm del lado izquierdo y a 5,6 mm del frente; 1,7 mm de piel arriba"
+   ],
+   [
+    "Bisagra",
+    "eje Ø 2,1 mm"
+   ]
+  ],
+  "comprobar": "Con la tapa cerrada debe quedar a ras de la cubierta, y abierta unos 100° sin tocar el pulsador."
+ },
+ "mod_cubierta": {
+  "modelo": [
+   [
+    "Tamaño",
+    "70 × 41,1 × 4 mm"
+   ],
+   [
+    "Agujero del pulsador",
+    "Ø 12,5 mm, a 11 mm del borde trasero"
+   ],
+   [
+    "Agujeros de tornillo",
+    "4 de Ø 3,4 mm con avellanado de Ø 6,9 mm para M3"
+   ]
+  ],
+  "hueco": [
+   [
+    "Bahía que cierra",
+    "65,2 × 36,2 mm"
+   ]
+  ],
+  "comprobar": "Debe quedar a ras de la tapa, con 0,4 mm de junta."
+ },
+ "mod_pasador": {
+  "modelo": [
+   [
+    "Pasador",
+    "Ø 1,75 × 58 mm"
+   ]
+  ],
+  "hueco": [
+   [
+    "Agujero",
+    "Ø 2,1 mm, ciego: termina a 1,5 mm de la cara derecha"
+   ],
+   [
+    "Eje de la bisagra",
+    "a 55,4 mm del frente y 29 mm de altura"
+   ]
+  ],
+  "comprobar": "Filamento de 1,75 mm (±0,05). Si no entra con holgura, abre el agujero a Ø 2,2 mm (PASADOR)."
+ },
+ "mod_iman": {
+  "modelo": [
+   [
+    "Imán",
+    "disco Ø 6 × 2 mm (medido), a 16 mm del lado izquierdo y a 5,6 mm del frente, justo encima del reed"
+   ]
+  ],
+  "hueco": [
+   [
+    "Alojamiento",
+    "Ø 6,5 × 2,3 mm; quedan 1,7 mm de tapa por encima"
+   ],
+   [
+    "Distancia al reed",
+    "1,8 mm con la tapa cerrada (la tapita de 1,2 mm queda en medio)"
+   ]
+  ],
+  "comprobar": "Antes de imprimir, acerca el imán al reed con 1,8 mm de plástico en medio y mide con un tester que cierra. Si no, usa uno de 8 × 3 mm o baja la tapita a 1 mm."
+ },
+ "mod_reed": {
+  "modelo": [
+   [
+    "Cuerpo de vidrio",
+    "14 × 2 mm (medido)"
+   ],
+   [
+    "Patas",
+    "salen por los extremos; se doblan a más de 2 mm del vidrio"
+   ],
+   [
+    "Posición",
+    "centro a 16 mm del lado izquierdo, pegado al frente del canal (5,6 mm del frente)"
+   ]
+  ],
+  "hueco": [
+   [
+    "Canal abierto",
+    "35,5 × 4,8 × 3,8 mm, del reed al pozo; si cambias REED_X, el canal y la tapita se mueven con él"
+   ],
+   [
+    "Margen para doblar las patas",
+    "5 mm de canal libre a la izquierda del vidrio y 8 mm a la derecha antes del pozo"
+   ],
+   [
+    "Carril de los cables",
+    "2,6 mm detrás del reed, dentro del mismo canal"
+   ],
+   [
+    "Distancia a la tapita",
+    "0,6 mm"
+   ]
+  ],
+  "comprobar": "No dobles las patas pegadas al vidrio: sujétalas con unos alicates entre el vidrio y el doblez, porque el vidrio se raja con facilidad."
+ },
+ "mod_led": {
+  "modelo": [
+   [
+    "LED",
+    "Ø 5 mm, 8,6 mm de largo con la cúpula, pestaña de Ø 5,8 × 1 mm con un lado plano (cátodo)"
+   ],
+   [
+    "Patas",
+    "la larga es el ánodo (+), la corta el cátodo (−)"
+   ],
+   [
+    "Asoma",
+    "4,4 mm por el frente, a 14 mm del fondo y centrado"
+   ],
+   [
+    "Color",
+    "rojo"
+   ]
+  ],
+  "hueco": [
+   [
+    "Agujero",
+    "Ø 6,3 mm desde el frente: pasa la pestaña con holgura"
+   ],
+   [
+    "Escalón",
+    "a 4,2 mm de profundidad, Ø 4 mm: detiene la pestaña y deja pasar las patas"
+   ],
+   [
+    "Patas",
+    "salen al pozo y bajan con los cables del reed"
+   ]
+  ],
+  "comprobar": "Mételo desde fuera con las patas primero hasta que la pestaña haga tope, y fíjalo con una gota de pegamento por dentro. Con 220 Ω a 3,3 V se ve bien."
+ },
+ "mod_pcf": {
+  "modelo": [
+   [
+    "Placa",
+    "adaptador I2C para LCD1602 con PCF8574T: 41,5 × 19,3 × 1,6 mm"
+   ],
+   [
+    "Tira de 16 pines",
+    "hacia abajo, a lo largo del borde trasero: 2,5 mm de plástico y 6 mm de pines"
+   ],
+   [
+    "Conector del bus",
+    "4 pines en ángulo recto (GND, VCC, SDA, SCL) en el extremo izquierdo: salen 6 mm"
+   ],
+   [
+    "Encima",
+    "chip, potenciómetro azul (unos 5 mm de alto) y puente de la luz (8,5 mm con el capuchón)"
+   ],
+   [
+    "Pines que se usan",
+    "4, 5 y 6 de la tira (P0 LED, P1 reed, P2 botón); el P3 va al transistor de la luz: no se usa"
+   ]
+  ],
+  "hueco": [
+   [
+    "Apoyos",
+    "a la izquierda, un pedestal de 12,5 mm de una pieza bajo todo el borde, con reborde en las esquinas y abierto en medio para los pines del bus; a la derecha, el refuerzo de la unión sube hasta la placa y hace de repisa, con un reborde en U; holgura 0,3 mm"
+   ],
+   [
+    "Posición",
+    "pegada a la derecha (pasa por encima de las soldaduras de la tira hembra), 7,6 mm detrás del bloque divisor"
+   ],
+   [
+    "Bajo la tira",
+    "4 mm libres hasta el fondo"
+   ],
+   [
+    "Conector del bus",
+    "sus puntas quedan a 15 mm de la pared izquierda: sitio para la tira macho y para soldar los cables"
+   ],
+   [
+    "Pulsador",
+    "sus patas quedan 0,5 mm por encima de las soldaduras de la tira"
+   ]
+  ],
+  "comprobar": "Mide tu placa: largo, ancho, cuánto bajan los pines de la tira de 16 y cuánto salen los del bus. Los cables van soldados en la punta de los pines (no hay sitio para conectores dupont). Dirección I2C: 0x27 de fábrica (0x3F si el chip es PCF8574A); une el puente A0 en uno de los dos módulos para que quede en 0x26.",
+  "supuesta": true
+ },
+ "mod_pulsador": {
+  "modelo": [
+   [
+    "Pulsador",
+    "de panel de 12 mm, normalmente abierto (tipo PBS-33B, medido)"
+   ],
+   [
+    "Por encima de la tapa",
+    "8 mm: bisel negro de Ø 17 mm y cúpula"
+   ],
+   [
+    "Rosca",
+    "Ø 12 × 10 mm (M12), con tuerca"
+   ],
+   [
+    "Terminales",
+    "2, de 4 mm, por debajo de la rosca"
+   ],
+   [
+    "Por dentro de la caja",
+    "10 mm (6 de rosca + 4 de terminales)"
+   ]
+  ],
+  "hueco": [
+   [
+    "Agujero",
+    "Ø 12,5 mm en la cubierta, a 11 mm del borde trasero"
+   ],
+   [
+    "Rosca en la cubierta",
+    "4 mm; quedan 6 mm por debajo para la tuerca"
+   ],
+   [
+    "Debajo",
+    "llega a 18 mm de altura, encima del borde trasero de la placa PCF8574: quedan 0,5 mm"
+   ]
+  ],
+  "comprobar": "Mide la tuerca (entre caras y grosor) y aprieta sin pasarte: la rosca es de plástico."
+ },
+ "mod_tornillos": {
+  "modelo": [
+   [
+    "Tornillo",
+    "M3 × 10 mm de cabeza avellanada (DIN 7991), cabeza Ø 6,5 mm"
+   ],
+   [
+    "Posiciones",
+    "4 esquinas de la bahía"
+   ]
+  ],
+  "hueco": [
+   [
+    "Paso en la tapa",
+    "Ø 3,4 mm con avellanado de Ø 6,9 mm: la cabeza queda a ras"
+   ],
+   [
+    "Reparto de la longitud",
+    "4 mm en la tapa, 2,4 en la tuerca y 3,6 de punta en el agujero del pilar"
+   ]
+  ],
+  "comprobar": "Si usas M3 × 8, también vale: la rosca atraviesa la tuerca entera."
+ },
+ "con_macho": {
+  "modelo": [
+   [
+    "Tira macho",
+    "4 pines de 2,54 mm: plástico de 10,2 × 2,5 × 2,5 mm (medidas típicas)"
+   ],
+   [
+    "Pines",
+    "0,64 mm cuadrados: sobresalen 6 mm por fuera y 3 mm por dentro para soldar"
+   ],
+   [
+    "Posición",
+    "cara izquierda, a 72 mm del frente y 10 mm de altura"
+   ]
+  ],
+  "hueco": [
+   [
+    "Alojamiento",
+    "10,6 × 2,9 × 2,5 mm: el plástico queda dentro de la pared"
+   ],
+   [
+    "Por dentro",
+    "4 mm libres detrás para soldar los cables"
+   ]
+  ],
+  "comprobar": "Mide cuánto sobresalen los pines por el lado largo (deberían ser unos 6 mm). Junta las unidades de frente, sin torcerlas, para no doblarlos.",
+  "supuesta": true
+ },
+ "con_hembra": {
+  "modelo": [
+   [
+    "Tira hembra",
+    "4 pines de 2,54 mm, 11 × 2,5 × 8,5 mm (medida)"
+   ],
+   [
+    "Posición",
+    "cara derecha, a ras, a 72 mm del frente y 10 mm de altura"
+   ]
+  ],
+  "hueco": [
+   [
+    "Alojamiento",
+    "11,4 × 2,9 × 8,5 mm"
+   ],
+   [
+    "Por dentro",
+    "4 mm libres detrás para soldar los cables"
+   ]
+  ],
+  "comprobar": "Córtala sacrificando un pin, como los zócalos, y pégala a ras con una gota de epoxi. Prueba con un tester que cada pin del macho vecino toca su contacto."
+ },
+ "imanes_izq": {
+  "modelo": [
+   [
+    "Imán",
+    "disco Ø 8 × 3 mm (medido)"
+   ],
+   [
+    "Posiciones",
+    "2 por cara: a 14 y a 87 mm del frente, a 7 mm de altura"
+   ]
+  ],
+  "hueco": [
+   [
+    "Alojamiento",
+    "Ø 8,4 × 3,2 mm, a ras de la cara; 1,4 mm de pared detrás"
+   ]
+  ],
+  "comprobar": "Con los 2 pares de imanes las unidades deben sostenerse sin moverse, pero poder separarse tirando con la mano."
+ },
+ "imanes_der": {
+  "modelo": [
+   [
+    "Imán",
+    "disco Ø 8 × 3 mm (medido)"
+   ],
+   [
+    "Posiciones",
+    "2 por cara: a 14 y a 87 mm del frente, a 7 mm de altura"
+   ]
+  ],
+  "hueco": [
+   [
+    "Alojamiento",
+    "Ø 8,4 × 3,2 mm, a ras de la cara; 1,4 mm de pared detrás"
+   ]
+  ],
+  "comprobar": "Antes de pegarlos, ponlos sobre un imán de una cara izquierda: la cara que queda pegada es la que va hacia fuera."
+ },
+ "mod_tapita": {
+  "modelo": [
+   [
+    "Tamaño",
+    "37,9 × 7,2 × 1,2 mm"
+   ],
+   [
+    "Posición",
+    "a ras de lo alto del borde, cubre el canal entero: reed, cables y pozo"
+   ]
+  ],
+  "hueco": [
+   [
+    "Rebaje",
+    "38,4 × 7,7 × 1,2 mm: 0,25 mm de holgura por lado"
+   ],
+   [
+    "Apoyo",
+    "1,2 mm por los cuatro lados del canal"
+   ],
+   [
+    "Distancia al reed",
+    "0,6 mm por encima"
+   ]
+  ],
+  "comprobar": "Debe entrar sin forzar y quedar a ras. Con la tapa cerrada no puede moverse; con la tapa abierta se saca con la uña."
+ },
+ "mod_cable": {
+  "modelo": [
+   [
+    "Mazo de 4 hilos",
+    "Ø 3 mm: 2 del reed y 2 del LED"
+   ],
+   [
+    "Recorrido",
+    "carril del canal → pozo → canal recto hasta la bahía, todo recto"
+   ],
+   [
+    "Largo",
+    "unos 90 mm hasta la placa PCF8574, con holgura"
+   ]
+  ],
+  "hueco": [
+   [
+    "Canal recto",
+    "12 × 3,5 mm: sobra 0,5 mm de alto sobre el mazo"
+   ],
+   [
+    "Pozo",
+    "8 × 3,6 mm"
+   ]
+  ],
+  "comprobar": "Con hilo fino (AWG 26 a 30) el mazo mide unos 3 mm. Mide el tuyo: si es más grueso, sube TUNEL_H en modulo.scad.",
+  "supuesta": true
+ },
+ "esp_boton_v": {
+  "modelo": [
+   [
+    "Pulsador",
+    "de panel de 12 mm, normalmente abierto (tipo PBS-33B, medido)"
+   ],
+   [
+    "Por encima de la tapa",
+    "8 mm: bisel negro de Ø 17 mm y cúpula"
+   ],
+   [
+    "Rosca",
+    "Ø 12 × 10 mm (M12), con tuerca"
+   ],
+   [
+    "Terminales",
+    "2, de 4 mm, por debajo de la rosca"
+   ],
+   [
+    "Por dentro de la caja",
+    "10 mm (6 de rosca + 4 de terminales)"
+   ],
+   [
+    "Conexión",
+    "entre GPIO 27 y GND; el firmware usa el pull-up interno"
+   ]
+  ],
+  "hueco": [
+   [
+    "Agujero",
+    "Ø 12,5 mm en la tapa, a 57,4 mm del lado izquierdo y 24 mm del frente"
+   ],
+   [
+    "Bisel",
+    "a 4,1 mm de la rejilla del buzzer y a 4,1 mm del borde de la tapa"
+   ],
+   [
+    "Por dentro",
+    "la tuerca queda a 0,6 mm de la pared derecha; el cuerpo baja hasta 18 mm del fondo, por encima de los imanes y del buzzer"
+   ]
+  ],
+  "comprobar": "Mantenlo pulsado 5 s: el LED parpadea 3 veces y el ESP32 entra en modo de vinculación."
+ },
+ "esp_resistencias": {
+  "modelo": [
+   [
+    "Resistencias",
+    "2 de 1/4 W, Ø 2,2 × 6,4 mm, tumbadas"
+   ],
+   [
+    "Valores",
+    "220 Ω para el LED (GPIO 18) y 1 kΩ para la base del transistor (GPIO 23)"
+   ]
+  ],
+  "hueco": [
+   [
+    "Posición",
+    "franja derecha de la placa perforada, junto al transistor"
+   ]
+  ],
+  "comprobar": "Con 220 Ω el LED de 5 mm consume unos 6 mA a 3,3 V. Si se ve poco, baja a 150 Ω."
+ },
+ "esp_cables": {
+  "modelo": [
+   [
+    "LED de estado",
+    "2 hilos, del frente a la placa perforada (unos 45 mm)"
+   ],
+   [
+    "Botón de vinculación",
+    "2 hilos, de la tapa a la placa (unos 30 mm, con holgura para abrir la tapa)"
+   ],
+   [
+    "Buzzer",
+    "2 hilos, desde las patas que salen por la ranura del anillo hasta el transistor (unos 25 mm)"
+   ],
+   [
+    "Bus I2C",
+    "4 hilos del JST a la tira hembra de la derecha (unos 15 mm) y 4 a la tira macho de la izquierda, por encima del ESP32 (unos 60 mm): 3,3 V, GND, SDA (GPIO 21) y SCL (GPIO 22)"
+   ]
+  ],
+  "hueco": [
+   [
+    "Paso",
+    "por la zona libre delante de la placa perforada, sin tocar el buzzer ni el ESP32"
+   ]
+  ],
+  "comprobar": "Deja unos 60 mm de cable en el botón para poder abrir la tapa sin desoldar."
+ },
+ "esp_tuercas": {
+  "modelo": [
+   [
+    "Tuerca",
+    "M3 hexagonal normal (DIN 934): 5,5 mm entre caras y 2,4 mm de grosor"
+   ]
+  ],
+  "hueco": [
+   [
+    "Pilar",
+    "Ø 8,6 mm unido a las dos paredes, sin huecos en la esquina"
+   ],
+   [
+    "Hueco hexagonal",
+    "5,8 mm entre caras y 2,5 mm de fondo, en lo alto del pilar: la tuerca entra sin forzar y queda a ras"
+   ],
+   [
+    "Debajo",
+    "agujero de Ø 3,4 mm para la punta del tornillo"
+   ],
+   [
+    "Pared alrededor",
+    "1 mm hacia el interior y 2 mm hacia la cara exterior de la caja"
+   ]
+  ],
+  "comprobar": "Mete la tuerca con una gota de epoxi (tipo Pegadit o Araldite), sin manchar la rosca, y deja secar antes de atornillar. No aprietes de más: el tornillo tira de la tuerca hacia la tapa."
+ },
+ "mod_tuercas": {
+  "modelo": [
+   [
+    "Tuerca",
+    "M3 hexagonal normal (DIN 934): 5,5 mm entre caras y 2,4 mm de grosor"
+   ]
+  ],
+  "hueco": [
+   [
+    "Pilar",
+    "Ø 8,6 mm unido a las dos paredes, sin huecos en la esquina"
+   ],
+   [
+    "Hueco hexagonal",
+    "5,8 mm entre caras y 2,5 mm de fondo, en lo alto del pilar: la tuerca entra sin forzar y queda a ras"
+   ],
+   [
+    "Debajo",
+    "agujero de Ø 3,4 mm para la punta del tornillo"
+   ],
+   [
+    "Pared alrededor",
+    "1 mm hacia el interior y 2 mm hacia la cara exterior de la caja"
+   ]
+  ],
+  "comprobar": "Mete la tuerca con una gota de epoxi (tipo Pegadit o Araldite), sin manchar la rosca, y deja secar antes de atornillar. No aprietes de más: el tornillo tira de la tuerca hacia la tapa."
+ },
+ "tapa_lateral": {
+  "modelo": [
+   [
+    "Tapa",
+    "8 × 100 × 32 mm, con las esquinas redondeadas"
+   ],
+   [
+    "Imanes",
+    "2 de 8 × 3 mm, como una cara derecha"
+   ]
+  ],
+  "hueco": [
+   [
+    "Pines",
+    "hueco de 11 × 3,3 × 6,5 mm para los pines macho del módulo del extremo"
+   ],
+   [
+    "Guía",
+    "canal para la guía saliente de la cara izquierda"
+   ]
+  ],
+  "comprobar": "Se pega por imanes a la cara izquierda del módulo del extremo. Tapa los pines, que llevan corriente, y la entrada del pasador de la bisagra."
+ }
+}

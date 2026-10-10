@@ -1,12 +1,15 @@
-// Módulo de un medicamento (60 x 100 x 32 mm con la tapa).
+// Módulo de un medicamento (70 x 100 x 32 mm con la tapa).
 //
 //   Frente (y = 0) ........ LED del módulo, a la vista con la tapa cerrada.
-//   Cámara ................ pastillas sueltas, con doble fondo: por dentro pasa el túnel de los cables.
-//   Columna del frente .... dentro: el reed (arriba, debajo del imán de la tapa) y el LED.
-//   Bloque divisor ........ bisagra de la tapa y cola de milano para unirse a la unidad de la izquierda.
+//   Cámara ................ pastillas sueltas, con doble fondo: por debajo pasa el canal de los cables.
+//   Borde del sensor ...... a todo el ancho, al frente: arriba, un canal abierto, solo del largo necesario, con el
+//                           reed (debajo del imán de la tapa) y una tapita que lo cubre entero; en la pared, el LED. Un pozo lleva los cables
+//                           del canal al fondo, y de ahí un único canal recto, grande, los lleva a la bahía.
+//   Bloque divisor ........ bisagra de la tapa y guía de la unión con las unidades vecinas.
+//   Caras laterales ....... unión magnética: conector del bus, imanes y guía (ver comun.scad).
 //   Bahía (atrás) ......... placa PCF8574 en el fondo y pulsador de panel en la cubierta.
 //
-// Piezas para imprimir: "base", "tapa" (con el número grabado), "cubierta" y "tapon" (solo para el último módulo).
+// Piezas para imprimir: "base", "tapa" (con el número grabado), "cubierta" y "tapita" (cubre el sensor).
 // Vista rápida: "todo" o "imprimir".
 include <comun.scad>
 
@@ -14,20 +17,27 @@ parte = "imprimir";
 numero = 1;             // número grabado en la tapa (módulo 1 = dirección 0x20)
 
 // ---------- Cámara ----------
-CAM_F = 43.2;           // fondo interior de la cámara
+CAM_F = 47;             // fondo desde la pared del frente hasta el bloque divisor
 DIV = 12;               // bloque divisor
-PISO_CAM = 5.9;         // altura del fondo de la cámara (doble fondo)
-TUNEL_A = 5;            // túnel de cables bajo la cámara
-TUNEL_H = 2.5;
+PISO_CAM = 7.4;         // altura del fondo de la cámara (doble fondo)
+TUNEL_A = 12;           // canal recto de cables bajo la cámara
+TUNEL_H = 3.5;
 
-// ---------- Columna del frente: reed y LED ----------
-COL_A = 21;
-COL_F = 9;
-REED_L = 14;            // cuerpo de vidrio del reed
-REED_D = 3;
-RANURA = 3.6;           // ranura del reed
-IMAN_D = 6;             // imán de neodimio en disco 6 x 3 mm
-IMAN_H = 3;
+// ---------- Borde del sensor (a todo el ancho): canal del reed, pozo y tapita ----------
+RAIL = 12;              // fondo del borde, desde el frente
+CANAL_Y0 = 4.4;         // el canal abierto empieza aquí...
+CANAL_A = 4.8;          // ...mide esto de ancho (en y)...
+CANAL_H = 3.8;          // ...y esto de profundo; a lo largo va del reed al pozo y nada más
+POZO_A = 8;             // pozo por donde los cables bajan al canal recto (centrado)
+POZO_Y0 = 5.6;
+REED_X = 16;            // posición del reed y del imán; el canal y la tapita se ajustan solos
+REED_L = 14;            // cuerpo de vidrio del reed (medido)
+REED_PATAS = 5;         // canal libre a cada lado del vidrio para doblar las patas sin forzarlo
+REED_D = 2;             // medido: 14 x 2 mm
+TAPITA_E = 1.2;         // grosor de la tapita; queda a ras y la tapa cerrada la sujeta
+TAPITA_H = 1.2;         // apoyo de la tapita a cada lado del canal
+IMAN_D = 6;             // imán de neodimio en disco 6 x 2 mm (medido)
+IMAN_H = 2;
 
 // ---------- Bisagra ----------
 BIS_R = 3;
@@ -35,35 +45,44 @@ BIS_K = 10;             // ancho de cada nudillo de la base
 PASADOR = 2.1;          // filamento de 1,75 mm
 
 // ---------- Bahía ----------
-PCF_L = 40;             // placa PCF8574
-PCF_A = 20;
-PCF_ALTO = 4;           // altura de los postes de la placa
-BOTON_D = 12.2;         // pulsador de panel de 12 mm
+// Placa PCF8574: el adaptador I2C para pantallas LCD1602 (PCF8574T). Medidas típicas: compruébalas con la tuya.
+PCF_L = 41.5;
+PCF_A = 19.3;
+PCF_ALTO = 12.5;        // altura de los postes: la tira de 16 pines (hacia abajo) queda 4 mm sobre el fondo y las
+                        // soldaduras de la tira hembra (hasta 12,75 mm) quedan por debajo de la placa
+PCF_TIRA_P = 2.5;       // plástico de la tira de 16 pines, bajo la placa, a lo largo del borde trasero
+PCF_TIRA_SALE = 6;      // pines por debajo de ese plástico
+PCF_BUS_SALE = 6;       // pines del conector del bus (GND, VCC, SDA, SCL): salen en horizontal por el extremo izquierdo
+BOTON_D = PULS_D;       // pulsador de panel de 12 mm (ver comun.scad)
 
 // ---------- Derivadas ----------
 m_cx = ANCHO / 2;
 m_div0 = PARED + CAM_F;                 // empieza el bloque divisor
 m_bahia = m_div0 + DIV;                 // empieza la bahía
-m_eje_y = CM_Y;
+m_eje_y = m_div0 + DIV / 2;
 m_eje_z = ALTO + TAPA - BIS_R;          // los nudillos quedan a ras de la tapa
-m_reed_y = PARED + COL_F / 2;
-m_pcf_x = m_cx - PCF_L / 2;
-m_pcf_y = m_bahia + 0.6;
+m_reed_y = CANAL_Y0 + REED_D / 2 + 0.2;   // el reed va junto al frente del canal; detrás queda un carril para los cables
+m_canal_x0 = REED_X - REED_L / 2 - REED_PATAS;   // deja sitio para doblar la pata del reed
+m_canal_x1 = m_cx + POZO_A / 2 + 0.5;    // termina justo pasado el pozo
+m_tap_x0 = m_canal_x0 - TAPITA_H;
+m_tap_x1 = m_canal_x1 + TAPITA_H;
+m_tap_y0 = CANAL_Y0 - TAPITA_H;
+m_tap_y1 = CANAL_Y0 + CANAL_A + TAPITA_H;
+m_pcf_x = ANCHO - PARED - 2.7 - PCF_L;   // a la derecha, sobre las soldaduras de la tira hembra: deja libre el lado de la
+                                        // tira macho, adonde miran los pines del bus
+m_pcf_y = m_bahia + 7.6;                // detrás de los pilares delanteros
 m_boton_y = FONDO - PARED - 11;
 m_pilares = pilares_en(PARED, m_bahia, ANCHO - PARED, FONDO - PARED);
 
-assert(abs(m_div0 + DIV / 2 - CM_Y) < 0.01, "La bisagra debe coincidir con la cola de milano");
+assert(abs(m_div0 + DIV / 2 - GUIA_Y) < 0.01, "La guía de la unión debe ir en el bloque divisor");
 
 module mod_base() {
     difference() {
         union() {
             difference() {
                 caja_redondeada(ANCHO, FONDO, ALTO);
-                // cámara, sin la columna del frente
-                difference() {
-                    translate([PARED, PARED, PISO_CAM]) cube([ANCHO - 2 * PARED, CAM_F, ALTO]);
-                    translate([m_cx - COL_A / 2, 0, 0]) cube([COL_A, PARED + COL_F, ALTO + 1]);
-                }
+                // cámara, detrás del borde del sensor (que ocupa todo el ancho)
+                translate([PARED, RAIL, PISO_CAM]) cube([ANCHO - 2 * PARED, PARED + CAM_F - RAIL, ALTO]);
                 // bahía
                 translate([PARED, m_bahia, PISO]) cube([ANCHO - 2 * PARED, FONDO - PARED - m_bahia, ALTO]);
             }
@@ -73,25 +92,33 @@ module mod_base() {
                 translate([x0, m_eje_y - BIS_R, ALTO - 3]) cube([BIS_K, 2 * BIS_R, 1]);
             }
             pilares(m_pilares);
-            apoyos_placa(m_pcf_x, m_pcf_y, PCF_L, PCF_A, PCF_ALTO);
-            cola_macho();
+            // la placa apoya a la izquierda en un pedestal y a la derecha en el refuerzo de la unión, que hace de repisa
+            pedestal_pcf();
+            refuerzos_union(false);
+            refuerzos_union(true, alto = PISO + PCF_ALTO);
+            reborde_pcf();
+            // relleno entre el refuerzo de cada cara y el apoyo trasero de la placa (si no, quedan rendijas de 0,4-1,3 mm);
+            // llega solo hasta lo alto del refuerzo: por encima pasan los pines del bus
+            guia();
         }
         agujeros_pilares(m_pilares);
-        cola_hembra();
-        ventana_bus();
-        // pasador de la bisagra
-        translate([-1, m_eje_y, m_eje_z]) rotate([0, 90, 0]) cylinder(d = PASADOR, h = ANCHO + 2);
+        huecos_union(false);
+        huecos_union(true);
+        // pasador de la bisagra: entra por la izquierda; el agujero es ciego a la derecha para que no se salga
+        translate([-1, m_eje_y, m_eje_z]) rotate([0, 90, 0]) cylinder(d = PASADOR, h = ANCHO - 1.5 + 1);
         // rebaje para el nudillo de la tapa
         translate([BIS_K, m_eje_y - BIS_R - 1.5, m_eje_z - BIS_R - 0.5]) cube([ANCHO - 2 * BIS_K, 2 * BIS_R + 2, 10]);
-        // ranura del reed en lo alto de la columna y agujeros de sus patas hacia el túnel
-        translate([m_cx - REED_L / 2 - 1, m_reed_y - RANURA / 2, ALTO - RANURA]) cube([REED_L + 2, RANURA, RANURA + 1]);
-        for (s = [-1, 1]) translate([m_cx + s * (REED_L / 2 + 1.25), m_reed_y, PISO]) cylinder(d = 2.5, h = ALTO);
-        // LED: entra por el frente; sus patas bajan al túnel
-        translate([m_cx, -1, LED_Z]) rotate([-90, 0, 0]) cylinder(d = LED_D, h = PARED + 7.5);
-        translate([m_cx, PARED + 5.5, PISO]) cylinder(d = 3, h = LED_Z - PISO);
-        // túnel: tramo transversal bajo la columna y tramo hasta la bahía
-        translate([m_cx - 10, PARED + 2, PISO]) cube([20, COL_F - 3, TUNEL_H]);
-        translate([m_cx - TUNEL_A / 2, PARED + 2, PISO]) cube([TUNEL_A, m_bahia + 1 - PARED - 2, TUNEL_H]);
+        // canal abierto, del reed al pozo: el reed va dentro y sus cables corren por él; la tapita lo cubre entero
+        translate([m_canal_x0, CANAL_Y0, ALTO - CANAL_H]) cube([m_canal_x1 - m_canal_x0, CANAL_A, CANAL_H + 1]);
+        // rebaje en el que apoya la tapita, a ras con lo alto del borde
+        translate([m_tap_x0 - 0.25, m_tap_y0 - 0.25, ALTO - TAPITA_E]) cube([m_tap_x1 - m_tap_x0 + 0.5, m_tap_y1 - m_tap_y0 + 0.5, TAPITA_E + 1]);
+        muesca_tira_pcf();
+        // pozo: los cables bajan del canal al fondo
+        translate([m_cx - POZO_A / 2, POZO_Y0, PISO]) cube([POZO_A, CANAL_Y0 + CANAL_A - POZO_Y0, ALTO - PISO - CANAL_H + 1]);
+        // LED: entra por el frente hasta el escalón; sus patas salen al pozo
+        agujero_led(m_cx, POZO_Y0 + 0.5);
+        // canal recto y grande, del pozo a la bahía
+        translate([m_cx - TUNEL_A / 2, POZO_Y0, PISO]) cube([TUNEL_A, m_bahia + 1 - POZO_Y0, TUNEL_H]);
     }
 }
 
@@ -105,11 +132,10 @@ module mod_tapa(n = numero) {
             }
             // lengüeta para levantarla
             translate([0, 0, ALTO]) hull() for (s = [-1, 1]) translate([m_cx + s * 9, 0, 0]) cylinder(r = 3, h = TAPA);
-            // reborde que entra en la cámara, con hueco para la columna
+            // reborde que entra en la cámara, detrás del borde del sensor
             translate([0, 0, ALTO - 2]) difference() {
-                translate([PARED + JUEGO, PARED + JUEGO, 0]) cube([ANCHO - 2 * PARED - 2 * JUEGO, CAM_F - 2 * JUEGO, 2.01]);
-                translate([PARED + JUEGO + 1.2, PARED + JUEGO + 1.2, -1]) cube([ANCHO - 2 * PARED - 2 * JUEGO - 2.4, CAM_F - 2 * JUEGO - 2.4, 4]);
-                translate([m_cx - COL_A / 2 - JUEGO, -1, -1]) cube([COL_A + 2 * JUEGO, PARED + COL_F + JUEGO + 1, 4]);
+                translate([PARED + JUEGO, RAIL + JUEGO, 0]) cube([ANCHO - 2 * PARED - 2 * JUEGO, PARED + CAM_F - RAIL - 2 * JUEGO, 2.01]);
+                translate([PARED + JUEGO + 1.2, RAIL + JUEGO + 1.2, -1]) cube([ANCHO - 2 * PARED - 2 * JUEGO - 2.4, PARED + CAM_F - RAIL - 2 * JUEGO - 2.4, 4]);
             }
             // nudillo central
             hull() {
@@ -119,9 +145,9 @@ module mod_tapa(n = numero) {
         }
         translate([-1, m_eje_y, m_eje_z]) rotate([0, 90, 0]) cylinder(d = PASADOR, h = ANCHO + 2);
         // alojamiento del imán, abierto por debajo
-        translate([m_cx, m_reed_y, ALTO - 0.01]) cylinder(d = IMAN_D + 0.5, h = IMAN_H + 0.3);
+        translate([REED_X, m_reed_y, ALTO - 0.01]) cylinder(d = IMAN_D + 0.5, h = IMAN_H + 0.3);
         // número del módulo
-        translate([m_cx, 27, ALTO + TAPA - 0.8]) linear_extrude(1)
+        translate([m_cx, 30, ALTO + TAPA - 0.8]) linear_extrude(1)
             text(str(n), size = 14, halign = "center", valign = "center", font = "Liberation Sans:style=Bold");
     }
 }
@@ -137,57 +163,103 @@ module mod_cubierta() {
     }
 }
 
+// Tapita que cubre el canal entero (reed, cables y pozo). Apoya 1,2 mm por los cuatro lados, queda a ras y la tapa
+// cerrada la mantiene en su sitio.
+module mod_tapita() {
+    translate([m_tap_x0, m_tap_y0, ALTO - TAPITA_E]) cube([m_tap_x1 - m_tap_x0, m_tap_y1 - m_tap_y0, TAPITA_E]);
+}
+
 // Gira lo que contiene alrededor de la bisagra (ángulo en grados; 0 = cerrada)
 module mod_abrir(angulo) {
     translate([0, m_eje_y, m_eje_z]) rotate([-angulo, 0, 0]) translate([0, -m_eje_y, -m_eje_z]) children();
 }
 
+// Reborde en U sobre la repisa de la derecha: a lo largo del borde derecho de la placa y en sus dos esquinas, a ras de
+// la cara del refuerzo y de la pared
+module reborde_pcf() {
+    x0 = ANCHO - grosor_union(true);   // cara del refuerzo
+    xr = m_pcf_x + PCF_L;              // borde derecho de la placa
+    z0 = PISO + PCF_ALTO - 0.01;
+    h = 1.6 + 2 + 0.01;
+    translate([xr + JUEGO, m_pcf_y - JUEGO - 1.2, z0]) cube([ANCHO - PARED + 0.01 - xr - JUEGO, PCF_A + 2 * JUEGO + 2.4, h]);
+    translate([x0, m_pcf_y - JUEGO - 1.2, z0]) cube([ANCHO - PARED + 0.01 - x0, 1.2, h]);
+    // la esquina trasera llega hasta el pilar, para no dejar una rendija entre los dos
+    translate([x0, m_pcf_y + PCF_A + JUEGO, z0]) cube([ANCHO - PARED + 0.01 - x0, FONDO - PARED - PILAR_O - (m_pcf_y + PCF_A + JUEGO), h]);
+}
+// Pedestal de la izquierda: un solo bloque bajo el borde izquierdo de la placa, de delante atrás, con un reborde en sus
+// dos esquinas; en medio del reborde queda un hueco para los pines del conector del bus, que salen por ese lado
+PED_E = 2;      // grosor del reborde, a ras de la cara del pedestal
+PED_DENTRO = 4; // cuánto entra el pedestal bajo la placa
+module pedestal_pcf() {
+    x0 = m_pcf_x - JUEGO - PED_E;
+    ya = m_pcf_y - JUEGO - 1.2;
+    yb = m_pcf_y + PCF_A + JUEGO + 1.2;
+    z0 = PISO + PCF_ALTO;
+    h = 1.6 + 2;
+    bus = [m_pcf_y + PCF_A / 2 - 5.1 - 1, m_pcf_y + PCF_A / 2 + 5.1 + 1];   // el conector del bus con 1 mm a cada lado
+    translate([x0, ya, PISO - 0.01]) cube([m_pcf_x + PED_DENTRO - x0, yb - ya, PCF_ALTO + 0.01]);
+    for (t = [[ya, bus[0]], [bus[1], yb]]) translate([x0, t[0], z0 - 0.01]) cube([PED_E, t[1] - t[0], h + 0.01]);
+    for (y = [ya, yb - 1.2]) translate([x0, y, z0 - 0.01]) cube([m_pcf_x + PED_DENTRO - x0, 1.2, h + 0.01]);
+}
+// Muesca por donde baja la tira de 16 pines de la placa: cruza el pedestal y la repisa
+module muesca_tira_pcf() {
+    translate([m_pcf_x - JUEGO, m_pcf_y + PCF_A - 2.9, PISO + PCF_ALTO - PCF_TIRA_P - PCF_TIRA_SALE - 0.5])
+        cube([PCF_L + 2 * JUEGO, 2.9 + JUEGO, PCF_TIRA_P + PCF_TIRA_SALE + 1]);
+}
+
 // ---------- Componentes (solo para ver el montaje; no se imprimen) ----------
 module mod_pcf() {
+    ty = PCF_A - 1.27;   // fila de la tira de 16 pines
     translate([m_pcf_x, m_pcf_y, PISO + PCF_ALTO]) {
         cube([PCF_L, PCF_A, 1.6]);
-        translate([PCF_L / 2 - 4, PCF_A / 2 - 5, 1.6]) cube([8, 10, 2]);             // chip
-        for (x = [1, PCF_L - 3]) translate([x, PCF_A / 2 - 5, 1.6]) cube([2, 10, 8]); // conectores del bus
+        translate([(PCF_L - 40.64) / 2, ty - 1.25, -PCF_TIRA_P]) cube([40.64, 2.5, PCF_TIRA_P]);            // tira de 16
+        for (i = [0 : 15]) translate([(PCF_L - 40.64) / 2 + 1.27 + i * 2.54 - 0.32, ty - 0.32, -PCF_TIRA_P - PCF_TIRA_SALE])
+            cube([0.64, 0.64, PCF_TIRA_P + PCF_TIRA_SALE + 2.6]);
+        translate([14, 2, 1.6]) cube([10, 7.5, 1.75]);                                                    // chip PCF8574T
+        translate([3.5, 9, 1.6]) cube([6.6, 7, 5]);                                                       // potenciómetro azul
+        translate([PCF_L - 3.5, 12, 1.6]) cube([2.5, 5, 8.5]);                                            // puente de la luz
+        // conector del bus en ángulo recto: plástico sobre la placa y pines hacia fuera
+        translate([0, PCF_A / 2 - 5.1, 1.6]) cube([2.5, 10.2, 2.5]);
+        for (i = [0 : 3]) translate([-PCF_BUS_SALE, PCF_A / 2 + (i - 1.5) * 2.54 - 0.32, 1.6 + 1.25 - 0.32]) cube([PCF_BUS_SALE + 2.5, 0.64, 0.64]);
     }
+}
+// Espacio que necesita la placa PCF8574 con su holgura (para comprobar que nada de la caja lo invade)
+module mod_hueco_pcf() {
+    translate([m_pcf_x - JUEGO + 0.05, m_pcf_y - JUEGO + 0.05, PISO + PCF_ALTO + 0.05]) cube([PCF_L + 2 * JUEGO - 0.1, PCF_A + 2 * JUEGO - 0.1, 1.6 + 2]);
 }
 module mod_reed() {
-    translate([m_cx - REED_L / 2, m_reed_y, ALTO - RANURA + REED_D / 2]) rotate([0, 90, 0]) cylinder(d = REED_D, h = REED_L, $fn = 20);
-    for (s = [-1, 1]) translate([m_cx + s * (REED_L / 2 + 1.25), m_reed_y, PISO + 0.5]) cylinder(d = 0.6, h = ALTO - RANURA + REED_D / 2 - PISO - 0.5, $fn = 8);
+    z = ALTO - CANAL_H + REED_D / 2;
+    translate([REED_X - REED_L / 2, m_reed_y, z]) rotate([0, 90, 0]) cylinder(d = REED_D, h = REED_L, $fn = 20);
+    for (s = [-1, 1]) translate([REED_X + s * REED_L / 2, m_reed_y, z]) rotate([0, 90 * s, 0]) cylinder(d = 0.5, h = 3, $fn = 8);
+}
+// Cables del reed y del LED: por el canal abierto, el pozo y el canal recto hasta la bahía
+module mod_cable() {
+    z = ALTO - CANAL_H + REED_D / 2;
+    yp = POZO_Y0 + 1.8;
+    translate([REED_X + REED_L / 2 + 3, m_reed_y + 2, z]) rotate([0, 90, 0]) cylinder(d = 1.2, h = m_cx - REED_X - REED_L / 2 - 3, $fn = 10);
+    translate([m_cx, yp, PISO + 1.75]) cylinder(d = 3, h = z - PISO - 1.75, $fn = 16);
+    translate([m_cx, yp, PISO + 1.75]) rotate([-90, 0, 0]) cylinder(d = 3, h = m_bahia + 14 - yp, $fn = 16);
 }
 module mod_iman() {
-    translate([m_cx, m_reed_y, ALTO]) cylinder(d = IMAN_D, h = IMAN_H);
+    translate([REED_X, m_reed_y, ALTO]) cylinder(d = IMAN_D, h = IMAN_H);
 }
-module mod_led() {
-    translate([m_cx, 0, LED_Z]) rotate([-90, 0, 0]) {
-        translate([0, 0, -1]) cylinder(d = 5.8, h = 1);
-        cylinder(d = 5, h = PARED + 6);
-    }
-}
-module mod_pulsador() {
-    translate([m_cx, m_boton_y, ALTO + TAPA]) {
-        cylinder(d = 16, h = 2);
-        cylinder(d = 9, h = 5);
-    }
-    translate([m_cx, m_boton_y, ALTO - 16]) cylinder(d = 12, h = 16 + TAPA);
-    translate([m_cx, m_boton_y, ALTO - 3]) cylinder(d = 15, h = 2.5, $fn = 6);
-}
-module mod_tornillos() {
-    for (p = m_pilares) translate([p[0], p[1], ALTO + TAPA - 8]) {
-        cylinder(d = 2.1, h = 8, $fn = 12);
-        translate([0, 0, 6.4]) cylinder(d1 = 2.1, d2 = TORNILLO_CABEZA, h = 1.6, $fn = 20);
-    }
-}
+module mod_led() { led_5mm(m_cx, POZO_Y0 + 1.4); }
+module mod_pulsador() { pulsador_panel(m_cx, m_boton_y); }
+module mod_tornillos() { tornillos(m_pilares); }
+module mod_tuercas() { tuercas(m_pilares); }
 module mod_pasador() {
-    translate([0.2, m_eje_y, m_eje_z]) rotate([0, 90, 0]) cylinder(d = 1.75, h = ANCHO - 0.4, $fn = 12);
+    translate([0.2, m_eje_y, m_eje_z]) rotate([0, 90, 0]) cylinder(d = 1.75, h = ANCHO - 1.5 - 0.4, $fn = 12);   // 58 mm
 }
 
 if (parte == "base") mod_base();
 else if (parte == "tapa") translate([0, 0, ALTO + TAPA]) rotate([180, 0, 0]) mod_tapa();   // boca abajo: el reborde queda arriba
 else if (parte == "cubierta") translate([0, 0, -ALTO]) mod_cubierta();
-else if (parte == "tapon") rotate([0, 90, 0]) translate([-ANCHO - 1.2, 0, 0]) tapon_bus();
-else if (parte == "todo") { mod_base(); mod_tapa(); mod_cubierta(); }
+else if (parte == "tapita") translate([0, 0, -(ALTO - TAPITA_E)]) mod_tapita();
+else if (parte == "tapa_lateral") translate([0, 0, TAPA_LAT]) rotate([0, -90, 0]) tapa_lateral();   // cara exterior en la cama
+else if (parte == "todo") { mod_base(); mod_tapa(); mod_cubierta(); mod_tapita(); }
 else if (parte == "imprimir") {
     mod_base();
     translate([ANCHO + 15, FONDO, ALTO + TAPA]) rotate([180, 0, 0]) mod_tapa();
     translate([2 * (ANCHO + 15), 0, -ALTO]) mod_cubierta();
+    translate([2 * (ANCHO + 15), FONDO + 15, -(ALTO - TAPITA_E)]) mod_tapita();
 }
