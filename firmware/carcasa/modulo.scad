@@ -68,7 +68,8 @@ m_tap_x0 = m_canal_x0 - TAPITA_H;
 m_tap_x1 = m_canal_x1 + TAPITA_H;
 m_tap_y0 = CANAL_Y0 - TAPITA_H;
 m_tap_y1 = CANAL_Y0 + CANAL_A + TAPITA_H;
-m_pcf_x = m_cx - (PCF_L - PCF_BUS_SALE) / 2;   // centrada contando los pines del bus, que miran a la izquierda
+m_pcf_x = ANCHO - PARED - 2.7 - PCF_L;   // a la derecha, sobre las soldaduras de la tira hembra: deja libre el lado de la
+                                        // tira macho, adonde miran los pines del bus
 m_pcf_y = m_bahia + 7.6;                // detrás de los pilares delanteros
 m_boton_y = FONDO - PARED - 11;
 m_pilares = pilares_en(PARED, m_bahia, ANCHO - PARED, FONDO - PARED);

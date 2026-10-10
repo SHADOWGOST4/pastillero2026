@@ -540,7 +540,7 @@
    ],
    [
     "Posición",
-    "centrada contando los pines del bus, 7,6 mm detrás del bloque divisor"
+    "pegada a la derecha (pasa por encima de las soldaduras de la tira hembra), 7,6 mm detrás del bloque divisor"
    ],
    [
     "Bajo la tira",
@@ -548,7 +548,7 @@
    ],
    [
     "Conector del bus",
-    "sus puntas quedan a 8,9 mm de la pared izquierda: sitio para soldar los cables"
+    "sus puntas quedan a 15 mm de la pared izquierda: sitio para la tira macho y para soldar los cables"
    ],
    [
     "Pulsador",
