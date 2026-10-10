@@ -167,10 +167,11 @@ module agujeros_tapa(lista) {
 // pilares: si hay un pilar junto a la esquina, el apoyo llega hasta las paredes y se une a él (sin rendijas).
 // tira: franja libre bajo la placa junto a su borde trasero (una tira de pines hacia abajo): ahí el bloque se corre hacia dentro.
 // dentro: cuánto entra el bloque bajo la placa (más si algo cerca lo recorta y dejaría una pared fina).
-module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6, limites = [-1e3, -1e3, 1e3, 1e3], pilares = [], tira = 0, dentro = 3) {
+// lados: qué extremos de la placa llevan apoyos (0 = el de x0, 1 = el de x0 + largo).
+module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6, limites = [-1e3, -1e3, 1e3, 1e3], pilares = [], tira = 0, dentro = 3, lados = [0, 1]) {
     e = 1.2;      // grosor de la escuadra
     lado = 5;     // largo de cada brazo de la escuadra
-    for (sx = [0, 1], sy = [0, 1]) {
+    for (sx = lados, sy = [0, 1]) {
         x = x0 + sx * largo;
         y = y0 + sy * ancho;
         dx = sx == 0 ? 1 : -1;   // hacia dentro de la placa
@@ -205,17 +206,22 @@ IMAN_FONDO = IMAN_U_H + 0.2;
 module a_la_derecha() { translate([ANCHO, 0, 0]) mirror([1, 0, 0]) children(); }
 
 // Refuerzos por dentro de la pared: marco del conector y alojamientos de los imanes (bajan hasta el fondo)
-module refuerzos_union(derecha) {
-    fc = fondo_con(derecha);
+// Un solo bloque, del mismo grosor y altura, va desde la tira de pines hasta pasado el imán trasero (se une al pilar);
+// el imán delantero lleva el suyo. alto: altura del bloque grande (0 = lo justo para la tira y el imán).
+function grosor_union(derecha) = max(fondo_con(derecha) + 1, IMAN_FONDO + 1.4);   // 1,4 mm detrás del imán
+module refuerzos_union(derecha, alto = 0) {
     cl = largo_con(derecha);
     ch = alto_con(derecha);
+    t = grosor_union(derecha);
+    y0 = CON_Y - cl / 2 - 2;
+    y1 = IMANES_U[1][0] + (IMAN_U_D + 3) / 2;
+    h = alto > 0 ? alto : max(CON_Z + ch / 2 + 2, IMANES_U[1][1] + (IMAN_U_D + 3) / 2);
     module r() {
-        // marco del conector: se alarga hasta el refuerzo del imán trasero para no dejar una rendija entre los dos
-        hasta = max(CON_Y + cl / 2 + 2, IMANES_U[1][0] - (IMAN_U_D + 3) / 2 + 0.5);
-        translate([PARED - 0.01, CON_Y - cl / 2 - 2, PISO - 0.01]) cube([max(fc + 1 - PARED, 1) + 0.01, hasta - (CON_Y - cl / 2 - 2), CON_Z + ch / 2 + 2 - PISO]);
-        // imanes: bloque de techo plano (un techo curvo dejaría una V contra los pilares)
-        for (p = IMANES_U) translate([PARED - 0.01, p[0] - (IMAN_U_D + 3) / 2, 0.5])
-            cube([IMAN_FONDO + 1.4 - PARED + 0.01, IMAN_U_D + 3, p[1] + (IMAN_U_D + 3) / 2 - 0.5]);   // 1,4 mm detrás del imán
+        translate([PARED - 0.01, y0, PISO - 0.01]) cube([t - PARED + 0.01, y1 - y0, h - PISO + 0.01]);
+        // imán delantero: bloque de techo plano (un techo curvo dejaría una V contra los pilares)
+        p = IMANES_U[0];
+        translate([PARED - 0.01, p[0] - (IMAN_U_D + 3) / 2, 0.5])
+            cube([IMAN_FONDO + 1.4 - PARED + 0.01, IMAN_U_D + 3, p[1] + (IMAN_U_D + 3) / 2 - 0.5]);
     }
     if (derecha) a_la_derecha() r(); else r();
 }

@@ -92,13 +92,13 @@ module mod_base() {
                 translate([x0, m_eje_y - BIS_R, ALTO - 3]) cube([BIS_K, 2 * BIS_R, 1]);
             }
             pilares(m_pilares);
-            apoyos_placa(m_pcf_x, m_pcf_y, PCF_L, PCF_A, PCF_ALTO, limites = [PARED, m_bahia, ANCHO - PARED, FONDO - PARED], pilares = m_pilares, tira = 2.9, dentro = 4.5);
+            // la placa apoya a la izquierda en dos escuadras y a la derecha en el refuerzo de la unión, que hace de repisa
+            apoyos_placa(m_pcf_x, m_pcf_y, PCF_L, PCF_A, PCF_ALTO, limites = [PARED, m_bahia, ANCHO - PARED, FONDO - PARED], pilares = m_pilares, tira = 2.9, lados = [0]);
             refuerzos_union(false);
-            refuerzos_union(true);
+            refuerzos_union(true, alto = PISO + PCF_ALTO);
+            reborde_pcf();
             // relleno entre el refuerzo de cada cara y el apoyo trasero de la placa (si no, quedan rendijas de 0,4-1,3 mm);
             // llega solo hasta lo alto del refuerzo: por encima pasan los pines del bus
-            relleno_apoyo(false);
-            a_la_derecha() relleno_apoyo(true);
             guia();
         }
         agujeros_pilares(m_pilares);
@@ -112,6 +112,7 @@ module mod_base() {
         translate([m_canal_x0, CANAL_Y0, ALTO - CANAL_H]) cube([m_canal_x1 - m_canal_x0, CANAL_A, CANAL_H + 1]);
         // rebaje en el que apoya la tapita, a ras con lo alto del borde
         translate([m_tap_x0 - 0.25, m_tap_y0 - 0.25, ALTO - TAPITA_E]) cube([m_tap_x1 - m_tap_x0 + 0.5, m_tap_y1 - m_tap_y0 + 0.5, TAPITA_E + 1]);
+        muesca_tira_pcf();
         // pozo: los cables bajan del canal al fondo
         translate([m_cx - POZO_A / 2, POZO_Y0, PISO]) cube([POZO_A, CANAL_Y0 + CANAL_A - POZO_Y0, ALTO - PISO - CANAL_H + 1]);
         // LED: entra por el frente hasta el escalón; sus patas salen al pozo
@@ -173,10 +174,22 @@ module mod_abrir(angulo) {
     translate([0, m_eje_y, m_eje_z]) rotate([-angulo, 0, 0]) translate([0, -m_eje_y, -m_eje_z]) children();
 }
 
-// Bloque de la cara izquierda (x = 0) que une el refuerzo de la unión con el apoyo trasero de la placa PCF8574
-module relleno_apoyo(derecha) {
-    translate([PARED - 0.01, CON_Y, PISO - 0.01])
-        cube([fondo_con(derecha) + 1 - PARED + 0.01, m_pcf_y + PCF_A - 5 + 0.5 - CON_Y, CON_Z + alto_con(derecha) / 2 + 2 - PISO]);
+// Reborde en U sobre la repisa de la derecha: a lo largo del borde derecho de la placa y en sus dos esquinas, a ras de
+// la cara del refuerzo y de la pared
+module reborde_pcf() {
+    x0 = ANCHO - grosor_union(true);   // cara del refuerzo
+    xr = m_pcf_x + PCF_L;              // borde derecho de la placa
+    z0 = PISO + PCF_ALTO - 0.01;
+    h = 1.6 + 2 + 0.01;
+    translate([xr + JUEGO, m_pcf_y - JUEGO - 1.2, z0]) cube([ANCHO - PARED + 0.01 - xr - JUEGO, PCF_A + 2 * JUEGO + 2.4, h]);
+    translate([x0, m_pcf_y - JUEGO - 1.2, z0]) cube([ANCHO - PARED + 0.01 - x0, 1.2, h]);
+    // la esquina trasera llega hasta el pilar, para no dejar una rendija entre los dos
+    translate([x0, m_pcf_y + PCF_A + JUEGO, z0]) cube([ANCHO - PARED + 0.01 - x0, FONDO - PARED - PILAR_O - (m_pcf_y + PCF_A + JUEGO), h]);
+}
+// Muesca de la repisa por donde baja la tira de 16 pines de la placa
+module muesca_tira_pcf() {
+    translate([m_pcf_x + PCF_L - 8, m_pcf_y + PCF_A - 2.9, PISO + PCF_ALTO - PCF_TIRA_P - PCF_TIRA_SALE - 0.5])
+        cube([8 + JUEGO, 2.9 + JUEGO, PCF_TIRA_P + PCF_TIRA_SALE + 1]);
 }
 
 // ---------- Componentes (solo para ver el montaje; no se imprimen) ----------
