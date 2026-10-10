@@ -3,11 +3,11 @@
   "modelo": [
    [
     "Exterior",
-    "60 × 100 × 28 mm (sin tapa)"
+    "70 × 100 × 28 mm (sin tapa)"
    ],
    [
     "Interior",
-    "55,2 × 95,2 × 25,6 mm"
+    "65,2 × 95,2 × 25,6 mm"
    ],
    [
     "Paredes y fondo",
@@ -32,13 +32,13 @@
     "tira hembra, 2 imanes y canal de la guía: encaja un módulo a la derecha"
    ]
   ],
-  "comprobar": "Tras imprimir: 60 × 100 mm con una tolerancia de ±0,3 mm. Comprueba que el enchufe USB entra por la abertura."
+  "comprobar": "Tras imprimir: 70 × 100 mm con una tolerancia de ±0,3 mm. Comprueba que el enchufe USB entra por la abertura."
  },
  "esp_tapa": {
   "modelo": [
    [
     "Tamaño",
-    "60 × 100 × 4 mm"
+    "70 × 100 × 4 mm"
    ],
    [
     "Agujeros EN y BOOT",
@@ -46,7 +46,7 @@
    ],
    [
     "Botón de vinculación",
-    "agujero Ø 12,5 mm a 49 mm del lado izquierdo y 24 mm del frente"
+    "agujero Ø 12,5 mm a 57,4 mm del lado izquierdo y 24 mm del frente"
    ],
    [
     "Rejilla del buzzer",
@@ -305,19 +305,19 @@
   "modelo": [
    [
     "Exterior",
-    "60 × 100 × 28 mm; 32 mm con los nudillos de la bisagra; +1,5 mm de guía en la cara izquierda"
+    "70 × 100 × 28 mm; 32 mm con los nudillos de la bisagra; +1,5 mm de guía en la cara izquierda"
    ],
    [
     "Cámara de pastillas",
-    "55,2 × 36,4 mm, 20,6 mm de profundidad (≈ 41 cm³)"
+    "65,2 × 36,4 mm, 20,6 mm de profundidad (≈ 49 cm³)"
    ],
    [
     "Borde del sensor",
-    "a todo el ancho (60 mm), 12 mm de fondo, al frente"
+    "a todo el ancho (70 mm), 12 mm de fondo, al frente"
    ],
    [
     "Bahía de la electrónica",
-    "55,2 × 36,2 × 25,6 mm"
+    "65,2 × 36,2 × 25,6 mm"
    ],
    [
     "Bloque divisor",
@@ -327,11 +327,11 @@
   "hueco": [
    [
     "Canal abierto del sensor",
-    "30,5 × 4,8 × 3,8 mm, solo del reed al pozo, desde 4,4 mm del frente"
+    "35,5 × 4,8 × 3,8 mm, solo del reed al pozo, desde 4,4 mm del frente"
    ],
    [
     "Rebaje de la tapita",
-    "33,4 × 7,7 mm, 1,2 mm de profundidad, a ras de lo alto del borde"
+    "38,4 × 7,7 mm, 1,2 mm de profundidad, a ras de lo alto del borde"
    ],
    [
     "Pozo",
@@ -346,13 +346,13 @@
     "elevado a 7,4 mm"
    ]
   ],
-  "comprobar": "Tras imprimir: 60 × 100 mm (±0,3 mm). Pasa un cable de 4 hilos por el canal recto: debe correr sin forzar. Prueba la guía y el canal de la unión con otra unidad."
+  "comprobar": "Tras imprimir: 70 × 100 mm (±0,3 mm). Pasa un cable de 4 hilos por el canal recto: debe correr sin forzar. Prueba la guía y el canal de la unión con otra unidad."
  },
  "mod_tapa": {
   "modelo": [
    [
     "Placa",
-    "60 × 61,4 × 4,5 mm"
+    "70 × 61,4 × 4,5 mm"
    ],
    [
     "Reborde",
@@ -383,7 +383,7 @@
   "modelo": [
    [
     "Tamaño",
-    "60 × 41,1 × 4 mm"
+    "70 × 41,1 × 4 mm"
    ],
    [
     "Agujero del pulsador",
@@ -397,7 +397,7 @@
   "hueco": [
    [
     "Bahía que cierra",
-    "55,2 × 36,2 mm"
+    "65,2 × 36,2 mm"
    ]
   ],
   "comprobar": "Debe quedar a ras de la tapa, con 0,4 mm de junta."
@@ -458,11 +458,11 @@
   "hueco": [
    [
     "Canal abierto",
-    "30,5 × 4,8 × 3,8 mm, del reed al pozo; si cambias REED_X, el canal y la tapita se mueven con él"
+    "35,5 × 4,8 × 3,8 mm, del reed al pozo; si cambias REED_X, el canal y la tapita se mueven con él"
    ],
    [
     "Margen para doblar las patas",
-    "5 mm de canal libre a la izquierda del vidrio y 3 mm a la derecha antes del pozo"
+    "5 mm de canal libre a la izquierda del vidrio y 8 mm a la derecha antes del pozo"
    ],
    [
     "Carril de los cables",
@@ -540,7 +540,7 @@
    ],
    [
     "Posición",
-    "a 6,3 mm de la pared izquierda y 7,6 mm detrás del bloque divisor, pegada al refuerzo de la tira hembra"
+    "centrada contando los pines del bus, 7,6 mm detrás del bloque divisor"
    ],
    [
     "Bajo la tira",
@@ -548,7 +548,7 @@
    ],
    [
     "Conector del bus",
-    "sus pines pasan 0,2 mm por encima del refuerzo de la tira macho (llega a 17,25 mm)"
+    "sus puntas quedan a 8,9 mm de la pared izquierda: sitio para soldar los cables"
    ],
    [
     "Pulsador",
@@ -713,7 +713,7 @@
   "modelo": [
    [
     "Tamaño",
-    "32,9 × 7,2 × 1,2 mm"
+    "37,9 × 7,2 × 1,2 mm"
    ],
    [
     "Posición",
@@ -723,7 +723,7 @@
   "hueco": [
    [
     "Rebaje",
-    "33,4 × 7,7 × 1,2 mm: 0,25 mm de holgura por lado"
+    "38,4 × 7,7 × 1,2 mm: 0,25 mm de holgura por lado"
    ],
    [
     "Apoyo",
@@ -794,11 +794,11 @@
   "hueco": [
    [
     "Agujero",
-    "Ø 12,5 mm en la tapa, a 49 mm del lado izquierdo y 24 mm del frente"
+    "Ø 12,5 mm en la tapa, a 57,4 mm del lado izquierdo y 24 mm del frente"
    ],
    [
     "Bisel",
-    "a 0,7 mm de la rejilla del buzzer y a 2,5 mm del borde de la tapa"
+    "a 4,1 mm de la rejilla del buzzer y a 4,1 mm del borde de la tapa"
    ],
    [
     "Por dentro",

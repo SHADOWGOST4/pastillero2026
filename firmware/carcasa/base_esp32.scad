@@ -1,4 +1,4 @@
-// Base del pastillero (60 x 100 x 32 mm con la tapa): va a la izquierda de la fila.
+// Base del pastillero (70 x 100 x 32 mm con la tapa): va a la izquierda de la fila.
 //
 //   Frente (y = 0) ........ LED de estado, a la misma altura que el LED de cada módulo.
 //   Delante, en el piso ... buzzer en su anillo, apoyado en un escalón, debajo de la rejilla de la tapa. Sus patas
@@ -43,7 +43,7 @@ ETIQUETAS_BOTONES = ["BOOT", "EN"];
 
 // ---------- Botón de vinculación (GPIO 27) ----------
 // El mismo pulsador de panel de 12 mm que los módulos. No hace falta hundirlo: es duro y hay que mantenerlo 5 s.
-BV_X = 49;              // el bisel queda a 0,7 mm de la rejilla del buzzer y a 2,5 mm del borde de la tapa
+BV_X = (ANCHO / 2 + 9.8 + ANCHO) / 2;   // a medio camino entre la rejilla del buzzer y el borde de la tapa
 BV_Y = 24;
 
 // ---------- Buzzer ----------

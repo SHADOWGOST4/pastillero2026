@@ -35,6 +35,8 @@ def en_paralelo(funcion, lista):
     with ThreadPoolExecutor(max_workers=TRABAJOS) as grupo:
         return list(grupo.map(funcion, lista))
 CARCASA = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# ancho de cada unidad, leído de comun.scad (para juntar las unidades de la fila)
+ANCHO = float(re.search(r"^ANCHO = ([\d.]+);", open(os.path.join(CARCASA, "comun.scad"), encoding="utf-8").read(), re.M).group(1))
 TMP = os.path.join(tempfile.gettempdir(), "pastillero_carcasa")
 os.makedirs(TMP, exist_ok=True)
 C = CARCASA.replace("\\", "/")
@@ -209,8 +211,8 @@ def interferencias():
         ("base: tapa / cables", "esp_tapa()", "esp_cables()"),
         ("base: ESP32 / cables", "esp_esp32()", "esp_cables()"),
         ("base: buzzer / cables", "esp_buzzer()", "esp_cables()"),
-        ("fila: base / modulo 1", "esp_caja()", f"translate([{60},0,0]) mod_base()"),
-        ("fila: modulo 1 / modulo 2", M, f"translate([{60},0,0]) mod_base()"),
+        ("fila: base / modulo 1", "esp_caja()", f"translate([{ANCHO},0,0]) mod_base()"),
+        ("fila: modulo 1 / modulo 2", M, f"translate([{ANCHO},0,0]) mod_base()"),
         ("modulo: base / conector macho", M, "con_macho()"),
         ("modulo: base / conector hembra", M, "con_hembra()"),
         ("modulo: base / imanes izquierda", M, "imanes_union(false)"),
@@ -219,12 +221,12 @@ def interferencias():
         ("base: caja / conector hembra", "esp_caja()", "con_hembra()"),
         ("base: caja / imanes", "esp_caja()", "imanes_union(true)"),
         ("base: placa perforada / conector", "esp_perforada()", "con_hembra()"),
-        ("fila: base / pines del modulo 1", "esp_caja()", "translate([60,0,0]) pines_macho()"),
-        ("fila: conector hembra / macho del vecino", "con_hembra()", "translate([60,0,0]) con_macho()"),
-        ("fila: imanes de la base / imanes del modulo", "imanes_union(true)", "translate([60,0,0]) imanes_union(false)"),
-        ("fila: modulo izquierdo / base", M, "translate([60,0,0]) esp_caja()"),
-        ("fila: modulo izquierdo / pines de la base", M, "translate([60,0,0]) pines_macho()"),
-        ("fila: hembra del modulo / pines de la base", "con_hembra()", "translate([60,0,0]) pines_macho()"),
+        ("fila: base / pines del modulo 1", "esp_caja()", f"translate([{ANCHO},0,0]) pines_macho()"),
+        ("fila: conector hembra / macho del vecino", "con_hembra()", f"translate([{ANCHO},0,0]) con_macho()"),
+        ("fila: imanes de la base / imanes del modulo", "imanes_union(true)", f"translate([{ANCHO},0,0]) imanes_union(false)"),
+        ("fila: modulo izquierdo / base", M, f"translate([{ANCHO},0,0]) esp_caja()"),
+        ("fila: modulo izquierdo / pines de la base", M, f"translate([{ANCHO},0,0]) pines_macho()"),
+        ("fila: hembra del modulo / pines de la base", "con_hembra()", f"translate([{ANCHO},0,0]) pines_macho()"),
         ("base: caja / tira macho", "esp_caja()", "union() { con_macho(); pines_macho(); }"),
         ("base: caja / imanes izquierda", "esp_caja()", "imanes_union(false)"),
         ("base: ESP32 / cables del bus", "esp_esp32()", "esp_cables()"),

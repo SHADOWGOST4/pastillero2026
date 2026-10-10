@@ -10,7 +10,7 @@
 //
 // Ejes: x = ancho (hacia la derecha), y = fondo (del frente hacia atrás), z = alto. Medidas en milímetros.
 
-ANCHO = 60;
+ANCHO = 70;
 FONDO = 100;
 ALTO = 28;          // caja sin tapa
 TAPA = 4;           // grosor de todas las tapas: alto total ALTO + TAPA

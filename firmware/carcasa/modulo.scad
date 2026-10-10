@@ -1,4 +1,4 @@
-// Módulo de un medicamento (60 x 100 x 32 mm con la tapa).
+// Módulo de un medicamento (70 x 100 x 32 mm con la tapa).
 //
 //   Frente (y = 0) ........ LED del módulo, a la vista con la tapa cerrada.
 //   Cámara ................ pastillas sueltas, con doble fondo: por debajo pasa el canal de los cables.
@@ -48,8 +48,8 @@ PASADOR = 2.1;          // filamento de 1,75 mm
 // Placa PCF8574: el adaptador I2C para pantallas LCD1602 (PCF8574T). Medidas típicas: compruébalas con la tuya.
 PCF_L = 41.5;
 PCF_A = 19.3;
-PCF_ALTO = 12.5;        // altura de los postes: la tira de 16 pines (hacia abajo) queda 4 mm sobre el fondo y los pines
-                        // del bus pasan por encima del refuerzo de la tira macho (llega a 17,25 mm)
+PCF_ALTO = 12.5;        // altura de los postes: la tira de 16 pines (hacia abajo) queda 4 mm sobre el fondo y las
+                        // soldaduras de la tira hembra (hasta 12,75 mm) quedan por debajo de la placa
 PCF_TIRA_P = 2.5;       // plástico de la tira de 16 pines, bajo la placa, a lo largo del borde trasero
 PCF_TIRA_SALE = 6;      // pines por debajo de ese plástico
 PCF_BUS_SALE = 6;       // pines del conector del bus (GND, VCC, SDA, SCL): salen en horizontal por el extremo izquierdo
@@ -68,7 +68,7 @@ m_tap_x0 = m_canal_x0 - TAPITA_H;
 m_tap_x1 = m_canal_x1 + TAPITA_H;
 m_tap_y0 = CANAL_Y0 - TAPITA_H;
 m_tap_y1 = CANAL_Y0 + CANAL_A + TAPITA_H;
-m_pcf_x = ANCHO - PARED - 7.4 - PCF_L;   // contra el refuerzo de la tira hembra; el conector del bus mira a la izquierda
+m_pcf_x = m_cx - (PCF_L - PCF_BUS_SALE) / 2;   // centrada contando los pines del bus, que miran a la izquierda
 m_pcf_y = m_bahia + 7.6;                // detrás de los pilares delanteros
 m_boton_y = FONDO - PARED - 11;
 m_pilares = pilares_en(PARED, m_bahia, ANCHO - PARED, FONDO - PARED);
