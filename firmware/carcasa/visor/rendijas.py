@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comprobar import C, MOTOR, OPENSCAD, TMP, en_paralelo, scad  # noqa: E402
 
 R = float(os.environ.get("RENDIJA", 1.4)) / 2   # detecta rendijas de menos de RENDIJA mm (1,4 por defecto)
+GROSOR = float(os.environ.get("GROSOR", 0)) / 2  # con GROSOR=1.2 busca, en cambio, paredes de menos de 1,2 mm
 AREA_MIN = 0.8   # mm²: por debajo son solo los rincones que el cierre redondea
 PASO = 0.5       # separación entre rodajas
 PIEZAS = {       # pieza: (código, alto hasta donde mirar)
@@ -32,7 +33,12 @@ def rodaja(trabajo):
     nombre, codigo, z = trabajo
     clave = f"r_{nombre}_{z:.2f}".replace(".", "_")
     seccion = f"projection(cut = true) translate([0, 0, {-z}]) {codigo};"
-    ruta = scad(clave, CABECERA + f"difference() {{ offset(r = -{R}) offset(r = {R}) {seccion} {seccion} }}\n")
+    if GROSOR:   # lo que se pierde al encoger y volver a crecer: partes más finas que 2·GROSOR
+        clave = "g" + clave
+        codigo = f"difference() {{ {seccion} offset(r = {GROSOR}) offset(r = -{GROSOR}) {seccion} }}\n"
+    else:        # lo que se rellena al crecer y volver a encoger: huecos más estrechos que 2·R
+        codigo = f"difference() {{ offset(r = -{R}) offset(r = {R}) {seccion} {seccion} }}\n"
+    ruta = scad(clave, CABECERA + codigo)
     salida = os.path.join(TMP, clave + ".svg")
     if os.path.exists(salida):
         os.remove(salida)
@@ -66,7 +72,7 @@ if __name__ == "__main__":
             z += PASO
     encontradas = [r for r in en_paralelo(rodaja, trabajos) if r[2]]
     if not encontradas:
-        print("Sin rendijas de menos de", 2 * R, "mm")
+        print("Sin paredes de menos de", 2 * GROSOR, "mm" if GROSOR else "") if GROSOR else print("Sin rendijas de menos de", 2 * R, "mm")
     # junta la misma zona en rodajas seguidas
     zonas = {}
     for nombre, z, lista in encontradas:

@@ -91,7 +91,7 @@ module mod_base() {
                 translate([x0, m_eje_y - BIS_R, ALTO - 3]) cube([BIS_K, 2 * BIS_R, 1]);
             }
             pilares(m_pilares);
-            apoyos_placa(m_pcf_x, m_pcf_y, PCF_L, PCF_A, PCF_ALTO, limites = [PARED, m_bahia, ANCHO - PARED, FONDO - PARED], pilares = m_pilares, tira = 2.9);
+            apoyos_placa(m_pcf_x, m_pcf_y, PCF_L, PCF_A, PCF_ALTO, limites = [PARED, m_bahia, ANCHO - PARED, FONDO - PARED], pilares = m_pilares, tira = 2.9, dentro = 4.5);
             refuerzos_union(false);
             refuerzos_union(true);
             // relleno entre el refuerzo de cada cara y el apoyo trasero de la placa (si no, quedan rendijas de 0,4-1,3 mm);

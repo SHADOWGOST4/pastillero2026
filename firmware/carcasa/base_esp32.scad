@@ -78,7 +78,7 @@ module esp_caja() {
             // anillo del buzzer
             translate([b_cx, BUZ_Y, PISO - 0.01]) difference() {
                 union() {
-                    cylinder(d = BUZ_D + 2.4, h = BUZ_H);
+                    cylinder(d = BUZ_D + 3.2, h = BUZ_H);   // pared de 1,6 mm
                 }
                 // hueco del buzzer por encima del escalón y, por debajo, uno más estrecho que deja el escalón
                 translate([0, 0, BUZ_ESCALON]) cylinder(d = BUZ_D, h = BUZ_H);

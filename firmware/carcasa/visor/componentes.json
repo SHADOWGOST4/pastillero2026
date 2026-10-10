@@ -178,7 +178,7 @@
   "hueco": [
    [
     "Anillo",
-    "Ø interior 12,4 mm, exterior 14,8 mm, 8 mm de alto"
+    "Ø interior 12,4 mm, exterior 15,6 mm, 8 mm de alto"
    ],
    [
     "Escalón",
@@ -207,7 +207,7 @@
    ],
    [
     "Asoma",
-    "3,5 mm por el frente, a 14 mm del fondo y centrado"
+    "4,4 mm por el frente, a 14 mm del fondo y centrado"
    ],
    [
     "Color",
@@ -221,7 +221,7 @@
    ],
    [
     "Escalón",
-    "a 5,1 mm de profundidad, Ø 4 mm: detiene la pestaña y deja pasar las patas"
+    "a 4,2 mm de profundidad, Ø 4 mm: detiene la pestaña y deja pasar las patas"
    ],
    [
     "Patas",
@@ -487,7 +487,7 @@
    ],
    [
     "Asoma",
-    "3,5 mm por el frente, a 14 mm del fondo y centrado"
+    "4,4 mm por el frente, a 14 mm del fondo y centrado"
    ],
    [
     "Color",
@@ -501,7 +501,7 @@
    ],
    [
     "Escalón",
-    "a 5,1 mm de profundidad, Ø 4 mm: detiene la pestaña y deja pasar las patas"
+    "a 4,2 mm de profundidad, Ø 4 mm: detiene la pestaña y deja pasar las patas"
    ],
    [
     "Patas",
@@ -632,7 +632,7 @@
    ],
    [
     "Posición",
-    "cara izquierda, a 72 mm del frente y 14 mm de altura"
+    "cara izquierda, a 72 mm del frente y 10 mm de altura"
    ]
   ],
   "hueco": [
@@ -656,7 +656,7 @@
    ],
    [
     "Posición",
-    "cara derecha, a ras, a 72 mm del frente y 14 mm de altura"
+    "cara derecha, a ras, a 72 mm del frente y 10 mm de altura"
    ]
   ],
   "hueco": [
@@ -685,7 +685,7 @@
   "hueco": [
    [
     "Alojamiento",
-    "Ø 8,4 × 3,2 mm, a ras de la cara"
+    "Ø 8,4 × 3,2 mm, a ras de la cara; 1,4 mm de pared detrás"
    ]
   ],
   "comprobar": "Con los 2 pares de imanes las unidades deben sostenerse sin moverse, pero poder separarse tirando con la mano."
@@ -704,7 +704,7 @@
   "hueco": [
    [
     "Alojamiento",
-    "Ø 8,4 × 3,2 mm, a ras de la cara"
+    "Ø 8,4 × 3,2 mm, a ras de la cara; 1,4 mm de pared detrás"
    ]
   ],
   "comprobar": "Antes de pegarlos, ponlos sobre un imán de una cara izquierda: la cara que queda pegada es la que va hacia fuera."

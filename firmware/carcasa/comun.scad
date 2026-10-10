@@ -36,10 +36,10 @@ PULS_ROSCA = 10;        // rosca, desde la cara de abajo del bisel
 PULS_PATAS = 4;         // terminales por debajo de la rosca
 
 // LED de 5 mm en el frente de cada unidad, siempre a la misma altura. Entra desde el frente, con las patas primero,
-// por un agujero por el que pasa la pestaña; a LED_TOPE de profundidad un escalón la detiene y la cúpula asoma 3,5 mm.
+// por un agujero por el que pasa la pestaña; a LED_TOPE de profundidad un escalón la detiene y la cúpula asoma 4,4 mm.
 LED_Z = 14;
 LED_AGUJERO = 6.3;      // pasa la pestaña de Ø 5,8 con 0,25 mm por lado
-LED_TOPE = 5.1;         // profundidad del escalón (8,6 de LED - 3,5 que asoman)
+LED_TOPE = 4.2;         // profundidad del escalón (8,6 de LED - 4,4 que asoman): deja 1,4 mm de escalón antes del pozo
 LED_PASO = 4;           // paso de las patas detrás del escalón
 
 // ---------- Unión entre unidades ----------
@@ -47,7 +47,7 @@ LED_PASO = 4;           // paso de las patas detrás del escalón
 //   Cara derecha: tira HEMBRA, a ras de la pared y con los agujeros hacia fuera (la de los zócalos, medida).
 //   Cara izquierda: tira MACHO; su plástico queda dentro de la pared y los pines sobresalen y entran en la hembra vecina.
 CON_Y = 72;             // centro del conector
-CON_Z = 14;
+CON_Z = 10;             // altura del conector: las soldaduras de detrás quedan bajo la placa PCF8574 y sobre la perforada
 CON_HOLGURA = 0.2;
 HEMBRA_L = 11;          // largo de 4 pines (medido)
 HEMBRA_A = 2.5;         // ancho (medido)
@@ -166,7 +166,8 @@ module agujeros_tapa(lista) {
 // limites = [x mín, y mín, x máx, y máx] de las paredes: si un apoyo queda a menos de 3 mm, llega hasta la pared.
 // pilares: si hay un pilar junto a la esquina, el apoyo llega hasta las paredes y se une a él (sin rendijas).
 // tira: franja libre bajo la placa junto a su borde trasero (una tira de pines hacia abajo): ahí el bloque se corre hacia dentro.
-module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6, limites = [-1e3, -1e3, 1e3, 1e3], pilares = [], tira = 0) {
+// dentro: cuánto entra el bloque bajo la placa (más si algo cerca lo recorta y dejaría una pared fina).
+module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6, limites = [-1e3, -1e3, 1e3, 1e3], pilares = [], tira = 0, dentro = 3) {
     e = 1.2;      // grosor de la escuadra
     lado = 5;     // largo de cada brazo de la escuadra
     for (sx = [0, 1], sy = [0, 1]) {
@@ -184,9 +185,9 @@ module apoyos_placa(x0, y0, largo, ancho, alto, pcb = 1.6, limites = [-1e3, -1e3
         union() {
             // bloque bajo la placa: une el apoyo y el pie de la escuadra
             if (sy == 1 && tira > 0)
-                translate([min(fx, x + 3 * dx), y - tira - 3, PISO - 0.01]) cube([abs(x + 3 * dx - fx), 3, alto + 0.01]);
+                translate([min(fx, x + dentro * dx), y - tira - 3, PISO - 0.01]) cube([abs(x + dentro * dx - fx), 3, alto + 0.01]);
             else
-                translate([min(fx, x + 3 * dx), min(fy, y + 3 * dy), PISO - 0.01]) cube([abs(x + 3 * dx - fx), abs(y + 3 * dy - fy), alto + 0.01]);
+                translate([min(fx, x + dentro * dx), min(fy, y + dentro * dy), PISO - 0.01]) cube([abs(x + dentro * dx - fx), abs(y + dentro * dy - fy), alto + 0.01]);
             // escuadra en L por encima, alrededor de la esquina
             translate([min(fx, x - dx * JUEGO), min(fy, y + lado * dy), PISO - 0.01]) cube([abs(x - dx * JUEGO - fx), abs(y + lado * dy - fy), alto + pcb + 2]);
             translate([min(fx, x + lado * dx), min(fy, y - dy * JUEGO), PISO - 0.01]) cube([abs(x + lado * dx - fx), abs(y - dy * JUEGO - fy), alto + pcb + 2]);
@@ -214,7 +215,7 @@ module refuerzos_union(derecha) {
         translate([PARED - 0.01, CON_Y - cl / 2 - 2, PISO - 0.01]) cube([max(fc + 1 - PARED, 1) + 0.01, hasta - (CON_Y - cl / 2 - 2), CON_Z + ch / 2 + 2 - PISO]);
         // imanes: bloque de techo plano (un techo curvo dejaría una V contra los pilares)
         for (p = IMANES_U) translate([PARED - 0.01, p[0] - (IMAN_U_D + 3) / 2, 0.5])
-            cube([IMAN_FONDO + 0.8 - PARED + 0.01, IMAN_U_D + 3, p[1] + (IMAN_U_D + 3) / 2 - 0.5]);
+            cube([IMAN_FONDO + 1.4 - PARED + 0.01, IMAN_U_D + 3, p[1] + (IMAN_U_D + 3) / 2 - 0.5]);   // 1,4 mm detrás del imán
     }
     if (derecha) a_la_derecha() r(); else r();
 }
@@ -226,11 +227,20 @@ module huecos_union(derecha) {
     ch = alto_con(derecha);
     module h() {
         translate([-1, CON_Y - cl / 2 - CON_HOLGURA, CON_Z - ch / 2 - CON_HOLGURA]) cube([fc + 1, cl + 2 * CON_HOLGURA, ch + 2 * CON_HOLGURA]);
-        translate([fc - 0.01, CON_Y - cl / 2, CON_Z - ch / 2 - 1.5]) cube([4, cl, ch + 3]);
         for (p = IMANES_U) translate([-1, p[0], p[1]]) rotate([0, 90, 0]) cylinder(d = IMAN_U_D + 0.4, h = IMAN_FONDO + 1);
         if (derecha) translate([0, GUIA_Y, -1]) linear_extrude(ALTO + 2) offset(delta = JUEGO) polygon(perfil_guia());
     }
     if (derecha) a_la_derecha() h(); else h();
+    espacio_soldar(derecha);
+}
+
+// Espacio detrás de cada tira para las patas y las soldaduras de los cables: nada debe meterse ahí
+module espacio_soldar(derecha) {
+    fc = fondo_con(derecha);
+    cl = largo_con(derecha);
+    ch = alto_con(derecha);
+    module e() translate([fc - 0.01, CON_Y - cl / 2, CON_Z - ch / 2 - 1.5]) cube([4, cl, ch + 3]);
+    if (derecha) a_la_derecha() e(); else e();
 }
 
 function perfil_guia() = [[-1, -GUIA_BASE / 2], [GUIA_SALE, -GUIA_PUNTA / 2], [GUIA_SALE, GUIA_PUNTA / 2], [-1, GUIA_BASE / 2]];
