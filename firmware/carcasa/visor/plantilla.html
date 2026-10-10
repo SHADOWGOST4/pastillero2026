@@ -112,16 +112,26 @@ td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line); vertical-ali
 td.num { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .ancho { grid-column: 1 / -1; }
 
+/* Vista ampliada: el visor ocupa toda la ventana (o la pantalla completa, si el navegador lo deja) */
+html.sin-scroll, html.sin-scroll body { overflow: hidden; }
+.visor.ampliado { position: fixed; inset: 0; z-index: 50; background: var(--bg); padding: 12px; gap: 12px; grid-template-columns: minmax(0, 1fr) 300px; align-items: stretch; }
+.visor.ampliado .escena { height: calc(100vh - 24px); height: calc(100dvh - 24px); }
+.visor.ampliado .leyenda { max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); }
+
 @media (max-width: 900px) {
   .visor { grid-template-columns: minmax(0, 1fr); }
   .leyenda { max-height: none; }
   .bloques { grid-template-columns: minmax(0, 1fr); }
+  .visor.ampliado { grid-template-columns: minmax(0, 1fr); }
+  .visor.ampliado .leyenda { display: none; }   /* en pantallas estrechas, ampliada se ve solo la escena */
 }
 @media (max-width: 520px) {
   .pagina { padding-inline: 16px; }
   .escena { height: 420px; }
   .detalle { left: 12px; right: 12px; max-width: none; max-height: 55%; }
   .pista { display: none; }
+  .visor.ampliado { padding: 0; }
+  .visor.ampliado .escena { height: 100vh; height: 100dvh; border-radius: 0; }
 }
 </style>
 
@@ -146,6 +156,7 @@ td.num { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; font-
           <button type="button" id="t-marcas" aria-pressed="true">Señales</button>
           <button type="button" id="t-cotas" aria-pressed="true">Medidas</button>
           <button type="button" id="t-vista">Centrar</button>
+          <button type="button" id="t-ampliar" aria-pressed="false" title="Ocupar toda la pantalla (Esc para volver)">Ampliar</button>
         </div>
       </div>
       <div class="pista">Arrastra para girar · rueda o pellizco para acercar · clic en una pieza para ver qué es</div>
@@ -623,6 +634,26 @@ interruptor('t-dentro', 'dentro', aplicarMateriales);
 interruptor('t-marcas', 'marcas', pedirRender);
 interruptor('t-cotas', 'cotas', pedirRender);
 document.getElementById('t-vista').addEventListener('click', vistaInicial);
+
+// Ampliar: el visor ocupa toda la ventana; si el navegador lo deja, además pasa a pantalla completa
+const visor = document.querySelector('.visor');
+const bAmpliar = document.getElementById('t-ampliar');
+function ampliar(si) {
+  visor.classList.toggle('ampliado', si);
+  document.documentElement.classList.toggle('sin-scroll', si);
+  bAmpliar.setAttribute('aria-pressed', String(si));
+  bAmpliar.textContent = si ? 'Reducir' : 'Ampliar';
+}
+bAmpliar.addEventListener('click', () => {
+  const si = !visor.classList.contains('ampliado');
+  ampliar(si);
+  try {
+    if (si && document.fullscreenEnabled && !document.fullscreenElement) visor.requestFullscreen().catch(() => {});
+    if (!si && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  } catch (e) { /* sin pantalla completa: se queda ocupando la ventana */ }
+});
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && visor.classList.contains('ampliado')) ampliar(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && visor.classList.contains('ampliado')) ampliar(false); });
 
 function vistaInicial() {
   const centro = new THREE.Vector3(TOTAL / 2, FONDO / 2, 12);
