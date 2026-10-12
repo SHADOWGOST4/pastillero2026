@@ -15,7 +15,7 @@
    ],
    [
     "Abertura del USB",
-    "13 × 10 mm, centrada a 21,1 mm de altura"
+    "boca de 9,8 × 3,8 mm con la forma del conector, centrada a 21,1 mm de altura, en un rebaje exterior de 13,5 × 8 mm y 0,7 mm de fondo; encima, una ranura hasta lo alto de la pared que cierra la lengüeta de la tapa"
    ],
    [
     "Pilares de las esquinas",
@@ -55,6 +55,10 @@
    [
     "Rótulos",
     "BOOT, EN, USB y VINCULAR, grabados 0,6 mm"
+   ],
+   [
+    "Lengüeta del USB",
+    "9,5 × 2,4 × 5 mm por debajo de la tapa: cierra la ranura de la pared encima del USB, con 0,15 mm a cada lado"
    ]
   ],
   "hueco": [
@@ -129,7 +133,7 @@
    ],
    [
     "Conector USB-C",
-    "boca de 9 × 3 mm (medida), 7,5 mm de largo, sobresale 2 mm del borde (medido)"
+    "óvalo de 9 × 3 mm (medido), 7,5 mm de largo, sobresale 2 mm del borde (medido)"
    ],
    [
     "Pines",
@@ -151,14 +155,14 @@
   "hueco": [
    [
     "Espacio al USB-C",
-    "0,5 mm entre el conector y la pared trasera"
+    "el borde de la placa queda a 0,3 mm de la pared; el conector entra 1,7 mm en ella y su boca queda a ras del fondo del rebaje, con 0,4 mm de holgura alrededor"
    ],
    [
     "Altura libre sobre el módulo",
     "5,2 mm hasta la tapa"
    ]
   ],
-  "comprobar": "Medido en tus fotos sobre papel milimetrado. Confirma con un calibre el largo (52,5 mm), el ancho (28 mm) y la distancia entre filas de pines (25,4 mm)."
+  "comprobar": "Medido en tus fotos sobre papel milimetrado. Confirma con un calibre el largo (52,5 mm), el ancho (28 mm) y la distancia entre filas de pines (25,4 mm). El USB queda justo en su boca: antes de imprimir confirma la distancia del conector a las filas de pines."
  },
  "esp_buzzer": {
   "modelo": [
@@ -258,24 +262,20 @@
   "modelo": [
    [
     "Enchufe USB-C",
-    "11 × 8 mm de cuerpo en el modelo, 18 mm de largo"
+    "cuerpo de 12 × 6,5 mm (típico) que queda en el rebaje; el metal entra directo en el conector"
    ]
   ],
   "hueco": [
    [
-    "Abertura",
-    "13 × 10 mm"
+    "Rebaje",
+    "13,5 × 8 mm y 0,7 mm de fondo, con las esquinas redondeadas"
    ],
    [
     "Holgura",
-    "1 mm a cada lado y 1 mm en vertical"
-   ],
-   [
-    "Hasta el conector",
-    "2,4 mm de pared y 0,5 mm de aire"
+    "0,75 mm a cada lado del cuerpo del enchufe"
    ]
   ],
-  "comprobar": "Mide el cuerpo del enchufe USB-C de tu cable: los comunes miden unos 12 × 6,5 mm y entran por la abertura hasta el conector.",
+  "comprobar": "Mide el cuerpo de plástico del enchufe de tu cable: debe caber en el rebaje de 13,5 × 8 mm (los comunes miden unos 12 × 6,5 mm).",
   "supuesta": true
  },
  "esp_tornillos": {

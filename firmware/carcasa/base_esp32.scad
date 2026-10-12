@@ -34,8 +34,9 @@ USB_C_A = 9;            // boca del conector USB-C (medida): 9 x 3 mm
 USB_C_H = 3;
 MACHO = 2.5;            // plástico de las tiras de pines del ESP32, que queda sobre el zócalo
 ZOCALO = 8.5;           // tiras de zócalo hembra entre la placa perforada y el ESP32
-USB_A = 13;             // abertura del USB
-USB_H = 10;
+USB_HOLGURA = 0.4;      // boca de la pared alrededor del conector USB-C, por lado
+USB_REBAJE = [13.5, 8]; // rebaje por fuera para el cuerpo del enchufe: la boca del conector queda a ras de su fondo
+USB_HUECO = 0.3;        // del borde del ESP32 a la pared: el conector entra 1,7 mm en ella
 BOTONES_X = 8.2;        // pulsadores EN y BOOT, a cada lado del USB (medido en las fotos)
 BOTONES_Y = 4.1;        // distancia al borde del USB
 BOTONES_D = 3.4;
@@ -61,10 +62,11 @@ b_cx = ANCHO / 2;
 b_perf_x = b_cx - PERF_A / 2;
 b_perf_y = FONDO - PARED - 2.5 - PERF_L;   // el USB-C sobresale 2 mm de la placa: quedan 0,5 mm hasta la pared
 b_esp_x = b_perf_x + 3;                 // a la derecha del ESP32 quedan 8,5 mm para el transistor y el conector
-b_esp_y = b_perf_y + PERF_L - ESP_L;    // el USB queda en el borde trasero
+b_esp_y = FONDO - PARED - USB_HUECO - ESP_L;   // el USB queda en el borde trasero, metido en la pared
 b_esp_z = PISO + PERF_ALTO + 1.6 + ZOCALO + MACHO;
 b_esp_cx = b_esp_x + ESP_A / 2;
 b_usb_z = b_esp_z + 1.6 + USB_C_H / 2;   // centro de la boca del USB-C
+b_usb_y = b_esp_y + ESP_L + USB_SALE;    // boca del conector: fondo del rebaje exterior
 b_botones = [for (s = [-1, 1]) [b_esp_cx + s * BOTONES_X, b_esp_y + ESP_L - BOTONES_Y]];
 b_pilares = pilares_en(PARED, PARED, ANCHO - PARED, FONDO - PARED);
 
@@ -105,14 +107,41 @@ module esp_caja() {
         agujero_led(b_cx, PARED + 7);
         // paso de las patas del LED hacia atrás
         translate([b_cx - 1.5, PARED + 4, PISO + 2]) cube([3, 6, LED_Z - PISO]);
-        // USB
-        translate([b_esp_cx - USB_A / 2, FONDO - PARED - 1, b_usb_z - USB_H / 2]) cube([USB_A, PARED + 2, USB_H]);
+        // USB: boca justa para el conector (redonda por abajo), ranura hasta arriba para que el conector baje al enchufar
+        // el ESP32 en los zócalos (la cierra la lengüeta de la tapa) y rebaje por fuera para el cuerpo del enchufe
+        usb_boca(FONDO - PARED - 1, PARED + 2);
+        translate([b_esp_cx - USB_C_A / 2 - USB_HOLGURA, FONDO - PARED - 1, b_usb_z]) cube([USB_C_A + 2 * USB_HOLGURA, PARED + 2, ALTO]);
+        usb_rebaje();
+    }
+}
+
+// Boca de la pared para el USB-C: forma del conector con su holgura, a lo largo de y desde y0
+module usb_boca(y0, largo) {
+    w = USB_C_A + 2 * USB_HOLGURA;
+    h = USB_C_H + 2 * USB_HOLGURA;
+    hull() for (s = [-1, 1]) translate([b_esp_cx + s * (w - h) / 2, y0, b_usb_z]) rotate([-90, 0, 0]) cylinder(d = h, h = largo, $fn = 32);
+}
+// Rebaje exterior alrededor del USB, con las esquinas redondeadas
+module usb_rebaje() {
+    r = 2;
+    hull() for (sx = [-1, 1], sz = [-1, 1])
+        translate([b_esp_cx + sx * (USB_REBAJE[0] / 2 - r), b_usb_y, b_usb_z + sz * (USB_REBAJE[1] / 2 - r)]) rotate([-90, 0, 0]) cylinder(r = r, h = FONDO - b_usb_y + 1, $fn = 24);
+}
+// Lengüeta de la tapa: cierra la ranura de la pared por encima del USB, con el rebaje exterior y 0,15 mm a cada lado
+module usb_lengueta() {
+    z0 = b_usb_z + USB_C_H / 2 + USB_HOLGURA;   // borde de arriba de la boca
+    difference() {
+        translate([b_esp_cx - USB_C_A / 2 - USB_HOLGURA + JUEGO / 2, FONDO - PARED, z0]) cube([USB_C_A + 2 * USB_HOLGURA - JUEGO, PARED, ALTO - z0 + 0.01]);
+        usb_rebaje();
     }
 }
 
 module esp_tapa() {
     difference() {
-        translate([0, 0, ALTO]) caja_redondeada(ANCHO, FONDO, TAPA);
+        union() {
+            translate([0, 0, ALTO]) caja_redondeada(ANCHO, FONDO, TAPA);
+            usb_lengueta();
+        }
         agujeros_tapa(b_pilares);
         for (b = b_botones) translate([b[0], b[1], ALTO - 1]) cylinder(d = BOTONES_D, h = TAPA + 2);
         // rejilla del buzzer
@@ -144,7 +173,9 @@ module esp_esp32() {
     translate([b_esp_x, b_esp_y, b_esp_z]) {
         cube([ESP_A, ESP_L, 1.6]);
         translate([ESP_A / 2 - 9, 0, 1.6]) cube([18, 25.5, 3.2]);                    // módulo WROOM (antena al frente)
-        translate([ESP_A / 2 - USB_C_A / 2, ESP_L + USB_SALE - 7.5, 1.6]) cube([USB_C_A, 7.5, USB_C_H]);  // conector USB-C
+        // conector USB-C: óvalo de 9 x 3 mm con los extremos redondos, 7,5 mm de largo
+        hull() for (s = [-1, 1]) translate([ESP_A / 2 + s * (USB_C_A - USB_C_H) / 2, ESP_L + USB_SALE - 7.5, 1.6 + USB_C_H / 2])
+            rotate([-90, 0, 0]) cylinder(d = USB_C_H, h = 7.5, $fn = 24);
         // tiras de pines macho, por debajo de la placa
         for (s = [-1, 1]) translate([ESP_A / 2 + s * ESP_FILAS / 2 - 1.25, ESP_PIN0 - 1.27, -MACHO]) cube([2.5, 15 * 2.54, MACHO]);
         for (s = [-1, 1]) translate([ESP_A / 2 + s * BOTONES_X - 2, ESP_L - BOTONES_Y - 2, 1.6]) cube([4, 4, 1.8]);
@@ -186,14 +217,14 @@ module esp_cables() {
 }
 module esp_tornillos() { tornillos(b_pilares); }
 module esp_tuercas() { tuercas(b_pilares); }
-module esp_usb() {
-    translate([b_esp_cx - 5.5, FONDO - 1.5, b_usb_z - 4]) cube([11, 18, 8]);
+module esp_usb() {   // enchufe del cable: el cuerpo (12 x 6,5 mm, típico) queda en el rebaje, el metal entra en el conector
+    translate([b_esp_cx - 6, b_usb_y + 0.05, b_usb_z - 3.25]) cube([12, 18, 6.5]);
 }
 
 if (parte == "caja") esp_caja();
-else if (parte == "tapa") translate([0, 0, -ALTO]) esp_tapa();
+else if (parte == "tapa") translate([0, 0, ALTO + TAPA]) rotate([180, 0, 0]) esp_tapa();   // boca abajo: la lengüeta del USB queda arriba
 else if (parte == "todo") { esp_caja(); esp_tapa(); }
 else if (parte == "imprimir") {
     esp_caja();
-    translate([ANCHO + 15, 0, -ALTO]) esp_tapa();
+    translate([ANCHO + 15, FONDO, ALTO + TAPA]) rotate([180, 0, 0]) esp_tapa();
 }
