@@ -29,7 +29,9 @@ ESP_A = 28;             // ancho de la placa
 ESP_L = 52.5;           // largo de la placa, sin el USB
 ESP_FILAS = 25.4;       // distancia entre las dos filas de pines (centro a centro)
 ESP_PIN0 = 6.5;         // centro del primer pin, medido desde el borde de la antena
-USB_SALE = 1.9;         // lo que el conector USB-C sobresale del borde de la placa
+USB_SALE = 2;           // lo que el conector USB-C sobresale del borde de la placa (medido)
+USB_C_A = 9;            // boca del conector USB-C (medida): 9 x 3 mm
+USB_C_H = 3;
 MACHO = 2.5;            // plástico de las tiras de pines del ESP32, que queda sobre el zócalo
 ZOCALO = 8.5;           // tiras de zócalo hembra entre la placa perforada y el ESP32
 USB_A = 13;             // abertura del USB
@@ -57,12 +59,12 @@ BUZ_Y = 22;
 // ---------- Derivadas ----------
 b_cx = ANCHO / 2;
 b_perf_x = b_cx - PERF_A / 2;
-b_perf_y = FONDO - PARED - 2.5 - PERF_L;   // el USB-C sobresale 1,9 mm de la placa: quedan 0,6 mm hasta la pared
+b_perf_y = FONDO - PARED - 2.5 - PERF_L;   // el USB-C sobresale 2 mm de la placa: quedan 0,5 mm hasta la pared
 b_esp_x = b_perf_x + 3;                 // a la derecha del ESP32 quedan 8,5 mm para el transistor y el conector
 b_esp_y = b_perf_y + PERF_L - ESP_L;    // el USB queda en el borde trasero
 b_esp_z = PISO + PERF_ALTO + 1.6 + ZOCALO + MACHO;
 b_esp_cx = b_esp_x + ESP_A / 2;
-b_usb_z = b_esp_z + 1.6 + 1.6;
+b_usb_z = b_esp_z + 1.6 + USB_C_H / 2;   // centro de la boca del USB-C
 b_botones = [for (s = [-1, 1]) [b_esp_cx + s * BOTONES_X, b_esp_y + ESP_L - BOTONES_Y]];
 b_pilares = pilares_en(PARED, PARED, ANCHO - PARED, FONDO - PARED);
 
@@ -142,7 +144,7 @@ module esp_esp32() {
     translate([b_esp_x, b_esp_y, b_esp_z]) {
         cube([ESP_A, ESP_L, 1.6]);
         translate([ESP_A / 2 - 9, 0, 1.6]) cube([18, 25.5, 3.2]);                    // módulo WROOM (antena al frente)
-        translate([ESP_A / 2 - 4.5, ESP_L + USB_SALE - 7.5, 1.6]) cube([9, 7.5, 3.2]);  // conector USB-C
+        translate([ESP_A / 2 - USB_C_A / 2, ESP_L + USB_SALE - 7.5, 1.6]) cube([USB_C_A, 7.5, USB_C_H]);  // conector USB-C
         // tiras de pines macho, por debajo de la placa
         for (s = [-1, 1]) translate([ESP_A / 2 + s * ESP_FILAS / 2 - 1.25, ESP_PIN0 - 1.27, -MACHO]) cube([2.5, 15 * 2.54, MACHO]);
         for (s = [-1, 1]) translate([ESP_A / 2 + s * BOTONES_X - 2, ESP_L - BOTONES_Y - 2, 1.6]) cube([4, 4, 1.8]);

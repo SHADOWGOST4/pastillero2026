@@ -15,7 +15,7 @@
    ],
    [
     "Abertura del USB",
-    "13 × 10 mm, centrada a 21,2 mm de altura"
+    "13 × 10 mm, centrada a 21,1 mm de altura"
    ],
    [
     "Pilares de las esquinas",
@@ -129,7 +129,7 @@
    ],
    [
     "Conector USB-C",
-    "9 × 7,5 × 3,2 mm, sobresale 1,9 mm del borde"
+    "boca de 9 × 3 mm (medida), 7,5 mm de largo, sobresale 2 mm del borde (medido)"
    ],
    [
     "Pines",
@@ -151,7 +151,7 @@
   "hueco": [
    [
     "Espacio al USB-C",
-    "0,6 mm entre el conector y la pared trasera"
+    "0,5 mm entre el conector y la pared trasera"
    ],
    [
     "Altura libre sobre el módulo",
@@ -272,7 +272,7 @@
    ],
    [
     "Hasta el conector",
-    "2,4 mm de pared y 0,6 mm de aire"
+    "2,4 mm de pared y 0,5 mm de aire"
    ]
   ],
   "comprobar": "Mide el cuerpo del enchufe USB-C de tu cable: los comunes miden unos 12 × 6,5 mm y entran por la abertura hasta el conector.",
