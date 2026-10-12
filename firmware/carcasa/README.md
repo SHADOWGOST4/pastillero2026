@@ -215,6 +215,17 @@ una o dos pasadas y se rompen. Las escuadras de los apoyos y el reborde de la ta
 
 PETG o PLA, capa de 0,2 mm, 3 perímetros, relleno 20 % y **sin soportes**. Las piezas ya están orientadas así en los STL.
 
+Todas juntas, con las cantidades de la tabla (11 piezas, unos 268 × 257 mm), están en `stl/pastillero_completo.stl`.
+Si cambias el modelo, vuelve a generarlo:
+
+```bash
+python visor/comprobar.py piezas
+python visor/juntar.py
+```
+
+Si tu cama es más pequeña, `ANCHO_CAMA=200 python visor/juntar.py` reparte las piezas en filas más cortas, o abre los
+STL sueltos y repártelos en varias tandas.
+
 Tornillería: 12 tornillos M3 × 10 de cabeza avellanada (DIN 7991) y 12 tuercas M3 normales (DIN 934), 4 por unidad.
 Cada tuerca se mete desde arriba en el hueco hexagonal de lo alto de su pilar, a presión y a ras, con una gota de epoxi
 (tipo Pegadit o Araldite) sin manchar la rosca. Deja secar antes de atornillar y no aprietes de más, porque el tornillo
