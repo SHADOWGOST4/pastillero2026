@@ -555,7 +555,7 @@
     "sus patas quedan 0,5 mm por encima de las soldaduras de la tira"
    ]
   ],
-  "comprobar": "Mide tu placa: largo, ancho, cuánto bajan los pines de la tira de 16 y cuánto salen los del bus. Los cables van soldados en la punta de los pines (no hay sitio para conectores dupont). Dirección I2C: 0x27 de fábrica (0x3F si el chip es PCF8574A); une el puente A0 en uno de los dos módulos para que quede en 0x26.",
+  "comprobar": "Mide tu placa: largo, ancho, cuánto bajan los pines de la tira de 16 y cuánto salen los del bus. Los cables van soldados en la punta de los pines (no hay sitio para conectores dupont). Dirección I2C: el módulo 1 va sin puentes (0x27 de fábrica, o 0x3F si el chip es PCF8574A) y el 2 con el puente A0 unido (0x26 o 0x3E).",
   "supuesta": true
  },
  "mod_pulsador": {

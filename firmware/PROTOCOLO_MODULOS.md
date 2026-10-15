@@ -14,15 +14,27 @@ La implementación del servidor está en `api_pillbox/core/modulos.py`; las prue
 
 ## Numeración de los módulos
 
-El módulo se identifica por su **posición** (`numero`, de 1 a 16), que sale de la dirección I2C fijada con el DIP switch.
-El firmware traduce la dirección a número; el protocolo nunca habla de direcciones.
+El módulo se identifica por su **número** (`numero`), que sale de la dirección I2C fijada con los puentes A0, A1 y A2 de su
+placa. El firmware traduce la dirección a número; el protocolo nunca habla de direcciones.
 
-| Chip | Direcciones | Números |
-|---|---|---|
-| PCF8574 | 0x20 a 0x27 | 1 a 8 |
-| PCF8574A | 0x38 a 0x3F | 9 a 16 |
+La placa de cada módulo es el adaptador I2C de LCD1602, que sale de fábrica con los tres puentes abiertos (0x27). Para que
+el módulo 1 no necesite soldadura, el firmware cuenta hacia abajo desde ahí. El PCF8574A (0x38 a 0x3F) da los mismos números,
+así que no importa cuál de los dos llegue:
 
-No mezcles un MCP23017 en el mismo bus: usa las mismas direcciones que el PCF8574.
+| Puentes unidos | PCF8574 | PCF8574A | Número |
+|---|---|---|---|
+| ninguno (de fábrica) | 0x27 | 0x3F | 1 |
+| A0 | 0x26 | 0x3E | 2 |
+| A1 | 0x25 | 0x3D | 3 |
+| A0 y A1 | 0x24 | 0x3C | 4 |
+| A2 | 0x23 | 0x3B | 5 |
+| A0 y A2 | 0x22 | 0x3A | 6 |
+| A1 y A2 | 0x21 | 0x39 | 7 |
+| los tres | 0x20 | 0x38 | 8 |
+
+Un PCF8574 y un PCF8574A con los mismos puentes darían el mismo número: el firmware avisa por el monitor serie y usa el
+primero. El servidor acepta números del 1 al 16; este firmware usa del 1 al 8. No mezcles un MCP23017 en el mismo bus: usa las
+mismas direcciones que el PCF8574.
 
 ## Pines del módulo (propuesta, a confirmar con la placa real)
 
@@ -34,6 +46,14 @@ No mezcles un MCP23017 en el mismo bus: usa las mismas direcciones que el PCF857
 | P3 a P7 | Libres | |
 
 Al leer, se escribe primero `1` en los pines de entrada. Hay que filtrar rebotes (30 a 50 ms).
+
+En el adaptador I2C de LCD1602, P0, P1 y P2 salen por los **pines 4, 5 y 6** de su tira de 16 (los que van a RS, RW y E de la
+pantalla). P3 va al transistor de la luz de la pantalla: no lo uses. Conexiones:
+
+- **LED:** ánodo a 3,3 V (pin 2 de la tira, VDD) con su resistencia de 220 Ω; cátodo al pin 4 (P0).
+- **Reed:** un extremo al pin 5 (P1) y el otro a GND (pin 1, VSS).
+- **Pulsador:** un terminal al pin 6 (P2) y el otro a GND.
+- **Bus:** el conector de 4 pines de la placa (GND, VCC, SDA, SCL) a la tira macho y la hembra del módulo.
 
 ## Autenticación
 
@@ -83,14 +103,17 @@ Mantiene `activo`, `version`, `horario` y `ultima_toma_confirmada_programada` de
           "id": 12, "hora_toma": "08:00:00", "frecuencia": 8, "cantidad_por_toma": 2,
           "fecha_inicio": "2026-10-01", "tipo_duracion": "INDEFINIDO", "duracion_dias": null, "fecha_fin": null
         }
-      ]
+      ],
+      "ultima_confirmada": "2026-10-03T08:00:00-05:00"
     },
-    {"numero": 2, "detectado": true, "medicamento": null, "horarios": []}
+    {"numero": 2, "detectado": true, "medicamento": null, "horarios": [], "ultima_confirmada": null}
   ]
 }
 ```
 
 - Solo vienen los horarios activos y no eliminados.
+- `ultima_confirmada` es la hora programada (de Bogotá) de la última toma confirmada del medicamento del módulo, por la placa o
+  por la app; `null` si no hay. Si coincide con la alarma que suena, la placa la apaga sin enviar nada: la confirmaron en la app.
 - `frecuencia` son las horas entre tomas; `0` o 24 o más significa una vez al día.
 - Un módulo sin medicamento no debe sonar. `activo` conserva el significado anterior (hay un horario asignado al dispositivo): el
   firmware modular debe guiarse por `modulos`.
@@ -180,6 +203,17 @@ Con la clave `modulo` confirma la toma de ese módulo. Sin ella es el flujo ante
 8. **Sin red:** guarda los eventos en una cola con su `evento_id` y los reenvía; la idempotencia evita duplicados.
 9. Con varios módulos a la misma hora, cada uno tiene su LED y se confirma por separado.
 
+El firmware de `esp32_pillbox/` (versión `modular-1.0.0`) lo hace así:
+
+- Confirma al cerrar la tapa: al instante si ya pulsaron el botón (`COMPLETA`), o a los 10 s si no lo pulsan (`TAPA`). Si pulsan
+  sin haber abierto, confirma al momento (`BOTON`); si pulsan con la tapa abierta, confirma al cerrarla.
+- A los 10 minutos sin respuesta envía `alarma_omitida`; si la tapa se abrió y no se cerró, confirma (`TAPA`).
+- El botón de la base **no confirma** las tomas de los módulos: una pulsación corta solo silencia el buzzer (los LED siguen
+  hasta confirmar). Mantenerlo 5 s sigue reiniciando la configuración.
+- Al encender no reabre tomas pasadas: solo suenan las que empiezan con la placa encendida.
+- La cola guarda hasta 24 envíos en memoria (se pierden si se apaga la placa).
+- Sin módulos conectados se comporta como el firmware de un solo compartimento (ver "Compatibilidad").
+
 ## Reglas del servidor
 
 | Regla | Valor |
@@ -217,7 +251,8 @@ medicamentos de cada módulo y la app ya no asigna un horario al dispositivo:
 
 ## Pendiente
 
-- Firmware modular: escaneo I2C, LED y sensores por módulo, máquina de estados de la alarma y cola sin red.
+- Firmware modular: hecho en `esp32_pillbox/` (detección I2C, LED y sensores por módulo, alarmas y cola sin red, con
+  módulos simulados por el monitor serie); falta probarlo con las placas PCF8574 reales.
 - App: pasar de "Agregar módulo" a "Detectar módulos", mostrar el historial y el método de cada toma, y quitar el selector
   "Horario del pastillero" cuando el dispositivo sea modular.
 - Avisar al cuidador cuando una toma llegue como `BOTON` o se omita.

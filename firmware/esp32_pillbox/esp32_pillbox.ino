@@ -1,8 +1,12 @@
-/* ESP32 MVP: un compartimiento, LED GPIO 18, botón GPIO 27 y buzzer GPIO 23.
+/* Base del pastillero: ESP32 con LED GPIO 18, botón GPIO 27, buzzer GPIO 23 y los módulos por I2C (SDA 21, SCL 22).
  * Requiere el core "esp32 by Espressif" 3.3 o superior y ArduinoJson 7.
  *
  * Configuración: sin credenciales (o tras mantener el botón 5 s) el ESP32 anuncia BLE y espera a la app
  * (ver aprovisionamiento.cpp). Con credenciales guardadas opera como pastillero.
+ *
+ * Con módulos conectados (o simulados por el monitor serie) cada uno suena a la hora de su medicamento y se confirma
+ * con su tapa y su botón (modulos.cpp y logica.h). Sin módulos se comporta como el pastillero de un solo compartimento:
+ * suena la base y se confirma con su botón.
  */
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
@@ -11,8 +15,11 @@
 #include <time.h>
 #include "secrets.h"
 #include "aprovisionamiento.h"
+#include "logica.h"
+#include "modulos.h"
 
 constexpr uint8_t LED_PIN = 18, BUTTON_PIN = 27, BUZZER_PIN = 23;
+constexpr const char *FIRMWARE_VERSION = "modular-1.0.0";
 constexpr unsigned long HEARTBEAT_MS = 30000, CONFIG_MS = 15000;
 constexpr unsigned long ALARM_STATUS_MS = 5000;
 WiFiClientSecure tls;
@@ -42,15 +49,30 @@ unsigned long inicioAlarmaMs = 0;
 volatile bool confirmacionSolicitada = false;
 volatile time_t instanteConfirmacion = 0;
 
-// Un envío pendiente (confirmación o alarma omitida). Se reintenta con el mismo evento_id: el servidor es idempotente.
+// Lo que hay que enviar al servidor (confirmaciones y eventos), en orden. Cada envío lleva su evento_id y se reintenta
+// con el mismo: el servidor es idempotente. Sin red se acumulan; si la cola se llena se descarta el más antiguo.
 struct Envio {
-  bool pendiente = false, esConfirmacion = true;
-  String evento, fecha, programada;
+  bool confirmacion = false;
+  String json;
   int intentos = 0;
   unsigned long proximoMs = 0;
 };
-Envio envio;
+constexpr int MAX_ENVIOS = 24;
+Envio envios[MAX_ENVIOS];
+int primerEnvio = 0, numEnvios = 0;
 constexpr int INTENTOS_ENVIO = 12;
+
+// Lo que dice el servidor de cada módulo: si tiene medicamento, sus horarios y la última toma confirmada.
+struct ConfigModulo {
+  bool conMedicamento = false;
+  int numHorarios = 0;
+  logica::Horario horarios[logica::MAX_HORARIOS];
+  int64_t ultimaConfirmada = -1;
+};
+ConfigModulo configModulos[logica::MAX_MODULOS];
+String firmaModulos = "";
+int64_t ultimoRevisadoModular = 0;   // hasta dónde se revisaron los horarios de los módulos
+uint32_t cambiosVistos = 0;
 
 void setAlarma(bool activa) {
   if (activa) inicioAlarmaMs = millis();
@@ -133,12 +155,69 @@ void heartbeat() {
   headers(http);
   JsonDocument body;
   body["rssi"] = WiFi.RSSI();
-  body["firmware_version"] = "mvp-1.0.0";
+  body["firmware_version"] = FIRMWARE_VERSION;
+  body["ip"] = WiFi.localIP().toString();
+  // Los módulos que se ven ahora (vacío si no hay ninguno: el servidor los marca como desconectados)
+  JsonArray lista = body["modulos"].to<JsonArray>();
+  int numeros[logica::MAX_MODULOS]; bool tapas[logica::MAX_MODULOS];
+  int presentes = modulosPresentes(numeros, tapas, logica::MAX_MODULOS);
+  for (int i = 0; i < presentes; i++) {
+    JsonObject m = lista.add<JsonObject>();
+    m["numero"] = numeros[i];
+    m["tapa_abierta"] = tapas[i];
+  }
   String json; serializeJson(body, json);
   int codigo = http.POST(json);
   Serial.printf("[API] Heartbeat HTTP %d\n", codigo);
   diagnosticarConexion("Heartbeat", codigo);
   http.end();
+}
+
+logica::Duracion duracion(const char *tipo) {
+  if (!strcmp(tipo, "DIAS")) return logica::Duracion::DIAS;
+  if (!strcmp(tipo, "FECHA")) return logica::Duracion::FECHA;
+  return logica::Duracion::INDEFINIDO;
+}
+
+// Guarda el medicamento y los horarios de cada módulo; si la app confirmó la toma que suena, la apaga.
+void leerConfiguracionModulos(JsonArrayConst lista) {
+  ConfigModulo nueva[logica::MAX_MODULOS];
+  String firma = "";
+  for (JsonObjectConst m : lista) {
+    int n = m["numero"] | 0;
+    if (n < 1 || n > logica::MAX_MODULOS) continue;
+    ConfigModulo &c = nueva[n - 1];
+    c.conMedicamento = !m["medicamento"].isNull();
+    for (JsonObjectConst h : m["horarios"].as<JsonArrayConst>()) {
+      if (c.numHorarios >= logica::MAX_HORARIOS) break;
+      logica::Horario x;
+      x.id = h["id"] | 0;
+      x.diaInicio = logica::parsearFecha(h["fecha_inicio"] | "");
+      x.horaToma = logica::parsearHora(h["hora_toma"] | "");
+      x.frecuencia = h["frecuencia"] | 0;
+      x.duracion = duracion(h["tipo_duracion"] | "INDEFINIDO");
+      x.duracionDias = h["duracion_dias"] | 0;
+      x.diaFin = logica::parsearFecha(h["fecha_fin"] | "");
+      if (x.diaInicio < 0 || x.horaToma < 0) continue;
+      c.horarios[c.numHorarios++] = x;
+      firma += String(n) + ":" + String(x.id) + "@" + String(x.horaToma) + "/" + String(x.frecuencia) + " ";
+    }
+    if (c.conMedicamento) firma += String(n) + "+ ";
+    c.ultimaConfirmada = logica::parsearFechaHora(m["ultima_confirmada"] | (const char *)nullptr);
+    if (c.ultimaConfirmada >= 0) ordenarModulo(Orden::CONFIRMADA_FUERA, n, c.ultimaConfirmada);
+  }
+  for (int i = 0; i < logica::MAX_MODULOS; i++) configModulos[i] = nueva[i];
+  if (firma != firmaModulos) {
+    firmaModulos = firma;
+    for (int n = 1; n <= logica::MAX_MODULOS; n++) {
+      const ConfigModulo &c = configModulos[n - 1];
+      if (!c.conMedicamento) continue;
+      Serial.printf("[CONFIG] Modulo %d: %d horario(s):", n, c.numHorarios);
+      for (int i = 0; i < c.numHorarios; i++)
+        Serial.printf(" %02d:%02d cada %d h", c.horarios[i].horaToma / 3600, c.horarios[i].horaToma % 3600 / 60, c.horarios[i].frecuencia);
+      Serial.println();
+    }
+  }
 }
 
 void obtenerConfiguracion() {
@@ -150,7 +229,9 @@ void obtenerConfiguracion() {
   diagnosticarConexion("Configuracion", codigo);
   if (codigo == HTTP_CODE_OK) {
     JsonDocument doc;
-    if (!deserializeJson(doc, http.getString()) && doc["activo"].as<bool>()) {
+    bool legible = !deserializeJson(doc, http.getString());
+    if (legible) leerConfiguracionModulos(doc["modulos"].as<JsonArrayConst>());
+    if (legible && doc["activo"].as<bool>()) {
       String nuevaVersion = doc["version"] | "";
       tomaConfirmadaProgramada = doc["ultima_toma_confirmada_programada"] | "";
       const char *hora = doc["horario"]["hora_toma"] | "";
@@ -190,27 +271,83 @@ String fechaIso(time_t instante) {
   return String(fecha);
 }
 
-void encolarEnvio(bool esConfirmacion, time_t instante, long claveToma) {
-  envio.pendiente = true; envio.esConfirmacion = esConfirmacion; envio.evento = nuevoEvento();
-  envio.fecha = fechaIso(instante); envio.programada = fechaIso((time_t)claveToma * 60);
-  envio.intentos = 0; envio.proximoMs = millis();
+// Agrega un envío al final de la cola, con un evento_id nuevo.
+void encolar(bool confirmacion, JsonDocument &body) {
+  body["evento_id"] = nuevoEvento();
+  if (numEnvios == MAX_ENVIOS) {
+    Serial.println("[API] Cola de envios llena: se descarta el mas antiguo.");
+    primerEnvio = (primerEnvio + 1) % MAX_ENVIOS;
+    numEnvios--;
+  }
+  Envio &e = envios[(primerEnvio + numEnvios) % MAX_ENVIOS];
+  e = Envio();
+  e.confirmacion = confirmacion;
+  serializeJson(body, e.json);
+  e.proximoMs = millis();
+  numEnvios++;
 }
 
+// Pastillero de un solo compartimento: confirmación (sin `modulo`) o alarma omitida.
+void encolarEnvio(bool esConfirmacion, time_t instante, long claveToma) {
+  JsonDocument body;
+  if (esConfirmacion) {
+    body["fecha_hora_real"] = fechaIso(instante);
+  } else {
+    body["tipo"] = "alarma_omitida"; body["fecha_hora"] = fechaIso(instante);
+    body["datos"]["programada"] = fechaIso((time_t)claveToma * 60);
+  }
+  encolar(esConfirmacion, body);
+}
+
+String fechaIso64(int64_t instante) {
+  char texto[32];
+  logica::formatearFechaHora(instante, texto, sizeof texto);
+  return String(texto);
+}
+
+// Lo que pidió el motor de alarmas de un módulo: un evento o la confirmación de una toma con su evidencia.
+void encolarAccion(const logica::Accion &a) {
+  JsonDocument body;
+  body["modulo"] = a.modulo;
+  if (a.tipo == logica::TipoAccion::CONFIRMAR) {
+    body["fecha_hora_real"] = fechaIso64(a.fecha);
+    if (a.programada >= 0) body["programada"] = fechaIso64(a.programada);
+    JsonObject evidencia = body["evidencia"].to<JsonObject>();
+    const struct { const char *clave; int64_t instante; } campos[] = {
+      {"apertura_en", a.apertura}, {"cierre_en", a.cierre}, {"boton_en", a.boton}};
+    for (auto &c : campos) {
+      if (c.instante) evidencia[c.clave] = fechaIso64(c.instante);
+      else evidencia[c.clave] = nullptr;
+    }
+    Serial.printf("[MODULOS] Modulo %d: toma confirmada (%s%s%s).\n", a.modulo, a.apertura ? "tapa" : "",
+                  a.apertura && a.boton ? " y " : "", a.boton ? "boton" : "");
+    encolar(true, body);
+  } else {
+    body["tipo"] = a.evento;
+    body["fecha_hora"] = fechaIso64(a.fecha);
+    JsonObject datos = body["datos"].to<JsonObject>();
+    if (a.alarmaActiva >= 0) datos["alarma_activa"] = a.alarmaActiva == 1;
+    if (a.programada >= 0) datos["programada"] = fechaIso64(a.programada);
+    if (a.esperado) datos["esperado"] = a.esperado;
+    if (!strcmp(a.evento, "alarma_iniciada")) Serial.printf("[MODULOS] Modulo %d: SUENA la toma de las %s.\n", a.modulo, fechaIso64(a.programada).substring(11, 16).c_str());
+    if (!strcmp(a.evento, "alarma_omitida")) Serial.printf("[MODULOS] Modulo %d: nadie respondio en 10 min; toma omitida.\n", a.modulo);
+    if (!strcmp(a.evento, "modulo_equivocado")) Serial.printf("[MODULOS] Modulo %d: no es el que suena (suena el %d).\n", a.modulo, a.esperado);
+    encolar(false, body);
+  }
+}
+
+// Envía el primero de la cola cuando le toca. Un 4xx (salvo 408 y 429) significa que el servidor lo rechazó:
+// reintentar no lo cambiaría, así que se descarta.
 void procesarEnvio() {
-  if (!envio.pendiente || millis() < envio.proximoMs) return;
-  const char *nombre = envio.esConfirmacion ? "Confirmacion" : "Alarma omitida";
+  if (!numEnvios) return;
+  Envio &e = envios[primerEnvio];
+  if ((long)(millis() - e.proximoMs) < 0) return;
+  const char *nombre = e.confirmacion ? "Confirmacion" : "Evento";
   int codigo = -1;
   HTTPClient http;
-  if (abrir(http, envio.esConfirmacion ? "/tomas/confirmar/" : "/eventos/")) {
+  if (abrir(http, e.confirmacion ? "/tomas/confirmar/" : "/eventos/")) {
     headers(http);
-    JsonDocument body; body["evento_id"] = envio.evento;
-    if (envio.esConfirmacion) {
-      body["fecha_hora_real"] = envio.fecha;
-    } else {
-      body["tipo"] = "alarma_omitida"; body["fecha_hora"] = envio.fecha; body["datos"]["programada"] = envio.programada;
-    }
-    String json; serializeJson(body, json);
-    codigo = http.POST(json);
+    codigo = http.POST(e.json);
     Serial.printf("[API] %s HTTP %d: %s\n", nombre, codigo, http.getString().c_str());
     diagnosticarConexion(nombre, codigo);
     http.end();
@@ -218,18 +355,19 @@ void procesarEnvio() {
     Serial.printf("[API] No se pudo abrir el envio (%s).\n", nombre);
   }
   bool exito = codigo == HTTP_CODE_OK || codigo == HTTP_CODE_CREATED;
-  // Un 4xx (salvo 408 y 429) significa que el servidor lo rechazó: reintentar no lo cambiaría.
   bool rechazado = codigo >= 400 && codigo < 500 && codigo != 408 && codigo != 429;
-  envio.intentos++;
-  if (exito || rechazado || envio.intentos >= INTENTOS_ENVIO) {
-    if (!exito) Serial.printf("[API] Se descarta el envio (%s) tras %d intento(s).\n", nombre, envio.intentos);
-    envio.pendiente = false;
+  e.intentos++;
+  if (exito || rechazado || e.intentos >= INTENTOS_ENVIO) {
+    if (!exito) Serial.printf("[API] Se descarta el envio (%s) tras %d intento(s): %s\n", nombre, e.intentos, e.json.c_str());
+    e = Envio();
+    primerEnvio = (primerEnvio + 1) % MAX_ENVIOS;
+    numEnvios--;
     return;
   }
-  unsigned long espera = 2000UL << (envio.intentos < 4 ? envio.intentos : 4);  // 4, 8, 16, 30, 30... s
+  unsigned long espera = 2000UL << (e.intentos < 4 ? e.intentos : 4);  // 4, 8, 16, 30, 30... s
   if (espera > 30000UL) espera = 30000UL;
-  envio.proximoMs = millis() + espera;
-  Serial.printf("[API] Se reintentara %s en %lu s.\n", nombre, espera / 1000);
+  e.proximoMs = millis() + espera;
+  Serial.printf("[API] Se reintentara %s en %lu s (%d en cola).\n", nombre, espera / 1000, numEnvios);
 }
 
 void tareaBoton(void *) {
@@ -247,6 +385,9 @@ void tareaBoton(void *) {
           instanteConfirmacion = time(nullptr);
           confirmacionSolicitada = true;
           Serial.println("[ALARMA] APAGADA al pulsar | confirmacion en curso");
+        } else if (modo == Modo::OPERACION && alarmaModularActiva()) {
+          // Con módulos, la toma se confirma en el módulo que suena; el botón de la base solo calla el buzzer.
+          ordenarModulo(Orden::SILENCIAR, 0);
         } else {
           Serial.println("[BOTON] No hay una toma pendiente para confirmar.");
         }
@@ -279,6 +420,39 @@ void revisarHorario() {
   if (corresponde && minutoActual != ultimaConfirmada) {
     claveAlarma = minutoActual;
     setAlarma(true);
+  }
+}
+
+// Empieza la alarma de cada módulo presente cuya toma acaba de llegar. Igual que el pastillero de un compartimento,
+// no reabre tomas pasadas al encender: solo las que empiezan desde la última revisión (con 5 min de margen por si el
+// loop estuvo bloqueado).
+void revisarHorariosModulos() {
+  time_t t = time(nullptr);
+  if (t < 1700000000) return;
+  if (!ultimoRevisadoModular) { ultimoRevisadoModular = t; return; }
+  if (t <= ultimoRevisadoModular) return;
+  int numeros[logica::MAX_MODULOS]; bool tapas[logica::MAX_MODULOS];
+  int presentes = modulosPresentes(numeros, tapas, logica::MAX_MODULOS);
+  for (int i = 0; i < presentes; i++) {
+    const ConfigModulo &c = configModulos[numeros[i] - 1];
+    if (!c.conMedicamento || !c.numHorarios) continue;
+    int64_t toma = logica::tomaEntre(c.horarios, c.numHorarios, ultimoRevisadoModular, t);
+    if (toma >= 0 && t - toma < 300 && toma != c.ultimaConfirmada) ordenarModulo(Orden::INICIAR, numeros[i], toma);
+  }
+  ultimoRevisadoModular = t;
+}
+
+// Comandos del monitor serie (simulación de módulos); ver comandoModulos.
+void leerSerie() {
+  static String linea;
+  while (Serial.available()) {
+    char c = Serial.read();
+    if (c == '\n' || c == '\r') {
+      if (linea.length() && !comandoModulos(linea)) Serial.printf("[SERIE] No entiendo '%s'. Escribe 'ayuda'.\n", linea.c_str());
+      linea = "";
+    } else if (linea.length() < 64) {
+      linea += c;
+    }
   }
 }
 
@@ -336,6 +510,7 @@ void iniciarOperacion() {
   modo = Modo::OPERACION;
   tls.setCACert(ROOT_CA);
   Serial.println("[INICIO] Pastillero en operacion normal.");
+  iniciarModulos(LED_PIN, BUZZER_PIN);
   conectarWifi();  // conecta y sincroniza la hora; si falla, se reintenta en cada petición
   ultimoHeartbeat = millis() - HEARTBEAT_MS; ultimaConfig = millis() - CONFIG_MS;
 }
@@ -383,8 +558,18 @@ void loop() {
     return;
   }
 
+  leerSerie();
+  // Con módulos conectados mandan ellos: la alarma de un solo compartimento no se usa.
+  const bool modular = hayModulos();
+  if (modular && alarma) {
+    Serial.println("[ALARMA] Hay modulos conectados: se apaga la alarma de la base.");
+    setAlarma(false);
+  }
   if (millis() < ledFijoHasta) digitalWrite(LED_PIN, HIGH);
-  else if (!alarma) digitalWrite(LED_PIN, LOW);
+  else if (!alarma && !salidasOcupadas()) digitalWrite(LED_PIN, LOW);
+
+  logica::Accion accion;
+  while (siguienteAccion(accion)) encolarAccion(accion);
 
   if (confirmacionSolicitada) {
     confirmacionSolicitada = false;
@@ -401,9 +586,13 @@ void loop() {
   procesarEnvio();
 
   unsigned long ahora = millis();
+  // Un módulo se conectó o se quitó: latido en un segundo, para que la app lo vea sin esperar 30 s
+  uint32_t cambios = cambiosDeModulos();
+  if (cambios != cambiosVistos) { cambiosVistos = cambios; ultimoHeartbeat = ahora - HEARTBEAT_MS + 1000; }
   if (ahora-ultimoHeartbeat >= HEARTBEAT_MS) { ultimoHeartbeat=ahora; heartbeat(); }
   if (ahora-ultimaConfig >= CONFIG_MS) { ultimaConfig=ahora; obtenerConfiguracion(); }
-  revisarHorario();
+  if (modular) revisarHorariosModulos();
+  else { ultimoRevisadoModular = 0; revisarHorario(); }
   if (alarma && ahora-ultimoEstadoAlarma >= ALARM_STATUS_MS) {
     ultimoEstadoAlarma = ahora;
     Serial.println("[ALARMA] ACTIVA: toma pendiente. Presiona el boton para confirmar.");
