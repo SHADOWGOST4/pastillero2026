@@ -1,9 +1,12 @@
+import importlib
+import json
 import re
 import time as time_module
 from unittest import mock
 from urllib.parse import unquote
 
-from django.core import mail
+from django.apps import apps as django_apps
+from django.core import mail, signing
 from django.test import TestCase
 from django.utils import timezone
 from django.contrib.auth.hashers import check_password, make_password
@@ -162,33 +165,32 @@ class AutenticacionJWTTests(TestCase):
         self.assertEqual(response_detail.status_code, status.HTTP_200_OK)
         self.assertNotIn('password', response_detail.data)
 
-    def test_migracion_transparente_emite_jwt_para_usuario_texto_plano(self):
-        """11. Usuario con contraseña previa en texto plano obtiene JWT y su hash se actualiza en BD."""
-        password_plana = 'ClavePlana123'
-        usuario_legado = Usuario.objects.create(
+    def test_login_rechaza_password_guardada_en_texto_plano(self):
+        """11. Ya no se acepta una contraseña guardada sin hashear (la
+        migración 0024 las hashea): comparar el valor guardado tal cual
+        permitía iniciar sesión enviando el propio hash."""
+        Usuario.objects.create(
             nombre='Usuario Legado',
             correo='legado@example.com',
-            password=password_plana,
+            password='ClavePlana123',
             telefono='3000000000',
             activo=True
         )
 
-        data = {
-            'correo': 'legado@example.com',
-            'password': password_plana
-        }
-        response_1 = self.client.post('/api/login/', data, format='json')
-        self.assertEqual(response_1.status_code, status.HTTP_200_OK)
-        self.assertIn('access', response_1.data)
-        self.assertIn('refresh', response_1.data)
+        response = self.client.post(
+            '/api/login/', {'correo': 'legado@example.com', 'password': 'ClavePlana123'}, format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-        usuario_legado.refresh_from_db()
-        self.assertNotEqual(usuario_legado.password, password_plana)
-        self.assertTrue(usuario_legado.password.startswith('pbkdf2_sha256$'))
-
-        response_2 = self.client.post('/api/login/', data, format='json')
-        self.assertEqual(response_2.status_code, status.HTTP_200_OK)
-        self.assertIn('access', response_2.data)
+    def test_login_rechaza_el_hash_almacenado_como_password(self):
+        """Enviar el hash guardado en la BD como contraseña no da acceso."""
+        response = self.client.post(
+            '/api/login/',
+            {'correo': self.usuario_hasheado.correo, 'password': self.usuario_hasheado.password},
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertNotIn('access', response.data)
 
     def test_registro_evita_correos_duplicados(self):
         """12. El registro valida correo duplicado y responde 400 Bad Request."""
@@ -1218,6 +1220,33 @@ class VerificacionCorreoTests(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
 
+class HashearPasswordsTextoPlanoMigracionTests(TestCase):
+    """Migración 0024: hashea las contraseñas legadas en texto plano y deja
+    intactas las que ya son hash o están marcadas como no utilizables."""
+
+    def test_hashea_solo_las_passwords_en_texto_plano(self):
+        migracion = importlib.import_module('core.migrations.0024_hashear_passwords_texto_plano')
+        plano = Usuario.objects.create(
+            nombre='Plano', correo='plano@example.com', password='ClavePlana123', telefono='3000000001'
+        )
+        hash_previo = make_password('YaHasheada123')
+        hasheado = Usuario.objects.create(
+            nombre='Hash', correo='hasheado@example.com', password=hash_previo, telefono='3000000002'
+        )
+        no_utilizable = Usuario.objects.create(
+            nombre='Sin clave', correo='sinclave@example.com', password='!abc', telefono='3000000003'
+        )
+
+        migracion.hashear_passwords_texto_plano(django_apps, None)
+
+        plano.refresh_from_db()
+        hasheado.refresh_from_db()
+        no_utilizable.refresh_from_db()
+        self.assertTrue(check_password('ClavePlana123', plano.password))
+        self.assertEqual(hasheado.password, hash_previo)
+        self.assertEqual(no_utilizable.password, '!abc')
+
+
 class RestablecerContrasenaTests(TestCase):
     """Flujo de "olvidé mi contraseña": solicitud de correo, restablecimiento
     con token válido, y rechazo de tokens expirados/usados/inválidos."""
@@ -1324,12 +1353,78 @@ class RestablecerContrasenaTests(TestCase):
         response = self.client.post('/api/restablecer-contrasena/', {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_token_restablecimiento_no_contiene_el_hash_de_la_password(self):
+        """El token viaja en un enlace (logs, historial, correo): firmar no
+        cifra, así que no debe llevar el hash de la contraseña."""
+        usuario = self._crear_usuario('sin.hash@example.com')
+        token = restablecer_contrasena_module.generar_token_restablecimiento(usuario)
+
+        _algoritmo, _iteraciones, sal, hash_b64 = usuario.password.split('$')
+        self.assertNotIn(usuario.password, token)
+        self.assertNotIn(sal, token)
+        self.assertNotIn(hash_b64, token)
+
+    def test_token_restablecimiento_con_el_hash_crudo_es_rechazado(self):
+        """Un token firmado con el formato anterior (hash crudo en lugar de
+        la huella) ya no es válido."""
+        usuario = self._crear_usuario('formato.viejo@example.com')
+        token = signing.TimestampSigner(salt=restablecer_contrasena_module.TOKEN_SALT).sign(
+            f'{usuario.id}:{usuario.password}'
+        )
+
+        response = self.client.post(
+            '/api/restablecer-contrasena/', {'token': token, 'password': 'PasswordNuevo456!'}, format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_pagina_restablecer_con_token_valido_muestra_formulario(self):
+        usuario = self._crear_usuario('pagina.valida@example.com')
+        token = restablecer_contrasena_module.generar_token_restablecimiento(usuario)
+
+        response = self.client.get('/restablecer-contrasena/', {'token': token})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        contenido = response.content.decode()
+        self.assertIn('id="form"', contenido)
+        self.assertIn(json.dumps(token), contenido)
+
+    def test_pagina_restablecer_no_refleja_script_inyectado_en_token(self):
+        """XSS reflejado: el token del query string no puede cerrar el
+        <script> de la página ni inyectar HTML."""
+        carga = '</script><script>alert(document.domain)</script>'
+
+        response = self.client.get('/restablecer-contrasena/', {'token': carga})
+
+        contenido = response.content.decode()
+        self.assertNotIn('<script>alert', contenido)
+        self.assertNotIn('id="form"', contenido)
+        self.assertIn('Enlace inválido', contenido)
+
+    def test_pagina_restablecer_con_token_expirado_avisa(self):
+        usuario = self._crear_usuario('pagina.expirada@example.com')
+        token = restablecer_contrasena_module.generar_token_restablecimiento(usuario)
+
+        with mock.patch.object(restablecer_contrasena_module, 'TOKEN_MAX_AGE', 0):
+            time_module.sleep(1.1)
+            response = self.client.get('/restablecer-contrasena/', {'token': token})
+
+        self.assertIn('Enlace expirado', response.content.decode())
+
+    def test_json_para_script_escapa_cierre_de_etiqueta(self):
+        from .views import _json_para_script
+
+        resultado = _json_para_script('</script><b>&')
+
+        self.assertNotIn('<', resultado)
+        self.assertNotIn('>', resultado)
+        self.assertNotIn('&', resultado)
+        self.assertEqual(json.loads(resultado), '</script><b>&')
+
     def test_enviar_correo_restablecimiento_codifica_token_con_caracteres_especiales(self):
-        """El payload firmado incluye el hash de la contraseña (base64
-        estándar de Django), que puede traer '+', '/' o '='. Si el enlace del
-        correo no codifica el token, un '+' se interpreta como espacio en el
-        query string y el enlace queda roto (bug real detectado al probar el
-        flujo end-to-end)."""
+        """El enlace del correo debe codificar el token para la URL: un '+'
+        sin codificar se interpreta como espacio en el query string y el
+        enlace queda roto (bug real detectado al probar el flujo end-to-end).
+        Se usa una contraseña con '+', '/' y '=' en el hash."""
         usuario = self._crear_usuario('caracteres.especiales@example.com')
         usuario.password = 'pbkdf2_sha256$1000000$sal+t/==$abc+def/ghi=='
         usuario.save(update_fields=['password'])
