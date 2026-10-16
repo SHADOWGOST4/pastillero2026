@@ -245,8 +245,19 @@ def restablecer_contrasena_confirmar(request):
     return Response({'detail': 'Contraseña actualizada correctamente.'})
 
 
+def _json_para_script(valor):
+    """`json.dumps` apto para ir dentro de un <script>: escapa '<', '>' y
+    '&' para que el valor no pueda cerrar la etiqueta e inyectar HTML."""
+    return (
+        json.dumps(valor)
+        .replace('<', '\\u003c')
+        .replace('>', '\\u003e')
+        .replace('&', '\\u0026')
+    )
+
+
 def _pagina_restablecer_contrasena_formulario(token):
-    token_js = json.dumps(token)
+    token_js = _json_para_script(token)
     html = f"""<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -337,6 +348,23 @@ def restablecer_contrasena_pagina(request):
     token = request.GET.get('token', '')
     if not token:
         return _pagina_verificacion('Enlace inválido', 'Falta el token de restablecimiento.', ok=False)
+    # Se valida antes de mostrar el formulario: así solo llega a la página
+    # un token firmado por el servidor, y el usuario se entera de que el
+    # enlace no sirve antes de escribir la contraseña nueva.
+    try:
+        restablecer_contrasena.verificar_token_restablecimiento(token)
+    except signing.SignatureExpired:
+        return _pagina_verificacion(
+            'Enlace expirado',
+            'El enlace para restablecer la contraseña expiró. Solicita uno nuevo desde la app.',
+            ok=False,
+        )
+    except (signing.BadSignature, ValueError, Usuario.DoesNotExist):
+        return _pagina_verificacion(
+            'Enlace inválido',
+            'El enlace para restablecer la contraseña no es válido, o ya fue usado.',
+            ok=False,
+        )
     return _pagina_restablecer_contrasena_formulario(token)
 
 
