@@ -151,6 +151,22 @@ def horario_de_los_modulos(dispositivo):
     return None
 
 
+def _ultima_confirmada(dispositivo, medicamento):
+    """Hora programada (local, ISO-8601) de la última toma confirmada del medicamento, por la placa o por la app.
+
+    La placa la compara con la alarma que tiene sonando: si es la misma, la confirmaron desde la app y se apaga.
+    """
+    if medicamento is None:
+        return None
+    registro = (
+        Registro_Toma.objects
+        .filter(id_horario__id_medicamento=medicamento, id_usuario=dispositivo.id_usuario, fecha_hora_real__isnull=False)
+        .order_by('-fecha_hora_programada')
+        .first()
+    )
+    return timezone.localtime(registro.fecha_hora_programada).isoformat() if registro else None
+
+
 def configuracion_modulos(dispositivo):
     """Lo que la placa necesita saber de cada módulo: su medicamento y los horarios de ese medicamento."""
     resultado = []
@@ -178,6 +194,7 @@ def configuracion_modulos(dispositivo):
                 if medicamento is not None else None
             ),
             'horarios': horarios,
+            'ultima_confirmada': _ultima_confirmada(dispositivo, medicamento),
         })
     return resultado
 

@@ -196,6 +196,24 @@ class ConfiguracionConModulosTests(BasePastillero):
         self.assertEqual(dos['numero'], 2)
         self.assertIsNone(dos['medicamento'])
         self.assertEqual(dos['horarios'], [])
+        self.assertIsNone(uno['ultima_confirmada'])
+        self.assertIsNone(dos['ultima_confirmada'])
+
+    def test_informa_la_ultima_toma_confirmada_de_cada_modulo(self):
+        medicamento = self.medicamento()
+        horario, instante = self.horario(medicamento)
+        self.modulo_con(medicamento, 1)
+        anterior = Registro_Toma.objects.create(
+            id_usuario=self.usuario, id_horario=horario, fecha_hora_programada=instante - timedelta(days=1),
+        )
+        confirmar_registro_con_stock(anterior.id, self.usuario, instante - timedelta(days=1))
+        pendiente = Registro_Toma.objects.create(id_usuario=self.usuario, id_horario=horario, fecha_hora_programada=instante)
+        r = self.cliente.get(URL_CONFIG, **self.cabeceras)
+        self.assertEqual(r.data['modulos'][0]['ultima_confirmada'], timezone.localtime(instante - timedelta(days=1)).isoformat())
+        # Al confirmarla desde la app, la placa recibe esa toma y apaga su alarma
+        confirmar_registro_con_stock(pendiente.id, self.usuario, self.ahora)
+        r = self.cliente.get(URL_CONFIG, **self.cabeceras)
+        self.assertEqual(r.data['modulos'][0]['ultima_confirmada'], timezone.localtime(instante).isoformat())
 
     def test_mantiene_el_contrato_del_firmware_anterior(self):
         r = self.cliente.get(URL_CONFIG, **self.cabeceras)
