@@ -371,16 +371,11 @@ class UsuarioTokenObtainPairSerializer(serializers.Serializer):
         if not usuario.activo:
             raise AuthenticationFailed('El usuario está inactivo', 'user_inactive')
 
-        valido = False
-        if check_password(password, usuario.password):
-            valido = True
-        elif usuario.password == password:
-            # Soporte de migración transparente retrocompatible
-            usuario.password = make_password(password)
-            usuario.save(update_fields=['password'])
-            valido = True
-
-        if not valido:
+        # Solo se compara contra el hash. Antes había un respaldo que comparaba
+        # el valor guardado tal cual (para contraseñas legadas en texto
+        # plano), pero eso permitía iniciar sesión enviando el propio hash.
+        # Las contraseñas legadas se hashean en la migración 0024.
+        if not check_password(password, usuario.password):
             raise AuthenticationFailed('Credenciales inválidas', 'no_active_account')
 
         refresh = RefreshToken.for_user(usuario)
