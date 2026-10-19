@@ -1,13 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { environment } from '../../environments/environment';
 import { ModuloService } from './modulo';
 import { ActualizarModuloRequest, CrearModuloRequest, ModuloResponse } from '../core/models/api.interfaces';
 
 describe('ModuloService', () => {
   let service: ModuloService;
   let httpController: HttpTestingController;
-  const apiUrl = 'http://localhost:8000/api/modulos/';
+  const apiUrl = `${environment.apiUrl}modulos/`;
   const modulo: ModuloResponse = {
     id: 1,
     id_dispositivo: 2,
