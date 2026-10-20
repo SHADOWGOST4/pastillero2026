@@ -33,6 +33,9 @@
    * `401 Unauthorized`: Token ausente, inválido, expirado o credenciales incorrectas.
    * `404 Not Found`: El recurso no existe o no pertenece al usuario autenticado.
 
+   La app corta cualquier petición que tarde más de **20 s** (`core/http/timeout.interceptor.ts`) y la trata como un
+   error de red (`status 0`), igual que sin conexión: muestra *"Sin conexión, inténtalo de nuevo."*.
+
 ---
 
 ## 2. Definiciones de Semántica de Negocio
@@ -320,6 +323,21 @@ Al confirmar un `Registro_Toma` mediante `PATCH /api/registros/{id}/` con `fecha
     "estado_conexion": true
   }
   ```
+
+#### 3.6.1 Módulos (compartimentos)
+
+| Operación | Método | URL | Request Body | Response Status | Response Type |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Listar** | `GET` | `/api/modulos/` | N/A | `200 OK` | `ModuloResponse[]` |
+| **Crear a mano** | `POST` | `/api/modulos/` | `CrearModuloRequest` | `201 Created` | `ModuloResponse` |
+| **Asignar / desasignar medicamento** | `PUT` | `/api/modulos/{id}/` | `ActualizarModuloRequest` | `200 OK` | `ModuloResponse` |
+| **Quitar** | `DELETE` | `/api/modulos/{id}/` | N/A | `204 No Content` | Cuerpo vacío |
+
+* La placa crea y actualiza los módulos en su latido: `detectado`, `ultimo_visto` y `tapa_abierta` son de solo lectura
+  para la app. `numero_modulo` va de 1 a 16 y es único por dispositivo.
+* **Quitar** es para módulos que la placa ya no ve (`detectado = false`), p. ej. restos de una prueba; la app solo
+  ofrece el botón en ese caso. El historial se conserva: `Registro_Toma.modulo` y `EventoDispositivo.modulo` quedan
+  en `null` (`SET_NULL`). Si el módulo se vuelve a conectar, el siguiente latido lo crea de nuevo **sin medicamento**.
 
 ---
 
