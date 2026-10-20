@@ -28,6 +28,7 @@
     <p class="qr-titulo">Pastillero detectado</p>
     <p class="qr-nombre">{{ qr?.nombreBle }}</p>
     <p class="qr-ayuda">Ahora indica la red Wi‑Fi a la que se conectará (debe ser de 2,4 GHz).</p>
+    <p class="qr-ayuda" *ngIf="escaner.disponible">Android te pedirá permiso de ubicación: lo necesita para darnos el nombre de tu Wi‑Fi.</p>
     <button type="button" class="btn btn-primary" (click)="abrirWifi()">
       <span class="material-icons" aria-hidden="true">wifi</span>
       Configurar Wi‑Fi
@@ -63,6 +64,11 @@
 <app-configurar-wifi-modal
   [visible]="wifiModalAbierto"
   [ssidInicial]="ssid"
+  [redes]="redes"
+  [buscandoRedes]="buscandoRedes"
+  [errorRedes]="errorRedes"
+  [redTelefono]="redTelefono"
+  (buscarRedes)="buscarRedes()"
   (closed)="wifiModalAbierto = false"
   (submitted)="usarWifi($event)"
 ></app-configurar-wifi-modal>

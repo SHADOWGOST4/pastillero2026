@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Subject, of, throwError } from 'rxjs';
 import { DispositivoResponse, HorarioResponse, ModuloResponse } from '../../core/models/api.interfaces';
 import { DispositivoService } from '../../services/dispositivo';
 import { Horario } from '../../services/horario';
@@ -26,6 +27,8 @@ describe('Dispositivo', () => {
   let getEventos: jasmine.Spy;
   let getAsignacion: jasmine.Spy;
   let asignarHorario: jasmine.Spy;
+  let eliminarDispositivo: jasmine.Spy;
+  let eliminarModulo: jasmine.Spy;
 
   const texto = () => (fixture.nativeElement as HTMLElement).textContent ?? '';
   const botones = () => Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'));
@@ -42,11 +45,12 @@ describe('Dispositivo', () => {
             getAsignacion,
             asignarHorario,
             getEventos,
+            delete: eliminarDispositivo,
           },
         },
         {
           provide: ModuloService,
-          useValue: { getAll: () => of(modulos), create: () => of({}), update: () => of({}) },
+          useValue: { getAll: () => of(modulos), create: () => of({}), update: () => of({}), delete: eliminarModulo },
         },
         { provide: Medicamento, useValue: { getAll: () => of([]) } },
         {
@@ -71,6 +75,8 @@ describe('Dispositivo', () => {
     getEventos = jasmine.createSpy('getEventos').and.returnValue(of([]));
     getAsignacion = jasmine.createSpy('getAsignacion').and.returnValue(of({ id_horario: 9 }));
     asignarHorario = jasmine.createSpy('asignarHorario').and.returnValue(of({}));
+    eliminarDispositivo = jasmine.createSpy('eliminarDispositivo').and.returnValue(of(undefined));
+    eliminarModulo = jasmine.createSpy('eliminarModulo').and.returnValue(of(undefined));
   });
 
   it('se crea', async () => {
@@ -117,6 +123,79 @@ describe('Dispositivo', () => {
       boton('Desvincular dispositivo')!.click();
       expect(component.modalEliminarAbierto).toBeTrue();
       expect(component.dispositivoPendienteEliminar).toBe(3);
+    });
+  });
+
+  describe('desvincular', () => {
+    beforeEach(crear);
+
+    it('mientras espera al servidor el modal muestra que está trabajando y no se puede cerrar', () => {
+      const respuesta = new Subject<void>();
+      eliminarDispositivo.and.returnValue(respuesta);
+      component.eliminarDispositivo(3);
+      component.confirmarEliminacion();
+      fixture.detectChanges();
+
+      expect(component.eliminando).toBeTrue();
+      expect(boton('Procesando')).toBeTruthy();
+      expect(boton('Cancelar')!.disabled).toBeTrue();
+
+      respuesta.next();
+      respuesta.complete();
+      expect(component.eliminando).toBeFalse();
+      expect(component.modalEliminarAbierto).toBeFalse();
+    });
+
+    it('sin conexión (o tras el timeout) muestra un mensaje claro', () => {
+      eliminarDispositivo.and.returnValue(throwError(() => new HttpErrorResponse({ status: 0, statusText: 'Timeout' })));
+      component.eliminarDispositivo(3);
+      component.confirmarEliminacion();
+      fixture.detectChanges();
+
+      expect(component.eliminando).toBeFalse();
+      expect(component.errorMessage).toBe('Sin conexión, inténtalo de nuevo.');
+      expect(texto()).toContain('Sin conexión, inténtalo de nuevo.');
+    });
+  });
+
+  describe('quitar módulos desconectados', () => {
+    it('pide confirmación explicando que reaparece sin medicamento, y lo borra', async () => {
+      modulos = [modulo(1, 'Ibuprofeno'), modulo(8, 'Paracetamol', false)];
+      await crear();
+      const quitar = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('app-modulo-card button'))
+        .filter((b) => b.textContent?.includes('Quitar'));
+      expect(quitar.length).toBe(1);
+
+      (quitar[0] as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(texto()).toContain('Quitar módulo');
+      expect(texto()).toContain('reaparecerá sin medicamento asignado');
+      expect(eliminarModulo).not.toHaveBeenCalled();
+
+      modulos = [modulo(1, 'Ibuprofeno')];
+      component.confirmarQuitarModulo();
+      fixture.detectChanges();
+      expect(eliminarModulo).toHaveBeenCalledWith(8);
+      expect(component.moduloPendienteQuitar).toBeNull();
+      expect(component.moduloSuccessMessage).toBe('Módulo 8 quitado.');
+      const tarjetas = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('app-modulo-card'));
+      expect(tarjetas.map((t) => t.textContent)).not.toContain(jasmine.stringContaining('Módulo 8'));
+    });
+
+    it('no deja quitar un módulo que la placa sigue viendo', async () => {
+      await crear();
+      component.quitarModulo(modulo(1, null, true));
+      expect(component.moduloPendienteQuitar).toBeNull();
+    });
+
+    it('si falla el borrado muestra el error y cierra la confirmación', async () => {
+      modulos = [modulo(8, null, false)];
+      eliminarModulo.and.returnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+      await crear();
+      component.quitarModulo(modulos[0]);
+      component.confirmarQuitarModulo();
+      expect(component.moduloPendienteQuitar).toBeNull();
+      expect(component.moduloErrorMessage).toBe('Sin conexión, inténtalo de nuevo.');
     });
   });
 

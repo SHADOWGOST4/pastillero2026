@@ -28,4 +28,8 @@
     <span class="material-icons" aria-hidden="true">link_off</span>
     Desasignar
   </button>
+  <button *ngIf="!modulo.detectado" type="button" class="btn btn-sm action-button action-remove" (click)="quitar.emit(modulo)">
+    <span class="material-icons" aria-hidden="true">delete_outline</span>
+    Quitar
+  </button>
 </article>

@@ -490,6 +490,29 @@ class ApiParaLaAppTests(BasePastillero):
         self.assertTrue(modulo.detectado)
         self.assertIs(modulo.tapa_abierta, True)
 
+    def test_quitar_un_modulo_conserva_el_historial_y_reaparece_vacio_si_se_reconecta(self):
+        medicamento = self.medicamento()
+        horario, instante = self.horario(medicamento)
+        self.modulo_con(medicamento, 8)
+        self.latido([{'numero': 8}])
+        self.latido([])
+        modulo = Modulo.objects.get(numero_modulo=8)
+        registro = Registro_Toma.objects.create(
+            id_usuario=self.usuario, id_horario=horario, fecha_hora_programada=instante, modulo=modulo,
+        )
+        eventos = EventoDispositivo.objects.filter(modulo=modulo).count()
+        sin_modulo = EventoDispositivo.objects.filter(modulo__isnull=True).count()
+        self.assertGreater(eventos, 0)
+
+        self.assertEqual(self.app.delete(f'/api/modulos/{modulo.id}/').status_code, 204)
+
+        self.assertFalse(Modulo.objects.filter(id=modulo.id).exists())
+        registro.refresh_from_db()
+        self.assertIsNone(registro.modulo)
+        self.assertEqual(EventoDispositivo.objects.filter(modulo__isnull=True).count(), sin_modulo + eventos)
+        self.latido([{'numero': 8}])
+        self.assertIsNone(Modulo.objects.get(numero_modulo=8).id_medicamento)
+
     def test_el_numero_de_modulo_tiene_limite(self):
         r = self.app.post('/api/modulos/', {'id_dispositivo': self.dispositivo.id, 'numero_modulo': 17}, format='json')
         self.assertEqual(r.status_code, 400)

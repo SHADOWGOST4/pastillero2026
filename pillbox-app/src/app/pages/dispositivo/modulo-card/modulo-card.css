@@ -102,3 +102,15 @@
   border-color: #b91c1c;
   background: #b91c1c;
 }
+
+.action-remove {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.action-remove:hover,
+.action-remove:focus-visible {
+  border-color: var(--danger);
+  color: var(--danger);
+}

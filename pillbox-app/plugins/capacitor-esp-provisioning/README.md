@@ -40,6 +40,25 @@ Verificado: `./gradlew :app:assembleDebug` compila con Capacitor 8 y `minSdkVers
 4. Credenciales Wi‑Fi por el flujo estándar de aprovisionamiento.
 5. Tras aplicarlas, el firmware llama a `POST {api_url}/enrolar/`.
 
+## Lista de redes (`scanNetworks`)
+
+`scanNetworks({ nombreBle, pop })` busca y conecta igual que `provision`, abre la sesión Security 2,
+pide al ESP32 las redes que ve (endpoint estándar `prov-scan`, que el administrador de
+aprovisionamiento del firmware registra solo) y se desconecta. Resuelve
+`{ redes: [{ ssid, rssi, segura }] }` sin filtrar; la app quita ocultas y repetidas.
+
+Solo hay una conexión BLE a la vez: si empieza un `provision` mientras un escaneo sigue en curso,
+el escaneo se rechaza con `cancelado` y el aprovisionamiento arranca tras 1,5 s para que el ESP32
+vuelva a anunciarse.
+
+## Ayudas para rellenar el Wi‑Fi
+
+- `currentNetwork()` → `{ ssid, frecuenciaMhz }` de la red a la que está conectado el teléfono, o `{}`
+  si no se puede saber. Android solo da el nombre con **ubicación precisa** concedida y la ubicación
+  del sistema encendida; el plugin pide el permiso (FINE + COARSE) y nunca rechaza.
+- `pickImage()` → `{ uri }` (`content://`) de una imagen elegida, o `{}` si se cancela. La app pasa esa
+  URI a `BarcodeScanner.readBarcodesFromImage` de ML Kit para leer el QR de «Compartir Wi‑Fi».
+
 ## Errores (`code` del rechazo)
 
-`permisos`, `bluetooth-apagado`, `no-encontrado`, `pop-invalido`, `wifi`, `desconocido`.
+`permisos`, `bluetooth-apagado`, `no-encontrado`, `pop-invalido`, `wifi`, `cancelado`, `desconocido`.

@@ -74,6 +74,41 @@
   padding: 1rem 1.25rem;
 }
 
+/* La app no carga el CSS de Bootstrap: los campos ocupan todo el ancho a mano. */
+.wifi-modal-body .form-label {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.wifi-modal-body .form-control {
+  display: block;
+  width: 100%;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--cui-border-color);
+}
+
+.wifi-modal-body .input-group {
+  display: flex;
+}
+
+.wifi-modal-body .input-group .form-control {
+  flex: 1;
+  min-width: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.wifi-modal-body .input-group .btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.wifi-modal-body .invalid-feedback {
+  margin-top: 0.25rem;
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+
 .field-help {
   display: block;
   margin-top: 0.5rem;
@@ -100,6 +135,182 @@
   border-color: #94a3b8;
   color: #334155;
   background: #e2e8f0;
+}
+
+.redes {
+  margin-bottom: 1rem;
+}
+
+.redes-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.redes-actualizar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.15rem 0.25rem;
+  text-decoration: none;
+}
+
+.redes-actualizar .material-icons {
+  font-size: 1.1rem;
+}
+
+.redes-estado {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.redes-spinner {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--cui-border-color);
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: redes-giro 0.8s linear infinite;
+}
+
+.redes-lista {
+  max-height: 13rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid var(--cui-border-color);
+  border-radius: 0.375rem;
+  list-style: none;
+}
+
+.redes-lista li + li {
+  border-top: 1px solid var(--cui-border-color);
+}
+
+.red {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  color: var(--text-primary);
+  background: transparent;
+  text-align: left;
+}
+
+.red:hover,
+.red:focus-visible {
+  background: var(--cui-tertiary-bg);
+}
+
+.red.seleccionada {
+  color: #1d4ed8;
+  background: #dbeafe;
+  font-weight: 600;
+}
+
+.red .material-icons {
+  flex: 0 0 auto;
+  font-size: 1.2rem;
+}
+
+.red-nombre {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+
+.red-candado {
+  color: var(--text-secondary);
+}
+
+.field-help .material-icons {
+  font-size: 1rem;
+  vertical-align: -0.2rem;
+}
+
+.aviso-banda {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.375rem;
+  color: #854d0e;
+  background: var(--warning-soft);
+  font-size: 0.85rem;
+}
+
+.aviso-banda .material-icons {
+  flex: 0 0 auto;
+  font-size: 1.1rem;
+}
+
+.qr-wifi {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px dashed var(--cui-border-color);
+}
+
+.qr-wifi-titulo {
+  margin: 0 0 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.qr-wifi-botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.qr-wifi-botones .btn {
+  display: inline-flex;
+  flex: 1 1 10rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.qr-wifi-botones .material-icons {
+  font-size: 1.1rem;
+}
+
+.qr-wifi-ok,
+.qr-wifi-error {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+}
+
+.qr-wifi-ok {
+  color: var(--success);
+}
+
+.qr-wifi-ok .material-icons {
+  font-size: 1.05rem;
+}
+
+.qr-wifi-error {
+  color: var(--danger);
+}
+
+@keyframes redes-giro {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes modal-enter {

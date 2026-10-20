@@ -27,7 +27,9 @@ describe('ConectarEsp32', () => {
 
   beforeEach(async () => {
     api = jasmine.createSpyObj('DispositivoService', ['reclamar', 'getById']);
-    ble = jasmine.createSpyObj('ProvisioningService', ['aprovisionar']);
+    ble = jasmine.createSpyObj('ProvisioningService', ['aprovisionar', 'escanearRedes', 'redDelTelefono']);
+    ble.escanearRedes.and.resolveTo([]);
+    ble.redDelTelefono.and.resolveTo(null);
     await TestBed.configureTestingModule({
       imports: [ConectarEsp32],
       providers: [
@@ -147,6 +149,95 @@ describe('ConectarEsp32', () => {
       expect(component.wifiModalAbierto).toBeFalse();
       expect(ble.aprovisionar).toHaveBeenCalledWith(jasmine.objectContaining({ ssid: 'MiRed' }));
       expect(component.etapa).toBe('progreso');
+    });
+
+    it('al abrir el modal pide las redes al pastillero una sola vez y las muestra', async () => {
+      let responder!: (r: { ssid: string; rssi: number; segura: boolean }[]) => void;
+      ble.escanearRedes.and.returnValue(new Promise((ok) => (responder = ok)));
+      component.usarQr(QR);
+      component.abrirWifi();
+      await fixture.whenStable();
+      expect(component.buscandoRedes).toBeTrue();
+      expect(ble.escanearRedes).toHaveBeenCalledWith('PASTILLERO-4397A840', 'secreto');
+      responder([{ ssid: 'Casa de Luis', rssi: -50, segura: true }]);
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(component.buscandoRedes).toBeFalse();
+      expect(el().querySelector('.red-nombre')?.textContent).toBe('Casa de Luis');
+      component.wifiModalAbierto = false;
+      component.abrirWifi();
+      await fixture.whenStable();
+      expect(ble.escanearRedes).toHaveBeenCalledTimes(1);
+    });
+
+    it('si no puede escanear deja escribir el nombre', async () => {
+      ble.escanearRedes.and.rejectWith(new AprovisionamientoError('no-encontrado'));
+      component.usarQr(QR);
+      component.abrirWifi();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(component.errorRedes).toBeTrue();
+      expect(component.redes).toEqual([]);
+      expect(el().textContent).toContain('No se pudieron cargar las redes');
+      expect(el().querySelector('#wifi-ssid')).not.toBeNull();
+    });
+
+    it('conectar antes de que termine el escaneo descarta su resultado', async () => {
+      let responder!: (r: { ssid: string; rssi: number; segura: boolean }[]) => void;
+      ble.escanearRedes.and.returnValue(new Promise((ok) => (responder = ok)));
+      api.reclamar.and.returnValue(of(reclamo));
+      ble.aprovisionar.and.returnValue(new Subject<PasoAprovisionamiento>());
+      component.usarQr(QR);
+      component.abrirWifi();
+      await fixture.whenStable();
+      component.usarWifi({ ssid: 'Casa de Luis ', password: '12345678' });
+      expect(component.buscandoRedes).toBeFalse();
+      expect(ble.aprovisionar).toHaveBeenCalledWith(jasmine.objectContaining({ ssid: 'Casa de Luis ' }));
+      responder([{ ssid: 'Tarde', rssi: -50, segura: true }]);
+      await fixture.whenStable();
+      expect(component.redes).toBeNull();
+    });
+
+    it('un QR nuevo vuelve a pedir las redes', async () => {
+      component.usarQr(QR);
+      component.abrirWifi();
+      await fixture.whenStable();
+      component.usarQr(QR);
+      expect(component.redes).toBeNull();
+      component.abrirWifi();
+      await fixture.whenStable();
+      expect(ble.escanearRedes).toHaveBeenCalledTimes(2);
+    });
+
+    it('propone la red del teléfono en el modal y solo la pide una vez', async () => {
+      ble.redDelTelefono.and.resolveTo({ ssid: 'Casa de Luis', frecuenciaMhz: 2437 });
+      component.usarQr(QR);
+      component.abrirWifi();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      await fixture.whenStable(); // ngModel escribe el valor en el input en el siguiente ciclo
+      expect((el().querySelector('#wifi-ssid') as HTMLInputElement).value).toBe('Casa de Luis');
+      expect(el().textContent).toContain('Es la red a la que está conectado tu teléfono');
+      component.wifiModalAbierto = false;
+      component.abrirWifi();
+      await fixture.whenStable();
+      expect(ble.redDelTelefono).toHaveBeenCalledTimes(1);
+    });
+
+    it('pide la red del teléfono antes de escanear por Bluetooth', async () => {
+      const orden: string[] = [];
+      ble.redDelTelefono.and.callFake(async () => {
+        orden.push('telefono');
+        return null;
+      });
+      ble.escanearRedes.and.callFake(async () => {
+        orden.push('ble');
+        return [];
+      });
+      component.usarQr(QR);
+      component.abrirWifi();
+      await fixture.whenStable();
+      expect(orden).toEqual(['telefono', 'ble']);
     });
 
     it('mientras conecta muestra el spinner y el paso actual', () => {

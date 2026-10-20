@@ -46,6 +46,8 @@ export class Dispositivo implements OnInit {
   modalEliminarAbierto = false;
   eliminando = false;
   dispositivoPendienteEliminar: number | null = null;
+  moduloPendienteQuitar: ModuloResponse | null = null;
+  quitandoModulo = false;
   modulos: ModuloResponse[] = [];
   medicamentos: MedicamentoResponse[] = [];
   modulosLoading = false;
@@ -279,6 +281,52 @@ export class Dispositivo implements OnInit {
     });
   }
 
+  /** Pide confirmación para borrar un módulo que la placa ya no detecta. */
+  quitarModulo(modulo: ModuloResponse): void {
+    if (modulo.detectado) return;
+    this.moduloPendienteQuitar = modulo;
+    this.moduloErrorMessage = '';
+    this.moduloSuccessMessage = '';
+  }
+
+  cancelarQuitarModulo(): void {
+    if (this.quitandoModulo) return;
+    this.moduloPendienteQuitar = null;
+  }
+
+  get mensajeQuitarModulo(): string {
+    const modulo = this.moduloPendienteQuitar;
+    if (!modulo) return '';
+    return (
+      `El módulo ${modulo.numero_modulo} desaparecerá de la lista. ` +
+      'Si lo vuelves a conectar al pastillero, reaparecerá sin medicamento asignado.'
+    );
+  }
+
+  confirmarQuitarModulo(): void {
+    const modulo = this.moduloPendienteQuitar;
+    if (!modulo || this.quitandoModulo) return;
+    this.quitandoModulo = true;
+
+    this.moduloService.delete(modulo.id).subscribe({
+      next: () => {
+        this.quitandoModulo = false;
+        this.moduloPendienteQuitar = null;
+        if (this.selectedModuleId === modulo.id) {
+          this.selectedModuleId = null;
+          this.selectedMedicationId = null;
+        }
+        this.moduloSuccessMessage = `Módulo ${modulo.numero_modulo} quitado.`;
+        this.cargarModulos();
+      },
+      error: (err) => {
+        this.quitandoModulo = false;
+        this.moduloPendienteQuitar = null;
+        this.moduloErrorMessage = this.extraerError(err, 'No se pudo quitar el módulo.');
+      },
+    });
+  }
+
   editarDispositivo(dispositivo: DispositivoResponse): void {
     this.dispositivoEnEdicion = dispositivo;
     this.errorEdicion = '';
@@ -368,6 +416,9 @@ export class Dispositivo implements OnInit {
       }
     }
 
+    if (error?.status === 0) {
+      return 'Sin conexión, inténtalo de nuevo.';
+    }
     if (error?.status === 401) {
       return 'La sesión ha expirado. Inicia sesión nuevamente.';
     }
