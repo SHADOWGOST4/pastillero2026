@@ -17,6 +17,8 @@ export class ModuloCard {
   @Input() horarios: HorarioResponse[] = [];
   @Output() asignar = new EventEmitter<ModuloResponse>();
   @Output() desasignar = new EventEmitter<ModuloResponse>();
+  /** Solo para módulos que la placa ya no ve (p. ej. restos de una prueba antigua). */
+  @Output() quitar = new EventEmitter<ModuloResponse>();
 
   get textoTapa(): string | null {
     if (!this.modulo.detectado || this.modulo.tapa_abierta === null) return null;

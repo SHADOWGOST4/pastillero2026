@@ -42,6 +42,16 @@ describe('ModuloCard', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('.module-offline')).not.toBeNull();
   });
 
+  it('"Quitar" solo aparece en módulos que la placa ya no detecta', () => {
+    const quitados: number[] = [];
+    component.quitar.subscribe((m) => quitados.push(m.id));
+    mostrar(modulo());
+    expect(boton('Quitar')).toBeUndefined();
+    mostrar(modulo({ detectado: false, id_medicamento: 7, medicamento_nombre: 'X' }));
+    boton('Quitar')!.click();
+    expect(quitados).toEqual([1]);
+  });
+
   it('muestra el estado de la tapa solo si el módulo está conectado y lo informa', () => {
     mostrar(modulo({ tapa_abierta: false }));
     expect(texto()).toContain('Tapa cerrada');

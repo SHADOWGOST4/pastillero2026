@@ -137,6 +137,7 @@
             [horarios]="horarios"
             (asignar)="seleccionarModuloParaAsignar($event)"
             (desasignar)="desasignarMedicamento($event)"
+            (quitar)="quitarModulo($event)"
           ></app-modulo-card>
         </div>
 
@@ -180,6 +181,17 @@
   variant="device"
   (closed)="cancelarEliminacion()"
   (confirmed)="confirmarEliminacion()"
+/>
+
+<app-confirm-modal
+  [visible]="moduloPendienteQuitar !== null"
+  [busy]="quitandoModulo"
+  title="Quitar módulo"
+  [message]="mensajeQuitarModulo"
+  confirmLabel="Quitar"
+  icon="delete_outline"
+  (closed)="cancelarQuitarModulo()"
+  (confirmed)="confirmarQuitarModulo()"
 />
 
 <app-editar-dispositivo-modal

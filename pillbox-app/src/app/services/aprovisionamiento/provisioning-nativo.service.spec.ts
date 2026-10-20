@@ -16,7 +16,7 @@ describe('ProvisioningNativoService', () => {
 
   beforeEach(() => {
     remover = jasmine.createSpy('remove').and.resolveTo();
-    plugin = jasmine.createSpyObj('plugin', ['provision', 'addListener']);
+    plugin = jasmine.createSpyObj('plugin', ['provision', 'addListener', 'scanNetworks', 'currentNetwork']);
     plugin.addListener.and.callFake(async (_e, fn) => {
       escuchar = fn;
       return { remove: remover } as unknown as PluginListenerHandle;
@@ -49,6 +49,35 @@ describe('ProvisioningNativoService', () => {
     plugin.provision.and.rejectWith({ code: 'raro' });
     const error = await new Promise<unknown>((ok) => servicio.aprovisionar(SOLICITUD).subscribe({ error: ok }));
     expect(error instanceof AprovisionamientoError && error.tipo).toBe('desconocido');
+  });
+
+  it('escanea redes: quita ocultas y repetidas y ordena por señal', async () => {
+    plugin.scanNetworks.and.resolveTo({
+      redes: [
+        { ssid: 'Vecino', rssi: -80, segura: true },
+        { ssid: '', rssi: -30, segura: true },
+        { ssid: 'Casa de Luis', rssi: -60, segura: true },
+        { ssid: 'Vecino', rssi: -55, segura: true },
+      ],
+    });
+    const redes = await servicio.escanearRedes('PASTILLERO-1', 'p');
+    expect(plugin.scanNetworks).toHaveBeenCalledWith({ nombreBle: 'PASTILLERO-1', pop: 'p' });
+    expect(redes.map((r) => [r.ssid, r.rssi])).toEqual([['Vecino', -55], ['Casa de Luis', -60]]);
+  });
+
+  it('un fallo al escanear redes se vuelve AprovisionamientoError', async () => {
+    plugin.scanNetworks.and.rejectWith({ code: 'bluetooth-apagado' });
+    const error = await servicio.escanearRedes('PASTILLERO-1', 'p').catch((e) => e);
+    expect(error instanceof AprovisionamientoError && error.tipo).toBe('bluetooth-apagado');
+  });
+
+  it('devuelve la red del teléfono, o null si no se puede saber', async () => {
+    plugin.currentNetwork.and.resolveTo({ ssid: 'Casa de Luis', frecuenciaMhz: 2437 });
+    expect(await servicio.redDelTelefono()).toEqual({ ssid: 'Casa de Luis', frecuenciaMhz: 2437 });
+    plugin.currentNetwork.and.resolveTo({});
+    expect(await servicio.redDelTelefono()).toBeNull();
+    plugin.currentNetwork.and.rejectWith(new Error('sin plugin'));
+    expect(await servicio.redDelTelefono()).toBeNull();
   });
 
   it('quita el listener al desuscribirse', async () => {

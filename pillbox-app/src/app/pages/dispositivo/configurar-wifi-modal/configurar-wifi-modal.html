@@ -17,7 +17,41 @@
 
     <form (ngSubmit)="conectar()" novalidate>
       <div class="wifi-modal-body">
-        <label class="form-label" for="wifi-ssid">Nombre de la red</label>
+        <div class="redes" *ngIf="mostrarRedes">
+          <div class="redes-cabecera">
+            <span class="form-label mb-0">Redes cercanas</span>
+            <button type="button" class="btn btn-link btn-sm redes-actualizar" (click)="buscarRedes.emit()" [disabled]="buscandoRedes">
+              <span class="material-icons" aria-hidden="true">refresh</span>
+              Actualizar
+            </button>
+          </div>
+          <p *ngIf="buscandoRedes" class="redes-estado" role="status">
+            <span class="redes-spinner" aria-hidden="true"></span>
+            Buscando redes cercanas…
+          </p>
+          <ul *ngIf="!buscandoRedes && redes?.length" class="redes-lista">
+            <li *ngFor="let red of redes">
+              <button
+                type="button"
+                class="red"
+                [class.seleccionada]="red.ssid === ssid"
+                [attr.aria-pressed]="red.ssid === ssid"
+                [attr.aria-label]="red.ssid + ', ' + textoSenal(red.rssi) + (red.segura ? ', con contraseña' : ', abierta')"
+                (click)="elegirRed(red)"
+              >
+                <span class="material-icons" aria-hidden="true">{{ iconoSenal(red.rssi) }}</span>
+                <span class="red-nombre">{{ red.ssid }}</span>
+                <span *ngIf="red.segura" class="material-icons red-candado" aria-hidden="true">lock</span>
+              </button>
+            </li>
+          </ul>
+          <p *ngIf="!buscandoRedes && redes?.length === 0" class="redes-estado">
+            {{ errorRedes ? 'No se pudieron cargar las redes.' : 'El pastillero no encontró redes de 2,4 GHz.' }}
+            Escribe el nombre abajo.
+          </p>
+        </div>
+
+        <label class="form-label" for="wifi-ssid">{{ mostrarRedes ? 'O escribe el nombre de la red' : 'Nombre de la red' }}</label>
         <input
           id="wifi-ssid"
           class="form-control"
@@ -25,11 +59,22 @@
           type="text"
           name="ssid"
           autocomplete="off"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
           placeholder="Ej. MiCasa"
           [(ngModel)]="ssid"
           required
         />
         <div class="invalid-feedback" *ngIf="intentado && !ssidValido">Escribe el nombre de la red.</div>
+        <small class="field-help" *ngIf="esRedDelTelefono && !avisoBanda">
+          <span class="material-icons" aria-hidden="true">smartphone</span>
+          Es la red a la que está conectado tu teléfono.
+        </small>
+        <div class="aviso-banda" *ngIf="avisoBanda" role="status">
+          <span class="material-icons" aria-hidden="true">info</span>
+          <span>{{ avisoBanda }}</span>
+        </div>
 
         <label class="form-label mt-3" for="wifi-password">Contraseña</label>
         <div class="input-group">
@@ -40,6 +85,9 @@
             [type]="mostrarPassword ? 'text' : 'password'"
             name="password"
             autocomplete="off"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
             [(ngModel)]="password"
             required
           />
@@ -55,7 +103,32 @@
         <div class="invalid-feedback d-block" *ngIf="intentado && !passwordValida">
           La contraseña debe tener al menos 8 caracteres.
         </div>
-        <small class="field-help">Debe ser una red de 2,4 GHz.</small>
+
+        <div class="qr-wifi" *ngIf="escaner.disponible">
+          <p class="qr-wifi-titulo">Rellenar con el QR del Wi‑Fi</p>
+          <div class="qr-wifi-botones">
+            <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="leyendoQr" (click)="leerQrWifi('imagen')">
+              <span class="material-icons" aria-hidden="true">image</span>
+              Desde una captura
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="leyendoQr" (click)="leerQrWifi('camara')">
+              <span class="material-icons" aria-hidden="true">qr_code_scanner</span>
+              Escanear QR
+            </button>
+          </div>
+          <small class="field-help">
+            En tu teléfono abre Ajustes › Wi‑Fi › tu red › Compartir y haz una captura del QR.
+            También puedes escanear el QR del router o el de otro teléfono.
+          </small>
+          <p class="qr-wifi-ok" *ngIf="mensajeQr" role="status">
+            <span class="material-icons" aria-hidden="true">check_circle</span>{{ mensajeQr }}
+          </p>
+          <p class="qr-wifi-error" *ngIf="errorQr" role="alert">{{ errorQr }}</p>
+        </div>
+        <small class="field-help">
+          Escribe el nombre exactamente como aparece en tu teléfono, con sus espacios y mayúsculas.
+          El pastillero solo funciona con redes de 2,4 GHz (no 5 GHz).
+        </small>
       </div>
 
       <footer class="wifi-modal-footer">

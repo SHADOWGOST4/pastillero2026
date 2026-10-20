@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/auth/auth.interceptor';
+import { timeoutInterceptor } from './core/http/timeout.interceptor';
 import { ProvisioningService } from './services/aprovisionamiento/provisioning.service';
 import { Capacitor } from '@capacitor/core';
 import { ProvisioningNativoService } from './services/aprovisionamiento/provisioning-nativo.service';
@@ -16,6 +17,7 @@ export const appConfig: ApplicationConfig = {
       provide: ProvisioningService,
       useClass: Capacitor.isNativePlatform() ? ProvisioningNativoService : ProvisioningSimuladoService,
     },
-    provideHttpClient(withInterceptors([authInterceptor]))
+    // El timeout va después de auth para que cada intento (también el reintento tras refrescar el token) tenga su propio límite.
+    provideHttpClient(withInterceptors([authInterceptor, timeoutInterceptor]))
   ]
 };

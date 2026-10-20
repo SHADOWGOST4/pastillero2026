@@ -10,6 +10,8 @@ import {
   AprovisionamientoError,
   PasoAprovisionamiento,
   ProvisioningService,
+  RedTelefono,
+  RedWifi,
 } from '../../../services/aprovisionamiento/provisioning.service';
 import { DispositivoService } from '../../../services/dispositivo';
 import { ConfigurarWifiModal, CredencialesWifi } from '../configurar-wifi-modal/configurar-wifi-modal';
@@ -50,7 +52,14 @@ export class ConectarEsp32 implements OnDestroy {
   mensajeError = '';
   escaneando = false;
   dispositivo: DispositivoResponse | null = null;
+  /** Redes que vio el pastillero; null mientras no se han pedido. */
+  redes: RedWifi[] | null = null;
+  buscandoRedes = false;
+  errorRedes = false;
+  redTelefono: RedTelefono | null = null;
 
+  private redTelefonoPedida = false;
+  private busquedaRedes = 0;
   private suscripcion?: Subscription;
   private temporizador?: ReturnType<typeof setTimeout>;
 
@@ -85,6 +94,7 @@ export class ConectarEsp32 implements OnDestroy {
     }
     this.mensajeError = '';
     this.qr = qr;
+    this.redes = null;
     this.etapa = 'wifi';
   }
 
@@ -94,6 +104,38 @@ export class ConectarEsp32 implements OnDestroy {
 
   abrirWifi(): void {
     this.wifiModalAbierto = true;
+    void this.prepararWifi();
+  }
+
+  /**
+   * Primero la red del teléfono (puede mostrar el permiso de ubicación) y después el escaneo BLE,
+   * para no lanzar dos diálogos de permisos a la vez.
+   */
+  private async prepararWifi(): Promise<void> {
+    if (!this.redTelefonoPedida) {
+      this.redTelefonoPedida = true;
+      this.redTelefono = await this.provisioning.redDelTelefono();
+    }
+    if (this.wifiModalAbierto && this.redes === null && !this.buscandoRedes) await this.buscarRedes();
+  }
+
+  /** Pide al pastillero las redes que ve; si falla, el usuario sigue pudiendo escribir el nombre. */
+  async buscarRedes(): Promise<void> {
+    const qr = this.qr;
+    if (!qr) return;
+    const busqueda = ++this.busquedaRedes;
+    this.buscandoRedes = true;
+    this.errorRedes = false;
+    try {
+      const redes = await this.provisioning.escanearRedes(qr.nombreBle, qr.pop);
+      if (busqueda === this.busquedaRedes) this.redes = redes;
+    } catch {
+      if (busqueda !== this.busquedaRedes) return;
+      this.redes = [];
+      this.errorRedes = true;
+    } finally {
+      if (busqueda === this.busquedaRedes) this.buscandoRedes = false;
+    }
   }
 
   usarWifi(wifi: CredencialesWifi): void {
@@ -105,6 +147,7 @@ export class ConectarEsp32 implements OnDestroy {
 
   conectar(): void {
     if (!this.qr || !this.wifiValido) return;
+    this.descartarBusquedaRedes();
     this.etapa = 'progreso';
     this.pasoActual = 0;
     this.mensajeError = '';
@@ -125,6 +168,7 @@ export class ConectarEsp32 implements OnDestroy {
 
   cancelar(): void {
     this.detener();
+    this.descartarBusquedaRedes();
     this.wifiModalAbierto = false;
     this.cancelado.emit();
   }
@@ -138,7 +182,8 @@ export class ConectarEsp32 implements OnDestroy {
       .aprovisionar({
         nombreBle: qr.nombreBle,
         pop: qr.pop,
-        ssid: this.ssid.trim(),
+        // Sin trim: el modal ya limpia lo tecleado y un nombre elegido de la lista debe ir tal cual.
+        ssid: this.ssid,
         password: this.password,
         deviceId: r.device_id,
         enrollmentCode: r.enrollment_code,
@@ -180,6 +225,12 @@ export class ConectarEsp32 implements OnDestroy {
     this.detener();
     this.mensajeError = mensaje;
     this.etapa = 'error';
+  }
+
+  /** El plugin corta el escaneo al empezar a aprovisionar; su resultado (o error) ya no interesa. */
+  private descartarBusquedaRedes(): void {
+    this.busquedaRedes++;
+    this.buscandoRedes = false;
   }
 
   private detener(): void {
