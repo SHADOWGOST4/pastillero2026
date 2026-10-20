@@ -1,0 +1,11 @@
+{
+  "name": "manual-pillbox",
+  "private": true,
+  "description": "Genera el manual de usuario de Pillbox (docx y PDF)",
+  "scripts": {
+    "borrador": "node build.js",
+    "final": "powershell -NoProfile -File generar.ps1",
+    "revisar": "powershell -NoProfile -File generar.ps1 -Revisar"
+  },
+  "dependencies": { "docx": "9.11.0" }
+}
