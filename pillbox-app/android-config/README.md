@@ -58,7 +58,7 @@ una carpeta fuera del repo — ver conversación/README de deploy).
    | 1.3.0 | 5 | Lista de redes, red del teléfono y QR de Wi‑Fi; timeout de 20 s; quitar módulos desconectados |
 
 5. `./gradlew assembleRelease`. La firma sale de `android/keystore.properties` (fuera de git) o de las variables
-   `PILLBOX_KEYSTORE*`. Usa siempre el mismo keystore: con otro, Android obliga a desinstalar y se pierde la sesión.
+   `PILLBOX_KEYSTORE`, `PILLBOX_KEYSTORE_PASSWORD`, `PILLBOX_KEY_ALIAS` y `PILLBOX_KEY_PASSWORD`. Usa siempre el mismo keystore: con otro, Android obliga a desinstalar y se pierde la sesión.
 6. Comprueba la firma y la versión antes de repartirla:
 
    ```bash
