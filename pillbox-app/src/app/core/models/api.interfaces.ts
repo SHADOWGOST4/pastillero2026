@@ -1,4 +1,4 @@
-// Contrato oficial del backend: API_FRONTEND_CONTRACT.md
+// Contrato oficial del backend: docs/03-api.md
 
 export interface RegistroRequest {
   nombre: string;
