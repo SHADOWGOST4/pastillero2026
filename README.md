@@ -1,166 +1,98 @@
-# Electronic Pillbox
+# e-Pillbox — pastillero electrónico modular
 
-Aplicación web para administrar medicamentos, horarios de toma, registros de cumplimiento y pastilleros electrónicos asociados a una cuenta de usuario.
+Sistema para que una persona tome sus medicamentos a tiempo y que sus cuidadores puedan comprobarlo. Tiene tres partes que
+trabajan juntas:
 
-El repositorio contiene dos proyectos independientes:
+- **La app** (Android, hecha con Angular + Capacitor): se registran los medicamentos, los horarios y el inventario. Suena una
+  alarma nativa a la hora de cada toma y muestra el historial.
+- **La API** (Django REST): guarda los datos, crea las tomas a su hora, manda las notificaciones push y habla con el pastillero.
+- **El pastillero**: una **base** con un ESP32 y uno o varios **módulos** imantados, uno por medicamento. Cada módulo tiene
+  un LED, un sensor de tapa y un botón. Avisa a la hora de la toma y registra si la tapa se abrió.
+
+```mermaid
+flowchart LR
+    App["App Android<br/>(Angular + Capacitor)"] -- "HTTPS + JWT" --> API["API Django<br/>(Docker + Nginx)"]
+    Base["Base ESP32"] -- "HTTPS + token de dispositivo" --> API
+    App -- "BLE (solo al vincular)" --> Base
+    Base -- "Bus I2C" --> M1["Módulo 1"]
+    Base -- "Bus I2C" --> M2["Módulo 2"]
+    API -- "Push FCM" --> App
+    API --- DB[("PostgreSQL")]
+```
+
+## Estructura del repositorio
 
 ```text
-pastillero2025/
-├── api_pillbox/   # API REST: Django + Django REST Framework
-└── pillbox-app/   # Aplicación web: Angular
+pastillero2026/
+├── api_pillbox/      API REST (Django 5.2, DRF, SimpleJWT, PostgreSQL)
+├── pillbox-app/      App Angular 20 que se compila a APK con Capacitor 8
+│   ├── plugins/      Plugins nativos propios: aprovisionamiento BLE y alarma de medicación
+│   └── android-config/  Configuración nativa de Android (Firebase, íconos, firma)
+├── firmware/
+│   ├── esp32_pillbox/   Firmware de la base (Arduino / ESP32)
+│   ├── carcasa/         Carcasa en OpenSCAD, STL listos para imprimir y visor 3D
+│   ├── prueba_hardware/ Sketch mínimo para probar LED, botón y buzzer
+│   └── tools/           Simulador del ESP32 contra la API
+├── deploy/           Configuración de Nginx y guía de despliegue
+├── docs/             Documentación de desarrollo y manual de usuario
+└── docker-compose.yml   Producción: Postgres + Django/Gunicorn + Nginx + Certbot
 ```
 
-## Estado del proyecto
+## Documentación
 
-Las funcionalidades de gestión y autenticación están implementadas y se integran mediante una API REST protegida con JWT.
+Toda la documentación de desarrollo está en [`docs/`](docs/README.md). Para empezar:
 
-Actualmente se pueden administrar:
+| Si quieres… | Lee |
+|---|---|
+| Entender cómo funciona el sistema completo | [Arquitectura](docs/01-arquitectura.md) |
+| Levantar el proyecto en tu computador | [Instalación para desarrollo](docs/02-instalacion-desarrollo.md) |
+| Consultar un endpoint | [API](docs/03-api.md) |
+| Trabajar en la app o generar la APK | [App](docs/04-app.md) |
+| Cargar el firmware o preparar una placa | [Firmware](docs/05-firmware.md) |
+| Armar el pastillero | [Hardware](docs/06-hardware.md) |
+| Publicar en el servidor | [Despliegue](docs/07-despliegue.md) |
+| Resolver un error conocido | [Solución de problemas](docs/10-solucion-problemas.md) |
 
-- Usuarios y registro de cuenta.
-- Medicamentos.
-- Horarios de toma.
-- Registros de toma.
-- Dispositivos/pastilleros registrados.
-- Dashboard de próximas tomas.
+El manual para quien usa el pastillero está en [`docs/manual-usuario/`](docs/manual-usuario/).
 
-## Tecnologías
+## Inicio rápido (desarrollo)
 
-### Backend
-
-- Python
-- Django 5.2.17
-- Django REST Framework 3.18
-- SimpleJWT 5.5
-- PostgreSQL
-- django-cors-headers
-
-### Frontend
-
-- Angular 20
-- TypeScript
-- RxJS
-- Bootstrap 5
-
-## Requisitos
-
-- Python 3.11 o superior.
-- Node.js 20 o superior.
-- npm.
-- PostgreSQL en ejecución.
-
-## Configuración del backend
-
-Desde la carpeta `api_pillbox`:
+Necesitas Python 3.11, Node.js 20 y PostgreSQL. La guía completa está en
+[docs/02-instalacion-desarrollo.md](docs/02-instalacion-desarrollo.md).
 
 ```bash
-python -m venv .venv
-```
-
-Activa el entorno virtual e instala las dependencias:
-
-```bash
+# API
+cd api_pillbox
+python -m venv .venv && .venv/Scripts/activate      # en Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
-```
-
-Crea un archivo `.env` tomando como referencia `.env.example`:
-
-```env
-SECRET_KEY=clave-secreta-segura
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-
-DB_NAME=pillbox_db
-DB_USER=postgres
-DB_PASSWORD=tu_password
-DB_HOST=localhost
-DB_PORT=5432
-
-CORS_ALLOWED_ORIGINS=http://localhost:4200,http://127.0.0.1:4200
-```
-
-Aplica las migraciones y ejecuta el servidor:
-
-```bash
+cp .env.example .env                                # rellena SECRET_KEY y los datos de la BD
 python manage.py migrate
 python manage.py runserver
-```
 
-La API estará disponible en:
-
-```text
-http://127.0.0.1:8000/api/
-```
-
-## Configuración del frontend
-
-Desde la carpeta `pillbox-app`:
-
-```bash
+# App (en otra terminal)
+cd pillbox-app
 npm install
-npm start
+npm start                                           # http://localhost:4200
 ```
 
-La aplicación estará disponible en:
+Para que la app use tu API local, cambia `apiUrl` en `pillbox-app/src/environments/environment.ts`.
 
-```text
-http://localhost:4200/
-```
-
-La URL de API para desarrollo se configura en:
-
-```text
-pillbox-app/src/environments/environment.ts
-```
-
-## Autenticación
-
-La API usa tokens JWT mediante el encabezado:
-
-```http
-Authorization: Bearer <access_token>
-```
-
-Rutas públicas:
-
-| Método | Ruta | Descripción |
-|---|---|---|
-| `POST` | `/api/registro/` | Crea una cuenta de usuario. |
-| `POST` | `/api/login/` | Inicia sesión y devuelve tokens JWT. |
-| `POST` | `/api/token/refresh/` | Obtiene un nuevo access token. |
-
-El frontend guarda la sesión, agrega automáticamente el token a las solicitudes privadas y renueva el token de acceso ante una respuesta `401`.
-
-## Endpoints principales
-
-| Recurso | Ruta base | Operaciones |
-|---|---|---|
-| Medicamentos | `/api/medicamentos/` | Crear, consultar, editar y eliminar. |
-| Horarios | `/api/horarios/` | Crear, consultar, editar y eliminar. |
-| Registros de toma | `/api/registros/` | Crear, consultar, confirmar y eliminar. |
-| Dispositivos | `/api/dispositivos/` | Registrar, consultar, editar y desvincular. |
-| Próximas tomas | `/api/proximos-horarios/` | Consultar próximas tomas del usuario. |
-
-La especificación detallada se encuentra en:
-
-- [`api_pillbox/API_FRONTEND_CONTRACT.md`](api_pillbox/API_FRONTEND_CONTRACT.md)
-- [`pillbox-app/API_FRONTEND_CONTRACT.md`](pillbox-app/API_FRONTEND_CONTRACT.md)
-
-## Modelo funcional actual
-
-```text
-Usuario
- ├── Medicamentos
- │    └── Horarios
- │         └── Registros de toma
- └── Dispositivos registrados
-```
-
-## Pruebas del backend
-
-Desde `api_pillbox`:
+## Pruebas
 
 ```bash
-python manage.py test core
+cd api_pillbox && python manage.py test core       # API
+cd pillbox-app && npm test                           # App
 ```
 
-Las pruebas cubren autenticación JWT, hash de contraseñas, aislamiento de recursos entre usuarios y cálculo de próximas tomas.
+Hay más detalles en [docs/09-pruebas.md](docs/09-pruebas.md).
+
+## Estado
+
+| Parte | Estado |
+|---|---|
+| API | En producción en `https://epillbox.duckdns.org/api/` |
+| App Android | APK 1.3.0, distribuida a mano (sin Google Play) |
+| Firmware | `modular-1.0.0`: base con módulos I2C; sin módulos funciona como pastillero de un compartimento |
+| Carcasa | Diseño completo; faltan medidas por confirmar con las piezas reales |
+
+Los cambios por versión están en el [CHANGELOG](CHANGELOG.md).
