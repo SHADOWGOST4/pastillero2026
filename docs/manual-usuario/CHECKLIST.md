@@ -307,6 +307,47 @@ Cambios de la app tras la prueba real del 2026-10-20 (PR #32 y #34 del repo).
 
 ---
 
+## Fase 8. Revisión contra el sistema actual (manual v2.2)
+
+Revisión del 2026-10-23 del manual v2.1 frente a `main` (app 1.3.0, firmware `modular-1.0.0`, PR #28 del 16/10). La
+v2.0 marcó como "Próximamente" todo lo de los compartimentos porque faltaban piezas y el firmware modular aún no existía.
+
+Textos que contradicen el sistema
+- [x] 8.1 Historial (cap. 9): una toma confirmada con el botón de la base se guarda como `BOTON` y la app la muestra
+      como "Solo botón, sin abrir", con advertencia; el manual dice "Pastillero".
+      > El equipo confirmó que el pastillero siempre se usa con compartimentos: con ellos el botón de la base solo calla
+      > el sonido, así que la app no cambia. Se quitó la fila "Pastillero" y el modo de un solo compartimento.
+- [x] 8.2 Verificar el correo (cap. 4): el aviso desaparece al volver a la app (`main-layout.ts` recarga el perfil al
+      entrar y al volver a primer plano), no "la próxima vez que inicie sesión".
+- [x] 8.3 Número de compartimentos (caps. 11 y 16): el firmware maneja 1 a 8 (`logica.h`, `MAX_MODULOS`), no 16.
+- [x] 8.4 Primeros pasos, paso 6: sin un módulo detectado hay que tocar **Agregar manualmente** antes de **Asignar**.
+- [x] 8.5 Versión de computador (caps. 1, 4, 5, 15, 16, 17): no hay una versión web publicada, solo la APK.
+      > Confirmado: solo se usa la APK. Quitadas las menciones al computador y al navegador.
+
+Depende del estado de las placas de los compartimentos (confirmado: base y un módulo probados y funcionando)
+- [x] 8.6 Quitar los "Próximamente" que ya cubre el firmware: cap. 2 (lo que funciona, partes 1, 9 y 10, luces), cap. 8
+      (confirmar en el pastillero, "sigue un solo horario"), cap. 9 (métodos), cap. 11 (armar, detección, actividad),
+      cap. 13 y cap. 16.
+      > Reescrito: se confirma abriendo y cerrando la tapa (botón opcional, 10 s), botón VINCULAR solo calla, detección
+      > automática, módulo equivocado, 10 min y tapa abierta = tomada. Problemas y preguntas nuevas. Queda "Próximamente"
+      > solo en *Armar y separar los compartimentos* (caja definitiva) **[DATO: ¿ya está la caja impresa?]**.
+
+Imágenes
+- [x] 8.7 Modales de confirmación con el estilo anterior al PR #34 (`rId34`, `rId37`): recapturar en teléfono.
+- [x] 8.8 Dispositivo (`rId46`, `rId52`, `rId53`, `rId54`): falta el botón **Quitar** en el módulo sin conexión y
+      `rId54` está mal recortada. Recapturar cuando se resuelva 8.6.
+      > Recapturadas `rId46`, `rId52` y `rId54`; nueva `tel_actividad`. `rId53` (agregar a mano) ya no se usa.
+- [x] 8.9 Capturas de computador a teléfono (5.21): Dashboard, Medicamentos, Horarios, Cuentas vinculadas y solo
+      lectura. Registros espera a 8.1.
+      > 20 capturas rehechas en el emulador (`rId26` a `rId55`) con los mismos personajes. Quedan en navegador con
+      > tamaño de teléfono las de la cuenta (`rId12` a `rId24`), `rId29`, `rId38` y `rId39`.
+- [x] 8.10 Pantallas que faltan: alarma a pantalla completa y aviso **Para que la alarma suene bien**.
+      > Añadidos `tel_permisos`, `tel_alarma` (pantalla completa, con el teléfono bloqueado) y `tel_alarma_aviso`
+      > (desbloqueado).
+- [x] 8.11 *Sobre las imágenes*, versión 2.2 en portada, pie y propiedades, y fila 2.2 en Control de versiones.
+
+---
+
 ## Datos que faltan (pedir al equipo)
 
 | Punto | Dato | Estado |
@@ -321,6 +362,10 @@ Cambios de la app tras la prueba real del 2026-10-20 (PR #32 y #34 del repo).
 | 4.9 | Datos de prueba con el personaje de ejemplo | pendiente |
 | 5.18 | Videos para los QR | pendiente |
 | 6.8 | Prueba con usuario real | pendiente |
+| 8.1 | ¿Corregir en la app la etiqueta de las tomas del pastillero sin módulos? | resuelto: no, siempre hay módulos |
+| 8.5 | ¿Habrá versión web para computador? | resuelto: solo APK |
+| 8.6 | ¿Ya hay placas de los compartimentos probadas? | resuelto: base y un módulo |
+| 8.6 | ¿Ya está la caja definitiva impresa? | pendiente |
 
 ## Registro
 
@@ -331,3 +376,5 @@ Cambios de la app tras la prueba real del 2026-10-20 (PR #32 y #34 del repo).
 | 2026-10-15 | 5.2, 5.20 | Fuente Atkinson Hyperlegible incrustada y tabla de figuras (42 figuras). El .docx pasa de 9,3 a 5 MB al quitar las fuentes de Windows que Word incrustaba. |
 | 2026-10-16 | — | Generador más rápido: `npm run borrador` (~1 s) y `npm run final` (~35 s, antes ~61 s), con imágenes a 200 ppp (4,8 → 1,2 MB), una sola pasada de campos en Word, tiempo máximo para Word y PDF de 1,7 MB. |
 | 2026-10-20 | 5.21, fase 7 | v2.1 (69 páginas) para la app 1.3.0: conectar con lista de redes, red del teléfono y QR del Wi‑Fi; quitar compartimentos; sin conexión al desvincular. 8 capturas nuevas de teléfono tomadas en un emulador Android 37 contra un backend local con datos inventados. |
+| 2026-10-23 | Fase 8 | Revisión contra `main`: 5 textos que contradicen el sistema, los "Próximamente" que ya cubre el firmware modular y ~20 capturas. Corregidos 8.2, 8.3 y 8.4 |
+| 2026-10-23 | Fase 8 | v2.2 (74 páginas): pastillero con compartimentos, solo APK, 20 capturas de teléfono y 4 nuevas tomadas en el emulador Android 37 contra una API local con datos inventados |

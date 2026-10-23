@@ -20,8 +20,8 @@ const comoUsar = () => [
   ...aviso('peligro', 'Un riesgo para su salud o la de otras personas.'),
   ...aviso('nota', 'Una función que ya está diseñada pero todavía no funciona en el pastillero.', 'Próximamente.'),
   H2('Sobre las imágenes'),
-  P('Las capturas son de la aplicación real, usada en un entorno de prueba con personas, medicamentos y redes Wi-Fi inventados. Las de la sección 11 (conectar el pastillero y sus compartimentos) se tomaron en un teléfono Android. El resto de las de teléfono se tomaron en un navegador con tamaño de teléfono, así que todavía no aparecen dos pantallas que solo existen en Android: la alarma a pantalla completa y el aviso de permisos.'),
-  P('Las imágenes del pastillero son del diseño 3D de la caja y del prototipo actual. El equipo terminado puede verse un poco distinto.'),
+  P('Las capturas son de la aplicación real en un teléfono Android, usada en un entorno de prueba con personas, medicamentos y redes Wi-Fi inventados. Algunas pantallas de la cuenta (inicio de sesión, registro y contraseña) se tomaron en un navegador con tamaño de teléfono y se ven igual que en la aplicación.'),
+  P('Las imágenes del pastillero son del diseño 3D de la caja. El equipo terminado puede verse un poco distinto.'),
 ];
 
 const cap1 = () => [
@@ -31,8 +31,8 @@ const cap1 = () => [
   H2('Qué es Pillbox'),
   P('Son dos partes que trabajan juntas:'),
   ...vinetas([
-    '**La aplicación**, en el teléfono o en el computador. Ahí registra sus medicamentos, programa los horarios, recibe las alarmas, consulta el historial y comparte la información con un familiar.',
-    '**El pastillero**, una caja con compartimentos que se conecta a Internet. A la hora de la toma enciende una luz y suena, y registra la toma cuando usted pulsa su botón.',
+    '**La aplicación**, en su teléfono Android. Ahí registra sus medicamentos, programa los horarios, recibe las alarmas, consulta el historial y comparte la información con un familiar.',
+    '**El pastillero**, una base con compartimentos que se conecta a Internet. A la hora de la toma suena y enciende la luz del compartimento que debe abrir, y registra la toma cuando usted abre y cierra su tapa.',
   ]),
   P('Con Pillbox puede:'),
   ...vinetas([
@@ -54,9 +54,8 @@ const cap1 = () => [
   H2('Qué necesita'),
   ...vinetas([
     '**Un teléfono Android** con cámara y Bluetooth. Es la forma prevista de usar Pillbox: el teléfono hace sonar la alarma, escanea el código QR del pastillero y se conecta con él.',
-    '**La aplicación Pillbox para Android.** Se instala con un archivo APK que entrega el equipo del proyecto.',
-    '**Un computador (opcional).** La aplicación también se abre en un navegador, en la dirección que le indique el equipo del proyecto. Desde el navegador no se puede escanear el código QR ni usar la alarma del teléfono.',
-    '**Conexión a Internet** en el teléfono o en el computador. Su información se guarda en un servidor en línea.',
+    '**La aplicación Pillbox para Android.** Se instala con un archivo APK que entrega el equipo del proyecto. No hay versión para computador.',
+    '**Conexión a Internet** en el teléfono. Su información se guarda en un servidor en línea.',
     '**Una cuenta Pillbox** con su nombre, correo, teléfono y contraseña, y acceso a ese correo.',
   ]),
   P('Para usar el pastillero, además:'),
@@ -74,10 +73,10 @@ const cap1 = () => [
 const cap2 = () => [
   H1(2, 'Conozca su pastillero', 'c2'),
   P('El pastillero es una fila de piezas que se unen de lado con imanes: la base, que lleva la electrónica, en el centro, y un compartimento a cada lado. Cada compartimento guarda un medicamento.'),
-  ...aviso('nota', 'El pastillero todavía está en desarrollo. La figura muestra el diseño 3D de la caja; el prototipo actual funciona con la base y un solo compartimento (la foto está al final de esta sección). Lo que depende de piezas que aún no han llegado está marcado como “próximamente”.'),
+  ...aviso('nota', 'La figura muestra el diseño 3D de la caja. El equipo terminado puede verse un poco distinto.'),
   ...fig('partes', 15.5, 'Partes del pastillero (diseño 3D).', { alt: 'Pastillero visto desde arriba con las partes numeradas del 1 al 10.' }),
   ...tabla(['', 'Parte', 'Para qué sirve'], [
-    ['1', 'Botón VINCULAR', 'Por ahora, confirma la toma. Si lo mantiene pulsado 5 segundos, borra la conexión Wi-Fi para volver a conectar el pastillero.'],
+    ['1', 'Botón VINCULAR', 'Mientras suena una alarma, calla el sonido. Si lo mantiene pulsado 5 segundos, borra la conexión Wi-Fi para volver a conectar el pastillero.'],
     ['2', 'Luz verde', 'Indica qué está haciendo el pastillero (ver la tabla de luces).'],
     ['3', 'Rejilla del zumbador', 'Por aquí sale el sonido de la alarma. No la tape.'],
     ['4', 'Entrada USB-C', 'Para el cable del cargador. Está en la parte de atrás.'],
@@ -85,9 +84,10 @@ const cap2 = () => [
     ['6', 'Compartimento 1', 'Guarda un medicamento. El número está grabado en la tapa.'],
     ['7', 'Compartimento 2', 'Igual que el 1, al otro lado de la base.'],
     ['8', 'Tapa lateral', 'Cubre los contactos del extremo izquierdo, que llevan corriente.'],
-    ['9', 'Botón del compartimento', 'Próximamente: confirmará la toma de ese compartimento.'],
-    ['10', 'Luz roja del compartimento', 'Próximamente: le indicará qué compartimento abrir.'],
+    ['9', 'Botón del compartimento', 'Confirma que tomó el medicamento de ese compartimento (sección 8).'],
+    ['10', 'Luz roja del compartimento', 'Parpadea cuando le toca tomar el medicamento de ese compartimento.'],
   ], [6, 30, 64]),
+  P('Cada compartimento tiene además un sensor en la tapa. Así el pastillero sabe si usted la abrió y la cerró, y lo anota en el historial.'),
   ...aviso('precaucion', 'Los orificios EN y BOOT son para el servicio técnico. No introduzca objetos en ellos.'),
   H2('Las luces de la base', 's2-luces'),
   ...tabla(['Cuando…', 'La luz verde…', 'Qué hacer'], [
@@ -97,17 +97,8 @@ const cap2 = () => [
     ['La contraseña del Wi-Fi es incorrecta, no encuentra la red o no pudo vincularse', '3 destellos y una pausa', 'Volver a intentarlo desde la aplicación.'],
     ['Pasaron 10 minutos sin conectarlo', 'Se apaga', 'Mantener el botón VINCULAR 5 s para empezar de nuevo.'],
     ['Al equipo le falta su identidad de fábrica', 'Doble destello', 'Llamar a soporte. Usted no puede arreglarlo.'],
-    ['Es hora de una toma', 'Encendida, con sonido', 'Tomar el medicamento y pulsar el botón (sección 8).'],
+    ['Es hora de una toma', 'Parpadea con el sonido, junto con la luz roja del compartimento que le toca', 'Abrir ese compartimento y tomar el medicamento (sección 8).'],
   ], [44, 24, 32]),
-  H2('Lo que ya funciona y lo que viene'),
-  P('Hoy el pastillero funciona con la base y **un compartimento**: la luz verde, el zumbador y el botón VINCULAR. Cuando lleguen las placas de los compartimentos, se sumarán:'),
-  ...vinetas([
-    'Detección automática de los compartimentos conectados.',
-    'Un sensor en cada tapa que registra si usted la abrió.',
-    'Un botón y una luz roja en cada compartimento.',
-    'Un aviso cuando se abre el compartimento equivocado.',
-  ]),
-  ...fig('protoboard', 9, 'Prototipo actual: la placa del pastillero con la luz y el botón, todavía sin caja.', { alt: 'Placa ESP32 en una protoboard con un LED y un pulsador.' }),
   H2('Si oye o ve con dificultad'),
   P('El sonido del zumbador no se puede ajustar, y las luces son verde y roja, colores que algunas personas confunden. Si es su caso, no dependa solo de la luz: atienda el sonido y active también la alarma del teléfono (sección 8).'),
 ];
@@ -120,7 +111,7 @@ function primerosPasos() {
     ['Agregue su primer medicamento', 'Menú → **Medicamentos** → **Agregar medicamento**.', 's6-agregar', 'rId30'],
     ['Cree su horario', 'Menú → **Horarios** → **Nuevo horario**.', 's7-crear', 'rId35'],
     ['Conecte el pastillero', 'Menú → **Dispositivo** → **Conectar dispositivo**.', 's11-conectar', 'rId48'],
-    ['Asigne el medicamento al compartimento 1', 'En su pastillero, toque **Ver módulos** y luego **Asignar**.', 's11-asignar', 'rId54'],
+    ['Asigne un medicamento a cada compartimento', 'Toque **Ver módulos** y, en cada compartimento, **Asignar**.', 's11-asignar', 'rId54'],
   ];
   const w = [900, 5706, 2800];
   const filasTabla = filas.map(([titulo, como, id, img], i) => new TableRow({ cantSplit: true, children: [
@@ -147,7 +138,7 @@ const cap4 = () => [
   H1(4, 'Su cuenta', 'c4'),
   H2('Abrir la aplicación'),
   ...junto([
-    P('En el teléfono, abra la aplicación **Pillbox**. Si usa computador, abra el navegador y escriba la dirección que le indicó el equipo del proyecto.'),
+    P('En el teléfono, abra la aplicación **Pillbox**.'),
     P('Verá la pantalla **Iniciar Sesión**, con:'),
     vinetas(['El campo **Correo Electrónico / Usuario**.', 'El campo **Contraseña**.', 'El enlace **¿Olvidaste tu contraseña?**', 'El botón **Ingresar**.', 'El enlace **Regístrate aquí**, para crear una cuenta.']),
     P('Si ya había entrado antes y no cerró la sesión, la aplicación lo lleva directamente al **Dashboard**.'),
@@ -187,10 +178,9 @@ const cap4 = () => [
   ...pasos([
     'Abra su correo y busque el mensaje de Pillbox. Si no está, mire en la carpeta de correo no deseado.',
     'Abra el enlace. Se abre una página que dice **¡Correo verificado!**',
-    'Vuelva a la aplicación. El aviso desaparece la próxima vez que inicie sesión.',
+    'Vuelva a la aplicación. El aviso desaparece en cuanto regresa a ella.',
   ]),
   ...fila([['rId15', 'Aviso de correo sin verificar, con el botón Reenviar correo.', 6.5], ['rId16', 'Página que se abre desde el enlace del correo.', 6.5]], 6.5),
-  P('Si abre el enlace en la versión de navegador de la aplicación, verá en cambio la pantalla **Verificación de correo** con el enlace **Ir a iniciar sesión**.'),
   P('Para recibir otro correo, toque **Reenviar correo** en el aviso de arriba.'),
   ...aviso('precaucion', 'El enlace vence a las 48 horas. Si ya venció, la página dice “El enlace de verificación expiró. Solicita uno nuevo.” Toque **Reenviar correo** para pedir otro.'),
   ...aviso('nota', 'Puede usar la aplicación sin verificar el correo, pero así nadie podrá enviarle invitaciones de monitoreo por correo electrónico.'),
@@ -225,7 +215,7 @@ const cap5 = () => [
     '**Menú de cuenta**, arriba a la derecha: su inicial y su nombre. Desde ahí vuelve a **Mi cuenta**, ve la cuenta de alguien a quien monitorea o entra a **Cuentas vinculadas**.',
     '**Aviso de verificación**, debajo del encabezado: solo si su correo no está verificado.',
   ]),
-  ...fila([['rId22', 'La aplicación en un computador.', 7.5], ['rId23', 'La misma pantalla en el teléfono.', 7.5]], 7.5),
+  ...fig('rId23', 6.5, 'Una pantalla de la aplicación, con el botón ☰ y el menú de cuenta arriba.'),
   H2('El menú lateral'),
   ...junto([
     tabla(['Opción', 'Qué encuentra'], [
@@ -241,7 +231,7 @@ const cap5 = () => [
   H2('Lo que se repite en cada sección'),
   ...vinetas([
     '**Tarjetas de resumen** arriba, con totales como “Medicamentos registrados”.',
-    '**La lista**: en el computador es una tabla; en el teléfono, tarjetas una debajo de otra.',
+    '**La lista**, con una tarjeta por elemento, una debajo de otra.',
     '**El botón azul** de la acción principal, como **Agregar medicamento** o **Nuevo horario**.',
     '**El botón ⋮** al final de cada fila, con Editar, Eliminar y otras opciones.',
     '**Ventanas** para crear o editar. Se cierran sin guardar con **Cancelar**, con la **×** o tocando fuera. Mientras guardan, el botón dice “Guardando...” y no se puede tocar dos veces.',
@@ -257,7 +247,7 @@ const cap5 = () => [
     '**Estado del stock**: los medicamentos que se están acabando, del más urgente al menos urgente. Si no hay ninguno, dice “No hay alertas de stock en este momento.”',
     '**Próximas tomas**: la agenda ordenada por hora, con el medicamento, la dosis y la frecuencia.',
   ]),
-  ...fig('rId26', 14, 'Dashboard con alertas de stock y la agenda de próximas tomas.'),
+  ...fig('rId26', 7, 'Dashboard: próximas tomas y estado del stock.'),
   P('Si todavía no tiene horarios, verá “No tienes tomas próximas” y el botón **Programar horario**. Si no se pudo cargar la información, verá “No pudimos cargar tu información” y el botón **Reintentar**.'),
   H2('Listas largas'),
   P('Las listas de Medicamentos, Horarios y Registros muestran 10 elementos por página. Si hay más, abajo aparece “Página 1 de 3” con los botones **Anterior** y **Siguiente**. Las listas no tienen buscador ni filtros.'),
