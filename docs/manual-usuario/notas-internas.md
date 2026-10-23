@@ -35,6 +35,17 @@ Lo que salió del manual v1.1 al pasar a la v2.0 porque es información del equi
 - Una toma pendiente no se puede confirmar después desde la app: la API lo permite (`PATCH` del registro), pero la
   interfaz solo confirma desde la ventana de los primeros 15 minutos o desde la alarma de Android.
 
+## Problemas de la aplicación vistos al recapturar (v2.2, 2026-10-23)
+
+- El permiso de batería dice "Para que el teléfono no cierre la app y la alarma no suene." (`permisos-alarma.ts:17`):
+  dice lo contrario de lo que quiere decir. Debería ser "…y la alarma no se corte."
+- El recordatorio dentro de la app (`medication-reminder.service.ts`, `latestDueOccurrence`) no mira si el horario está
+  pausado ni su fecha de inicio o fin: al abrir la app crea tomas pendientes de horarios deshabilitados y puede mostrar
+  la ventana "Hora de tomar el medicamento" de un horario pausado. El servidor sí los respeta.
+- Sigue la hora en formato inglés en la ventana de la toma ("10/23/26, 9:54 AM").
+- En el teléfono, la ventana **Editar pastillero** deja la etiqueta "Nombre" pegada al campo y el texto de
+  **Guardar cambios** alineado a la izquierda.
+
 ## Datos comprobados en el código para la v2.0
 
 | Dato del manual | Fuente |
