@@ -9,3 +9,8 @@ pillbox-app/plugins/*/android/.gradle/
 
 # Identidades de fabrica (contienen el PoP)
 fabrica_salida/
+
+# Firma Android release (nunca al repo)
+*.jks
+*.keystore
+keystore.properties
