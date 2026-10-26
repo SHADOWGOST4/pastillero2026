@@ -50,8 +50,12 @@ const cap13 = () => [
     'Si la tarjeta dice **Sin conexión**, toque **Quitar** (sección 11).'),
   ...problema('El pastillero aparece “Desconectado”', ['Está apagado o sin Internet.', 'Cambió la red Wi-Fi o su contraseña.'],
     'Revise el cable y el Wi-Fi y toque **Actualizar estado**. Si cambió la red, mantenga el botón **VINCULAR** 5 segundos y conéctelo de nuevo (sección 11).'),
-  ...problema('El pastillero no suena a la hora de un medicamento', ['El compartimento no tiene medicamento asignado, o el medicamento no tiene horarios activos.', 'Por ahora el pastillero sigue un solo horario.', 'Se reinició sin Internet y no sabe la hora.'],
-    'Revise la asignación en **Dispositivo** y los horarios en **Horarios**, y compruebe que tenga Internet (sección 8).'),
+  ...problema('El pastillero no suena a la hora de un medicamento', ['El compartimento no tiene medicamento asignado, o el medicamento no tiene horarios activos.', 'El compartimento no está bien unido a la base: la aplicación lo muestra **Sin conexión**.', 'Se reinició sin Internet y no sabe la hora.'],
+    'Revise la asignación en **Dispositivo**, los horarios en **Horarios** y que el compartimento esté **Conectado**, y compruebe que tenga Internet (sección 8).'),
+  ...problema('Un compartimento no aparece en la aplicación', ['No está bien unido a la base.', 'Los pines de la unión están doblados.', 'La lista todavía no se actualizó.'],
+    'Separe el compartimento y vuelva a unirlo de frente y recto. Espere unos segundos y toque **Buscar módulos**. Si sigue sin aparecer, llame a soporte.'),
+  ...problema('Abrí un compartimento y la alarma no se apagó', ['No era el compartimento que le tocaba.', 'Todavía no cerró la tapa.'],
+    'Mire qué luz roja parpadea, abra ese compartimento y cierre la tapa. Después de cerrarla, el pastillero espera 10 segundos por si pulsa el botón y luego se apaga.'),
   ...problema('La luz verde hace doble destello y el pastillero no funciona', ['Al equipo le falta su identidad de fábrica.'], 'No se puede arreglar en casa. Llame a soporte.'),
   H2('Mensajes de error'),
   ...tabla(['Si ve…', 'Significa', 'Qué hacer'], [
@@ -100,7 +104,8 @@ const cap14 = () => [
   ...faq('No recuerdo la contraseña de mi Wi-Fi. ¿Qué hago?', 'Léala de un código QR: en el teléfono, **Ajustes › Wi-Fi ›** su red **› Compartir**, haga una captura y en Pillbox toque **Desde una captura** (sección 11).'),
   ...faq('Cambié de router. ¿Qué hago?', 'Mantenga el botón **VINCULAR** 5 segundos y vuelva a conectar el pastillero desde **Dispositivo → Conectar dispositivo**.'),
   ...faq('¿Puedo tener más de un pastillero?', 'Sí. Cada uno aparece como una tarjeta en **Dispositivo**.'),
-  ...faq('¿Qué pasa si no hay Internet cuando pulso el botón?', 'El pastillero vuelve a intentar el envío varias veces, sin duplicar la toma. Pero si se reinicia sin Internet, no sonará hasta que se conecte (sección 8).'),
+  ...faq('¿Tengo que pulsar el botón del compartimento?', 'No es obligatorio: con abrir y cerrar la tapa la toma queda registrada. Si además pulsa el botón, el historial muestra **Tapa y botón**.'),
+  ...faq('¿Qué pasa si no hay Internet cuando confirmo en el pastillero?', 'El pastillero guarda la confirmación y vuelve a intentar el envío varias veces, sin duplicar la toma. Pero si se reinicia sin Internet, no sonará hasta que se conecte (sección 8).'),
   ...faq('Voy a viajar. ¿El pastillero cambia de hora?', 'No. El pastillero usa siempre la hora de Colombia. Si viaja a otro país con otra hora, sus alarmas seguirán la hora de Colombia.'),
   ...faq('¿Puedo buscar un medicamento en la lista?', 'Por ahora las listas no tienen buscador ni filtros. Use los botones **Anterior** y **Siguiente**.'),
 ];
@@ -114,7 +119,7 @@ const cap15 = () => [
   ...vinetas([
     '**Su correo y su contraseña son personales.** Nadie del equipo de Pillbox le pedirá su contraseña.',
     '**Use una contraseña que no use en otros servicios** y que sea difícil de adivinar. Si cree que alguien la conoce, cámbiela con **¿Olvidaste tu contraseña?**',
-    '**La sesión queda abierta** en el teléfono o el computador hasta que toque **Cerrar sesión** o venza. Ciérrela si el equipo es compartido.',
+    '**La sesión queda abierta** en el teléfono hasta que toque **Cerrar sesión** o venza. Ciérrela si comparte el teléfono.',
     '**Lo que no se puede deshacer** (eliminar medicamentos, vinculaciones o pastilleros) siempre pide confirmación. Lea el aviso antes de aceptar.',
     '**Los enlaces de los correos vencen**: el de verificación a las 48 horas y el de la contraseña a la hora. No reenvíe esos correos.',
   ]),
@@ -132,9 +137,10 @@ const cap16 = () => [
     ['Alimentación', 'USB-C, 5 V'],
     ['Conexión', 'Wi-Fi de 2,4 GHz; Bluetooth solo para la primera conexión'],
     ['Hora', 'Hora de Colombia (UTC-5), tomada de Internet'],
-    ['Compartimentos', 'Hasta 16 (hoy funciona con 1)'],
+    ['Compartimentos', 'Hasta 8, unidos a la base con imanes'],
+    ['Horarios por compartimento', 'Hasta 6'],
     ['Caja', 'Impresa en 3D'],
-    ['Aplicación', 'Android, o navegador web en computador'],
+    ['Aplicación', 'Android (archivo APK)'],
   ], [45, 55]),
 ];
 
@@ -152,7 +158,7 @@ const cap17 = () => [
     'En qué sección estaba y qué estaba haciendo.',
     'El texto exacto del mensaje de error.',
     'La fecha y la hora aproximadas.',
-    'El modelo de su teléfono y la versión de Android, o el navegador que usa.',
+    'El modelo de su teléfono y la versión de Android.',
     'Si es el pastillero: su nombre en la aplicación y qué hace la luz verde.',
   ]),
   P('Puede enviar capturas de pantalla del error. Antes, revise que no se vea ninguna contraseña.'),
@@ -192,6 +198,7 @@ const versiones = () => [
     ['1.1', '05/10/2026', 'Capturas reales de la aplicación con datos de prueba; correcciones en verificación de correo, recuperación de contraseña y stock insuficiente.'],
     ['2.0', '15/10/2026', 'Manual reorganizado en el orden de uso. Nuevas secciones: Conozca su pastillero, Primeros pasos, Cuidado y limpieza, Especificaciones, sin Internet y toma tardía, seguridad física y datos de salud. Funciones del pastillero que aún no están disponibles marcadas como próximamente. Nuevo diseño.'],
     ['2.1', '20/10/2026', 'Aplicación 1.3.0. Conectar el pastillero: lista de redes cercanas, red del teléfono propuesta, permiso de ubicación y contraseña desde un QR. Quitar compartimentos sin conexión. Aviso “Sin conexión” al desvincular. Capturas de la sección 11 tomadas en un teléfono Android.'],
+    ['2.2', '23/10/2026', 'El pastillero funciona con sus compartimentos: se confirma abriendo y cerrando la tapa, el botón del compartimento es opcional y el botón VINCULAR solo calla el sonido; los compartimentos se detectan solos. Quitadas las marcas de próximamente que ya funcionan. Solo la aplicación de Android: sin versión de computador. Capturas de teléfono en todas las secciones, más la alarma, el aviso de permisos y la actividad del pastillero. Correcciones: verificación del correo, hasta 8 compartimentos y Primeros pasos.'],
   ], [12, 16, 72]),
 ];
 

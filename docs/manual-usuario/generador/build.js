@@ -21,7 +21,7 @@ const pagina = { size: { width: 12240, height: 15840 }, margin: { top: MARGEN, b
 
 const pieDePagina = () => new Footer({ children: [new Paragraph({
   alignment: AlignmentType.CENTER,
-  children: [new TextRun({ children: ['Pillbox · Manual de usuario v2.1 · página ', PageNumber.CURRENT, ' de ', PageNumber.TOTAL_PAGES], size: 18, color: C.suave })],
+  children: [new TextRun({ children: ['Pillbox · Manual de usuario v2.2 · página ', PageNumber.CURRENT, ' de ', PageNumber.TOTAL_PAGES], size: 18, color: C.suave })],
 })] });
 const encabezado = (texto) => new Header({ children: [new Paragraph({
   alignment: AlignmentType.RIGHT,
@@ -35,7 +35,7 @@ const portada = [
   new Paragraph({ spacing: { after: 160 }, children: [new TextRun({ text: 'Manual de usuario', size: 48, color: C.texto })] }),
   new Paragraph({ spacing: { after: 400 }, children: [new TextRun({ text: 'Su medicación a tiempo, con la aplicación y el pastillero electrónico', size: 26, color: C.suave })] }),
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 700 }, children: [imagen('tapas_abiertas', 12, 'Diseño 3D del pastillero con las tapas abiertas')] }),
-  new Paragraph({ spacing: { after: 40 }, children: [new TextRun({ text: 'Versión 2.1 · octubre de 2026', bold: true, size: 22 })] }),
+  new Paragraph({ spacing: { after: 40 }, children: [new TextRun({ text: 'Versión 2.2 · octubre de 2026', bold: true, size: 22 })] }),
   new Paragraph({ spacing: { after: 40 }, children: [new TextRun({ text: 'Fundación Escuela Tecnológica de Neiva “Jesús Oviedo Pérez” (FET)', size: 22, color: C.suave })] }),
   new Paragraph({ spacing: { after: 0 }, children: [new TextRun({ text: 'Programa de Ingeniería de Software', size: 22, color: C.suave })] }),
   new Paragraph({ children: [new PageBreak()] }),
@@ -69,7 +69,7 @@ const capitulos = [
 ];
 
 const doc = new Document({
-  creator: 'Equipo Electronic Pill Box', title: 'Pillbox · Manual de usuario', description: 'Manual de usuario de Pillbox, versión 2.1',
+  creator: 'Equipo Electronic Pill Box', title: 'Pillbox · Manual de usuario', description: 'Manual de usuario de Pillbox, versión 2.2',
   features: { updateFields: true },
   fonts: [{
     name: FUENTE,
