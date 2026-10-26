@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
+import { BloquearScroll } from '../bloquear-scroll/bloquear-scroll';
 
 @Component({
   selector: 'app-confirm-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, BloquearScroll],
   templateUrl: './confirm-modal.html',
   styleUrl: './confirm-modal.css',
 })

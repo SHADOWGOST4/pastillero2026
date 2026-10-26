@@ -2,12 +2,13 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, HostListener, Input, OnChanges, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DispositivoResponse } from '../../../core/models/api.interfaces';
+import { BloquearScroll } from '../../../shared/bloquear-scroll/bloquear-scroll';
 
 /** Modal para editar lo único que el usuario puede cambiar de un pastillero: su nombre. */
 @Component({
   selector: 'app-editar-dispositivo-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BloquearScroll],
   templateUrl: './editar-dispositivo-modal.html',
   styleUrl: './editar-dispositivo-modal.css',
 })

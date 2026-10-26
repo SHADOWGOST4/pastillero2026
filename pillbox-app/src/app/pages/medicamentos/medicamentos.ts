@@ -15,11 +15,12 @@ import {
 import { Medicamento } from '../../services/medicamento';
 import { CuentaActiva } from '../../services/cuenta-activa';
 import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
+import { BloquearScroll } from '../../shared/bloquear-scroll/bloquear-scroll';
 
 @Component({
   selector: 'app-medicamentos',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatMenuModule, ConfirmModal],
+  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatMenuModule, ConfirmModal, BloquearScroll],
   templateUrl: './medicamentos.html',
   styleUrls: ['./medicamentos.css'],
 })

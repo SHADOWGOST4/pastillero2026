@@ -169,7 +169,7 @@
   </section>
 </div>
 
-<div *ngIf="modalFormularioAbierto" class="medication-modal-backdrop" (click)="!submitting && cancelEdit()">
+<div *ngIf="modalFormularioAbierto" class="medication-modal-backdrop" appBloquearScroll (click)="!submitting && cancelEdit()">
   <section
     class="medication-modal"
     [class.form-card-editing]="isEditMode"
@@ -252,7 +252,7 @@
   </section>
 </div>
 
-<div *ngIf="stockOperationType" class="medication-modal-backdrop" (click)="!stockOperationBusy && cancelarOperacionStock()">
+<div *ngIf="stockOperationType" class="medication-modal-backdrop" appBloquearScroll (click)="!stockOperationBusy && cancelarOperacionStock()">
   <section
     class="medication-modal stock-operation-modal"
     role="dialog"

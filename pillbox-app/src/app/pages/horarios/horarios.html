@@ -171,7 +171,7 @@
   </section>
 </div>
 
-<div *ngIf="modalFormularioAbierto" class="schedule-modal-backdrop" (click)="!submitting && resetForm()">
+<div *ngIf="modalFormularioAbierto" class="schedule-modal-backdrop" appBloquearScroll (click)="!submitting && resetForm()">
   <section
     class="schedule-modal"
     [class.form-card-editing]="isEditMode"

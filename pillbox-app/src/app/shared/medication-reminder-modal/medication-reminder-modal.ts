@@ -1,11 +1,12 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component } from '@angular/core';
 import { MedicationReminderService } from '../../services/medication-reminder.service';
+import { BloquearScroll } from '../bloquear-scroll/bloquear-scroll';
 
 @Component({
   selector: 'app-medication-reminder-modal',
   standalone: true,
-  imports: [CommonModule, DatePipe],
+  imports: [CommonModule, DatePipe, BloquearScroll],
   templateUrl: './medication-reminder-modal.html',
   styleUrl: './medication-reminder-modal.css',
 })

@@ -9,11 +9,12 @@ import { Vinculacion } from '../../services/vinculacion';
 import { Auth } from '../../services/auth';
 import { CuentaActiva } from '../../services/cuenta-activa';
 import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
+import { BloquearScroll } from '../../shared/bloquear-scroll/bloquear-scroll';
 
 @Component({
   selector: 'app-cuentas-vinculadas',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatMenuModule, ConfirmModal],
+  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatMenuModule, ConfirmModal, BloquearScroll],
   templateUrl: './cuentas-vinculadas.html',
   styleUrl: './cuentas-vinculadas.css',
 })

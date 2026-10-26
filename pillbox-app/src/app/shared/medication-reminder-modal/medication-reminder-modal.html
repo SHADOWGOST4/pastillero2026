@@ -1,5 +1,5 @@
 <ng-container *ngIf="reminderService.currentReminder() as reminder">
-  <div class="reminder-backdrop" role="presentation" (click)="cerrar()">
+  <div class="reminder-backdrop" appBloquearScroll role="presentation" (click)="cerrar()">
     <section
       class="reminder-modal"
       role="dialog"
