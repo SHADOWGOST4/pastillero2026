@@ -1,5 +1,5 @@
 # Orquestación de producción: Postgres + Django/Gunicorn + Nginx + Certbot.
-# Uso: desde la raíz del repo en la VM de Oracle.
+# Uso: desde la raíz del repo en la VM (ver deploy/README-deploy.md).
 #   docker compose up -d --build
 
 services:
