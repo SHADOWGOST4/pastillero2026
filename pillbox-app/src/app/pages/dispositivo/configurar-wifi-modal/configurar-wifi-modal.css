@@ -2,14 +2,17 @@
   position: fixed;
   inset: 0;
   z-index: 1050;
-  display: grid;
-  place-items: center;
+  display: flex;
   padding: 1rem;
+  /* Si el modal no cabe (teclado abierto), se desplaza el modal y no la página de abajo. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: rgba(33, 38, 49, 0.55);
 }
 
 .wifi-modal {
   width: min(100%, 440px);
+  margin: auto;
   overflow: hidden;
   border: 1px solid var(--cui-border-color);
   border-radius: 0.5rem;
@@ -184,6 +187,7 @@
   margin: 0;
   padding: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid var(--cui-border-color);
   border-radius: 0.375rem;
   list-style: none;

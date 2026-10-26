@@ -328,6 +328,7 @@
   display: grid;
   place-items: center;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 1rem;
   background: rgba(33, 38, 49, 0.55);
 }
@@ -336,6 +337,7 @@
   width: min(100%, 480px);
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 1.35rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);

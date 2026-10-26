@@ -21,11 +21,12 @@ import { Horario } from '../../services/horario';
 import { CuentaActiva } from '../../services/cuenta-activa';
 import { LocalReminderSchedulerService } from '../../services/local-reminder-scheduler.service';
 import { ConfirmModal } from '../../shared/confirm-modal/confirm-modal';
+import { BloquearScroll } from '../../shared/bloquear-scroll/bloquear-scroll';
 
 @Component({
   selector: 'app-horarios',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatRadioModule, MatMenuModule, ConfirmModal],
+  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatRadioModule, MatMenuModule, ConfirmModal, BloquearScroll],
   templateUrl: './horarios.html',
   styleUrl: './horarios.css',
 })

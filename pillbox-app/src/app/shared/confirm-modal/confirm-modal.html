@@ -1,4 +1,4 @@
-<div *ngIf="visible" class="modal-backdrop" (click)="!busy && closed.emit()">
+<div *ngIf="visible" class="modal-backdrop" appBloquearScroll (click)="!busy && closed.emit()">
   <section
     class="confirm-modal"
     [class.device-modal]="variant === 'device'"

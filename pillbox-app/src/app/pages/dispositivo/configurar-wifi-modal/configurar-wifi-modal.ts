@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { EscanerQrService } from '../../../services/aprovisionamiento/escaner-qr.service';
 import { RedTelefono, RedWifi, esRedNo24GHz } from '../../../services/aprovisionamiento/provisioning.service';
 import { parsearQrWifi } from '../../../services/aprovisionamiento/qr-wifi';
+import { BloquearScroll } from '../../../shared/bloquear-scroll/bloquear-scroll';
 
 export interface CredencialesWifi {
   ssid: string;
@@ -14,7 +15,7 @@ export interface CredencialesWifi {
 @Component({
   selector: 'app-configurar-wifi-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BloquearScroll],
   templateUrl: './configurar-wifi-modal.html',
   styleUrl: './configurar-wifi-modal.css',
 })

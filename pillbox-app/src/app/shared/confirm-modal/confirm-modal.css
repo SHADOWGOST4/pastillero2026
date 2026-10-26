@@ -1,5 +1,5 @@
-.modal-backdrop { position:fixed; inset:0; z-index:1050; display:grid; place-items:center; padding:1rem; background:rgba(33,38,49,.55); }
-.confirm-modal { width:min(100%, 430px); overflow:hidden; border:1px solid var(--cui-border-color); border-radius:.5rem; background:#fff; box-shadow:0 18px 48px rgba(33,38,49,.28); animation:modal-enter .16s ease-out; }
+.modal-backdrop { position:fixed; inset:0; z-index:1050; display:flex; overflow-y:auto; overscroll-behavior:contain; padding:1rem; background:rgba(33,38,49,.55); }
+.confirm-modal { width:min(100%, 430px); margin:auto; overflow:hidden; border:1px solid var(--cui-border-color); border-radius:.5rem; background:#fff; box-shadow:0 18px 48px rgba(33,38,49,.28); animation:modal-enter .16s ease-out; }
 .confirm-modal-header { display:flex; align-items:flex-start; gap:.75rem; padding:1.25rem 1.25rem 1rem; border-bottom:1px solid var(--cui-border-color); }
 .modal-icon { display:grid; place-items:center; flex:0 0 auto; width:2.5rem; height:2.5rem; border-radius:50%; color:var(--danger); background:var(--danger-soft); }
 .modal-overline { margin:0 0 .15rem; color:var(--text-secondary); font-size:.69rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }

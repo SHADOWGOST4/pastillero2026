@@ -154,7 +154,7 @@
   </ng-container>
 </div>
 
-<div *ngIf="modalFormularioAbierto" class="vinculacion-modal-backdrop" (click)="!submitting && cancelarInvitacion()">
+<div *ngIf="modalFormularioAbierto" class="vinculacion-modal-backdrop" appBloquearScroll (click)="!submitting && cancelarInvitacion()">
   <section
     class="vinculacion-modal"
     role="dialog"
