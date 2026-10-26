@@ -59,6 +59,8 @@ una carpeta fuera del repo — ver conversación/README de deploy).
 
 5. `./gradlew assembleRelease`. La firma sale de `android/keystore.properties` (fuera de git) o de las variables
    `PILLBOX_KEYSTORE`, `PILLBOX_KEYSTORE_PASSWORD`, `PILLBOX_KEY_ALIAS` y `PILLBOX_KEY_PASSWORD`. Usa siempre el mismo keystore: con otro, Android obliga a desinstalar y se pierde la sesión.
+   Cómo está montada la firma (bloque de `build.gradle`, keystore, Play App Signing): [`FIRMA-RELEASE.md`](FIRMA-RELEASE.md),
+   con la plantilla [`keystore.properties.example`](keystore.properties.example).
 6. Comprueba la firma y la versión antes de repartirla:
 
    ```bash
