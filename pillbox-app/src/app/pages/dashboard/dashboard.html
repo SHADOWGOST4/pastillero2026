@@ -13,7 +13,7 @@
 
   <app-permisos-alarma></app-permisos-alarma>
 
-  <section class="summary-grid" *ngIf="!hasError">
+  <section class="summary-grid" data-tour="resumen" *ngIf="!hasError">
     <article class="summary-card summary-primary">
       <span class="card-icon material-icons" aria-hidden="true">medication</span>
       <div>
@@ -46,7 +46,7 @@
     </div>
   </section>
 
-  <section class="alerts-section" *ngIf="!hasError">
+  <section class="alerts-section" data-tour="stock" *ngIf="!hasError">
     <div class="section-header">
       <div>
         <p class="section-kicker">Alertas de medicamentos</p>
@@ -79,7 +79,7 @@
     </ng-template>
   </section>
 
-  <section class="upcoming-section" *ngIf="!hasError">
+  <section class="upcoming-section" data-tour="proximas" *ngIf="!hasError">
     <div class="section-header">
       <div>
         <p class="section-kicker">Agenda de medicación</p>

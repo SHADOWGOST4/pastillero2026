@@ -5,7 +5,7 @@
       <h1>Medicamentos</h1>
       <p class="page-intro">Gestiona tus medicamentos y mantén organizada tu medicación.</p>
     </div>
-    <button *ngIf="!esSoloLectura" type="button" class="btn btn-primary add-button" (click)="abrirFormularioNuevo()">
+    <button *ngIf="!esSoloLectura" type="button" class="btn btn-primary add-button" data-tour="agregar-medicamento" (click)="abrirFormularioNuevo()">
       <span class="material-icons" aria-hidden="true">add</span>
       Agregar medicamento
     </button>
@@ -31,7 +31,7 @@
     <span>{{ successMessage }}</span>
   </div>
 
-  <section class="list-section">
+  <section class="list-section" data-tour="lista-medicamentos">
     <div class="section-header list-header">
       <div>
         <p class="section-kicker">Tu tratamiento</p>

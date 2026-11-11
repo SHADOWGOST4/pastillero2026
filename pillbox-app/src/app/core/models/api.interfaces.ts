@@ -27,6 +27,7 @@ export interface UsuarioResponse {
   telefono: string;
   activo: boolean;
   correo_verificado: boolean;
+  tutorial_completado?: boolean;
   fecha_creacion: string;
 }
 
@@ -63,6 +64,7 @@ export interface ActualizarUsuarioRequest {
   nombre?: string;
   telefono?: string;
   password?: string;
+  tutorial_completado?: boolean;
 }
 
 export interface CrearMedicamentoRequest {

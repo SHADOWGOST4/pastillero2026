@@ -1,5 +1,6 @@
 ﻿<div class="app-shell">
   <button
+    data-tour="menu"
     class="menu-button"
     [class.sidebar-open]="sidebarAbierto"
     type="button"
@@ -51,6 +52,11 @@
           <span class="material-icons" aria-hidden="true">devices</span>
           <span>Dispositivo</span>
         </button>
+
+        <button class="nav-item" routerLink="/mi-cuenta" routerLinkActive="selected" [routerLinkActiveOptions]="{ exact: true }">
+          <span class="material-icons" aria-hidden="true">manage_accounts</span>
+          <span>Mi cuenta</span>
+        </button>
       </nav>
     </div>
 
@@ -70,7 +76,7 @@
         </div>
       </div>
 
-      <button type="button" class="topbar-user" [matMenuTriggerFor]="cuentaMenu" aria-label="Cambiar de cuenta">
+      <button type="button" class="topbar-user" data-tour="cuenta" [matMenuTriggerFor]="cuentaMenu" aria-label="Cambiar de cuenta">
         <div class="user-avatar">{{ (cuentaActiva?.nombre || usuario?.nombre)?.charAt(0)?.toUpperCase() || 'U' }}</div>
         <div>
           <small>{{ cuentaActiva ? 'Viendo como' : 'Usuario' }}</small>
@@ -97,6 +103,10 @@
         <button mat-menu-item type="button" routerLink="/cuentas-vinculadas">
           <span class="material-icons" aria-hidden="true">supervisor_account</span>
           Cuentas vinculadas
+        </button>
+        <button mat-menu-item type="button" routerLink="/mi-cuenta">
+          <span class="material-icons" aria-hidden="true">manage_accounts</span>
+          Configuración de la cuenta
         </button>
       </mat-menu>
     </header>
@@ -133,3 +143,4 @@
 </div>
 
 <app-medication-reminder-modal></app-medication-reminder-modal>
+<app-tutorial-overlay></app-tutorial-overlay>

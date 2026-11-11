@@ -5,7 +5,7 @@
       <h1>Mi pastillero</h1>
       <p class="page-intro">Consulta el estado de tu dispositivo inteligente.</p>
     </div>
-    <button type="button" class="btn btn-primary refresh-button" (click)="asistenteAbierto = true" *ngIf="!asistenteAbierto">
+    <button type="button" class="btn btn-primary refresh-button" data-tour="conectar" (click)="asistenteAbierto = true" *ngIf="!asistenteAbierto">
       <span class="material-icons" aria-hidden="true">bluetooth_searching</span>
       Conectar dispositivo
     </button>
@@ -30,7 +30,7 @@
     <span>{{ successMessage }}</span>
   </div>
 
-  <section class="devices-section">
+  <section class="devices-section" data-tour="estado-pastillero">
     <div class="section-header list-header">
       <div>
         <p class="section-kicker">Dispositivo conectado</p>
