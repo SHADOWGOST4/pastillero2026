@@ -12,6 +12,8 @@ class Usuario(models.Model):
     telefono = models.CharField(max_length=15)
     activo = models.BooleanField(default=True)
     correo_verificado = models.BooleanField(default=False)
+    # La app muestra el recorrido guiado hasta que el usuario lo termina o lo salta.
+    tutorial_completado = models.BooleanField(default=False)
     fecha_creacion = models.DateTimeField(default=timezone.now)
 
     @property

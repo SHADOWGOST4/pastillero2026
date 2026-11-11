@@ -16,7 +16,7 @@
     <span>Viendo el historial de <strong>{{ cuentaActiva.nombre }}</strong> en modo solo lectura.</span>
   </div>
 
-  <section class="summary-grid" aria-label="Resumen del historial">
+  <section class="summary-grid" data-tour="resumen-registros" aria-label="Resumen del historial">
     <article class="summary-card">
       <span class="summary-icon material-icons" aria-hidden="true">history</span>
       <div>
@@ -46,7 +46,7 @@
     <button type="button" class="retry-button" (click)="cargarRegistros()">Reintentar</button>
   </section>
 
-  <section class="list-section">
+  <section class="list-section" data-tour="lista-registros">
     <div class="section-header list-header">
       <div>
         <p class="section-kicker">Actividad</p>

@@ -5,7 +5,7 @@
       <h1>Horarios de toma</h1>
       <p class="page-intro">Programa cuándo debes tomar cada medicamento.</p>
     </div>
-    <button *ngIf="!esSoloLectura" type="button" class="btn btn-primary add-button" (click)="abrirFormularioNuevo()">
+    <button *ngIf="!esSoloLectura" type="button" class="btn btn-primary add-button" data-tour="agregar-horario" (click)="abrirFormularioNuevo()">
       <span class="material-icons" aria-hidden="true">add</span>
       Nuevo horario
     </button>
@@ -21,7 +21,7 @@
     <span>{{ successMessage }}</span>
   </div>
 
-  <section class="list-section">
+  <section class="list-section" data-tour="lista-horarios">
     <div class="section-header list-header">
       <div>
         <p class="section-kicker">Programación actual</p>

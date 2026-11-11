@@ -4,6 +4,7 @@ import { environment } from '../../environments/environment';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import {
+  ActualizarUsuarioRequest,
   ApiErrorResponse,
   LoginRequest,
   LoginResponse,
@@ -82,6 +83,19 @@ export class Auth {
     }
 
     return this.http.get<any>(`${this.apiUrl}usuarios/${usuarioActual.id}/`).pipe(
+      tap((usuario) => this.guardarUsuario(usuario)),
+      catchError((error) => this.manejarError(error))
+    );
+  }
+
+  /** Cambia campos del propio perfil (PATCH) y actualiza el usuario guardado. */
+  actualizarPerfil(datos: ActualizarUsuarioRequest): Observable<UsuarioResponse> {
+    const usuarioActual = this.obtenerUsuario();
+    if (!usuarioActual?.id) {
+      return throwError(() => new Error('No hay sesión activa.'));
+    }
+
+    return this.http.patch<UsuarioResponse>(`${this.apiUrl}usuarios/${usuarioActual.id}/`, datos).pipe(
       tap((usuario) => this.guardarUsuario(usuario)),
       catchError((error) => this.manejarError(error))
     );

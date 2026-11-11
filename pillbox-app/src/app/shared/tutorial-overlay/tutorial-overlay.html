@@ -1,0 +1,44 @@
+<div *ngIf="paso" class="tutorial-capa" role="presentation">
+  <!-- Bloquea los toques sobre la app mientras dura el recorrido. -->
+  <div class="tutorial-bloqueo" [class.sin-hueco]="!recuadro"></div>
+
+  <div
+    *ngIf="recuadro"
+    class="tutorial-hueco"
+    aria-hidden="true"
+    [style.top.px]="recuadro.top"
+    [style.left.px]="recuadro.left"
+    [style.width.px]="recuadro.width"
+    [style.height.px]="recuadro.height"
+  ></div>
+
+  <section
+    #tarjeta
+    class="tutorial-tarjeta"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="tutorial-titulo"
+    aria-describedby="tutorial-texto"
+    [class.centrada]="centrada"
+    [class.lista]="posicionLista"
+    [style.top.px]="centrada ? null : tarjetaTop"
+    [style.left.px]="centrada ? null : tarjetaLeft"
+  >
+    <p class="tutorial-contador">{{ (indice ?? 0) + 1 }} / {{ total }}</p>
+    <h2 id="tutorial-titulo">{{ paso.titulo }}</h2>
+    <p id="tutorial-texto" class="tutorial-texto">{{ paso.texto }}</p>
+
+    <div class="tutorial-progreso" aria-hidden="true">
+      <span [style.width.%]="((indice ?? 0) + 1) / total * 100"></span>
+    </div>
+
+    <div class="tutorial-acciones">
+      <button *ngIf="!esUltimo" type="button" class="tutorial-saltar" (click)="saltar()">Saltar tour</button>
+      <span class="tutorial-espacio"></span>
+      <button *ngIf="indice !== 0" type="button" class="btn btn-secondary" (click)="anterior()">Atrás</button>
+      <button type="button" class="btn btn-primary" (click)="siguiente()">
+        {{ esUltimo ? 'Terminar' : 'Siguiente' }}
+      </button>
+    </div>
+  </section>
+</div>

@@ -46,7 +46,8 @@ export const routes: Routes = [
       { path: 'horarios', component: Horarios },
       { path: 'registros', component: Registros },
       { path: 'cuentas-vinculadas', component: CuentasVinculadas },
-      { path: 'dispositivo', component: Dispositivo }
+      { path: 'dispositivo', component: Dispositivo },
+      { path: 'mi-cuenta', loadComponent: () => import('./pages/mi-cuenta/mi-cuenta').then((m) => m.MiCuenta) }
     ]
   },
 

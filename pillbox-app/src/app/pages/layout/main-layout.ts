@@ -8,6 +8,8 @@ import { NotificationService } from '../../services/notification.service';
 import { filter, Subject, takeUntil } from 'rxjs';
 import { MedicationReminderService } from '../../services/medication-reminder.service';
 import { MedicationReminderModal } from '../../shared/medication-reminder-modal/medication-reminder-modal';
+import { TutorialOverlay } from '../../shared/tutorial-overlay/tutorial-overlay';
+import { Tutorial } from '../../services/tutorial';
 import { UsuarioResumenResponse, VinculacionResponse } from '../../core/models/api.interfaces';
 import { Vinculacion } from '../../services/vinculacion';
 import { AlarmaMedicacionService } from '../../services/alarma-medicacion/alarma-medicacion.service';
@@ -16,7 +18,7 @@ import { LocalReminderSchedulerService } from '../../services/local-reminder-sch
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatMenuModule, MedicationReminderModal],
+  imports: [CommonModule, RouterModule, MatMenuModule, MedicationReminderModal, TutorialOverlay],
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.css'
 })
@@ -40,6 +42,7 @@ export class MainLayout implements OnDestroy, OnInit {
     private vinculacionService: Vinculacion,
     private localReminderScheduler: LocalReminderSchedulerService,
     private alarmaMedicacion: AlarmaMedicacionService,
+    private tutorial: Tutorial,
   ) {
     this.usuario = this.auth.obtenerUsuario();
   }
@@ -59,7 +62,7 @@ export class MainLayout implements OnDestroy, OnInit {
     void this.localReminderScheduler.sync();
     this.sidebarAbierto = window.innerWidth >= 992;
     this.actualizarBreadcrumb(this.router.url);
-    this.refrescarUsuario();
+    this.refrescarUsuario(true);
     document.addEventListener('visibilitychange', this.onVisibilityChange);
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
@@ -84,15 +87,26 @@ export class MainLayout implements OnDestroy, OnInit {
   }
 
   ngOnDestroy(): void {
+    this.tutorial.detener();
     this.medicationReminderService.stop();
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     this.destroyed$.next();
     this.destroyed$.complete();
   }
 
-  private refrescarUsuario(): void {
+  /**
+   * Con `ofrecerTutorial`, la primera vez que la cuenta entra a la app (según
+   * el servidor, no el teléfono) arranca el recorrido guiado.
+   */
+  private refrescarUsuario(ofrecerTutorial = false): void {
     this.auth.refrescarUsuario().subscribe({
-      next: (usuario) => (this.usuario = usuario),
+      next: (usuario) => {
+        this.usuario = usuario;
+        if (ofrecerTutorial && usuario?.tutorial_completado === false && !this.tutorial.activo) {
+          this.cuentaActivaService.volverAMiCuenta();
+          this.tutorial.iniciar();
+        }
+      },
       error: () => {},
     });
   }
@@ -121,7 +135,8 @@ export class MainLayout implements OnDestroy, OnInit {
       horarios: 'Horarios',
       registros: 'Registros',
       'cuentas-vinculadas': 'Cuentas vinculadas',
-      dispositivo: 'Dispositivo'
+      dispositivo: 'Dispositivo',
+      'mi-cuenta': 'Mi cuenta'
     };
 
     this.breadcrumbActual = etiquetas[ruta] || 'Dashboard';

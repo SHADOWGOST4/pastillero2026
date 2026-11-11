@@ -31,7 +31,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Usuario
-        fields = ['id', 'nombre', 'correo', 'password', 'telefono', 'activo', 'correo_verificado', 'fecha_creacion']
+        fields = ['id', 'nombre', 'correo', 'password', 'telefono', 'activo', 'correo_verificado', 'tutorial_completado', 'fecha_creacion']
         extra_kwargs = {
             'fecha_creacion': {'read_only': True},
             'correo_verificado': {'read_only': True},
@@ -389,6 +389,7 @@ class UsuarioTokenObtainPairSerializer(serializers.Serializer):
                 'correo': usuario.correo,
                 'telefono': usuario.telefono,
                 'correo_verificado': usuario.correo_verificado,
+                'tutorial_completado': usuario.tutorial_completado,
             }
         }
 
