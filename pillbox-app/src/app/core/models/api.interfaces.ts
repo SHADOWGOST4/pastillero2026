@@ -29,6 +29,28 @@ export interface UsuarioResponse {
   correo_verificado: boolean;
   tutorial_completado?: boolean;
   fecha_creacion: string;
+  foto?: string;
+  fecha_nacimiento?: string | null;
+  grupo_sanguineo?: GrupoSanguineo | '';
+  alergias?: string;
+  condiciones?: string;
+  contacto_emergencia_nombre?: string;
+  contacto_emergencia_telefono?: string;
+}
+
+export type GrupoSanguineo = 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-';
+
+export interface AdherenciaResponse {
+  dias: number;
+  total: number;
+  confirmadas: number;
+  porcentaje: number | null;
+  racha_dias: number;
+}
+
+export interface FichaMedicaResponse {
+  texto: string;
+  qr_svg: string;
 }
 
 export interface LoginResponse {
@@ -65,6 +87,13 @@ export interface ActualizarUsuarioRequest {
   telefono?: string;
   password?: string;
   tutorial_completado?: boolean;
+  foto?: string;
+  fecha_nacimiento?: string | null;
+  grupo_sanguineo?: GrupoSanguineo | '';
+  alergias?: string;
+  condiciones?: string;
+  contacto_emergencia_nombre?: string;
+  contacto_emergencia_telefono?: string;
 }
 
 export interface CrearMedicamentoRequest {

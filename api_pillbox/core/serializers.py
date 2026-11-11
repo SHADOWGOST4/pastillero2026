@@ -20,6 +20,12 @@ from .models import (
     VinculacionMonitor,
 )
 from . import vinculaciones
+import re
+
+# La app recorta la foto a 256 px y la comprime; 300 KB de data URL dan mucho margen.
+FOTO_DATA_URL = re.compile(r'^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$')
+FOTO_TAMANO_MAXIMO = 300_000
+
 
 class UsuarioSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
@@ -31,7 +37,12 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Usuario
-        fields = ['id', 'nombre', 'correo', 'password', 'telefono', 'activo', 'correo_verificado', 'tutorial_completado', 'fecha_creacion']
+        fields = [
+            'id', 'nombre', 'correo', 'password', 'telefono', 'activo', 'correo_verificado',
+            'tutorial_completado', 'fecha_creacion',
+            'foto', 'fecha_nacimiento', 'grupo_sanguineo', 'alergias', 'condiciones',
+            'contacto_emergencia_nombre', 'contacto_emergencia_telefono',
+        ]
         extra_kwargs = {
             'fecha_creacion': {'read_only': True},
             'correo_verificado': {'read_only': True},
@@ -45,6 +56,28 @@ class UsuarioSerializer(serializers.ModelSerializer):
     def validate_telefono(self, value):
         if not value.isdigit():
             raise serializers.ValidationError('El teléfono solo debe contener números.')
+        return value
+
+    def validate_contacto_emergencia_telefono(self, value):
+        value = value.strip()
+        if value and not value.isdigit():
+            raise serializers.ValidationError('El teléfono solo debe contener números.')
+        return value
+
+    def validate_foto(self, value):
+        if not value:
+            return ''
+        if not FOTO_DATA_URL.match(value):
+            raise serializers.ValidationError('La foto debe ser una imagen JPEG, PNG o WebP.')
+        if len(value) > FOTO_TAMANO_MAXIMO:
+            raise serializers.ValidationError('La foto es demasiado grande.')
+        return value
+
+    def validate_fecha_nacimiento(self, value):
+        if value and value > timezone.localdate():
+            raise serializers.ValidationError('La fecha de nacimiento no puede ser futura.')
+        if value and value.year < 1900:
+            raise serializers.ValidationError('Revisa el año de nacimiento.')
         return value
 
     def create(self, validated_data):

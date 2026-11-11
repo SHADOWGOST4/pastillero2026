@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
-import { Observable, throwError } from 'rxjs';
+import { Observable, Subject, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import {
   ActualizarUsuarioRequest,
@@ -27,6 +27,8 @@ const STORAGE_KEYS = {
 })
 export class Auth {
   private apiUrl = environment.apiUrl;
+  /** Avisa cuando cambia el usuario guardado (p. ej. al editar el perfil). */
+  readonly usuarioActualizado$ = new Subject<any>();
 
   constructor(
     private http: HttpClient,
@@ -131,6 +133,7 @@ export class Auth {
 
   guardarUsuario(usuario: any) {
     localStorage.setItem(STORAGE_KEYS.usuario, JSON.stringify(usuario));
+    this.usuarioActualizado$.next(usuario);
   }
 
   guardarAccessToken(token: string) {

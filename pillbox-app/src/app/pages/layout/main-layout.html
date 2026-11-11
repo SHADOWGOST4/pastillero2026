@@ -52,15 +52,21 @@
           <span class="material-icons" aria-hidden="true">devices</span>
           <span>Dispositivo</span>
         </button>
-
-        <button class="nav-item" routerLink="/mi-cuenta" routerLinkActive="selected" [routerLinkActiveOptions]="{ exact: true }">
-          <span class="material-icons" aria-hidden="true">manage_accounts</span>
-          <span>Mi cuenta</span>
-        </button>
       </nav>
     </div>
 
     <div class="sidebar-footer">
+      <a class="perfil-resumen" routerLink="/perfil" routerLinkActive="selected" data-tour="perfil">
+        <span class="perfil-avatar">
+          <img *ngIf="usuario?.foto; else inicialSidebar" [src]="usuario.foto" alt="" />
+          <ng-template #inicialSidebar>{{ usuario?.nombre?.charAt(0)?.toUpperCase() || 'U' }}</ng-template>
+        </span>
+        <span class="perfil-resumen-texto">
+          <strong>{{ usuario?.nombre || 'Sin nombre' }}</strong>
+          <small>Ver perfil</small>
+        </span>
+        <span class="material-icons" aria-hidden="true">chevron_right</span>
+      </a>
       <button class="nav-item logout" (click)="cerrarSesion()">
         <span class="material-icons" aria-hidden="true">logout</span>
         <span>Cerrar sesión</span>
@@ -77,7 +83,10 @@
       </div>
 
       <button type="button" class="topbar-user" data-tour="cuenta" [matMenuTriggerFor]="cuentaMenu" aria-label="Cambiar de cuenta">
-        <div class="user-avatar">{{ (cuentaActiva?.nombre || usuario?.nombre)?.charAt(0)?.toUpperCase() || 'U' }}</div>
+        <div class="user-avatar">
+          <img *ngIf="!cuentaActiva && usuario?.foto; else inicialTopbar" [src]="usuario.foto" alt="" />
+          <ng-template #inicialTopbar>{{ (cuentaActiva?.nombre || usuario?.nombre)?.charAt(0)?.toUpperCase() || 'U' }}</ng-template>
+        </div>
         <div>
           <small>{{ cuentaActiva ? 'Viendo como' : 'Usuario' }}</small>
           <strong>{{ cuentaActiva?.nombre || usuario?.nombre || 'Sin nombre' }}</strong>
@@ -104,9 +113,9 @@
           <span class="material-icons" aria-hidden="true">supervisor_account</span>
           Cuentas vinculadas
         </button>
-        <button mat-menu-item type="button" routerLink="/mi-cuenta">
-          <span class="material-icons" aria-hidden="true">manage_accounts</span>
-          Configuración de la cuenta
+        <button mat-menu-item type="button" routerLink="/perfil">
+          <span class="material-icons" aria-hidden="true">account_circle</span>
+          Mi perfil
         </button>
       </mat-menu>
     </header>

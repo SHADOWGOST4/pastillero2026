@@ -47,7 +47,8 @@ export const routes: Routes = [
       { path: 'registros', component: Registros },
       { path: 'cuentas-vinculadas', component: CuentasVinculadas },
       { path: 'dispositivo', component: Dispositivo },
-      { path: 'mi-cuenta', loadComponent: () => import('./pages/mi-cuenta/mi-cuenta').then((m) => m.MiCuenta) }
+      { path: 'perfil', loadComponent: () => import('./pages/perfil/perfil').then((m) => m.Perfil) },
+      { path: 'mi-cuenta', redirectTo: 'perfil', pathMatch: 'full' }
     ]
   },
 

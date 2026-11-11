@@ -20,7 +20,7 @@ export const PASOS_TUTORIAL: PasoTutorial[] = [
   {
     ruta: '/dashboard',
     titulo: 'Te damos la bienvenida a Pillbox',
-    texto: 'Te mostramos en un minuto cómo se usa la app. Puedes saltar el recorrido cuando quieras y repetirlo desde Mi cuenta.',
+    texto: 'Te mostramos en un minuto cómo se usa la app. Puedes saltar el recorrido cuando quieras y repetirlo desde tu perfil.',
   },
   {
     ruta: '/dashboard',
@@ -104,13 +104,19 @@ export const PASOS_TUTORIAL: PasoTutorial[] = [
     ruta: '/cuentas-vinculadas',
     objetivo: 'cuenta',
     titulo: 'Tu cuenta',
-    texto: 'Toca aquí para cambiar a una cuenta que monitoreas o entrar a Mi cuenta.',
+    texto: 'Toca aquí para cambiar a una cuenta que monitoreas o ir a tu perfil.',
   },
   {
-    ruta: '/mi-cuenta',
+    ruta: '/perfil',
+    objetivo: 'ficha',
+    titulo: 'Tu ficha médica',
+    texto: 'Anota tus alergias, condiciones y un contacto de emergencia. Desde tu perfil puedes llamarlo o mostrar la ficha en un QR.',
+  },
+  {
+    ruta: '/perfil',
     objetivo: 'tutorial',
     titulo: '¡Listo!',
-    texto: 'Ya conoces la app. Si quieres repetir este recorrido, lo encuentras aquí, en Mi cuenta.',
+    texto: 'Ya conoces la app. Si quieres repetir este recorrido, lo encuentras aquí, en tu perfil.',
   },
 ];
 

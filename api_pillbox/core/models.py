@@ -16,6 +16,27 @@ class Usuario(models.Model):
     tutorial_completado = models.BooleanField(default=False)
     fecha_creacion = models.DateTimeField(default=timezone.now)
 
+    # Perfil y ficha médica de emergencia (todo opcional).
+    class GrupoSanguineo(models.TextChoices):
+        A_POS = 'A+', 'A+'
+        A_NEG = 'A-', 'A-'
+        B_POS = 'B+', 'B+'
+        B_NEG = 'B-', 'B-'
+        AB_POS = 'AB+', 'AB+'
+        AB_NEG = 'AB-', 'AB-'
+        O_POS = 'O+', 'O+'
+        O_NEG = 'O-', 'O-'
+
+    # La foto va como data URL (JPEG pequeño que la app recorta y comprime):
+    # así no hace falta servir archivos subidos desde el servidor.
+    foto = models.TextField(blank=True, default='')
+    fecha_nacimiento = models.DateField(null=True, blank=True)
+    grupo_sanguineo = models.CharField(max_length=3, choices=GrupoSanguineo.choices, blank=True, default='')
+    alergias = models.TextField(max_length=500, blank=True, default='')
+    condiciones = models.TextField(max_length=500, blank=True, default='')
+    contacto_emergencia_nombre = models.CharField(max_length=100, blank=True, default='')
+    contacto_emergencia_telefono = models.CharField(max_length=15, blank=True, default='')
+
     @property
     def is_authenticated(self):
         return True
