@@ -80,6 +80,10 @@ export class MainLayout implements OnDestroy, OnInit {
         this.cuentaActiva = cuenta;
       });
 
+    this.auth.usuarioActualizado$
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe((usuario) => (this.usuario = usuario));
+
     this.cargarCuentasMonitoreadas();
     this.vinculacionService.vinculacionActualizada$
       .pipe(takeUntil(this.destroyed$))
@@ -136,7 +140,7 @@ export class MainLayout implements OnDestroy, OnInit {
       registros: 'Registros',
       'cuentas-vinculadas': 'Cuentas vinculadas',
       dispositivo: 'Dispositivo',
-      'mi-cuenta': 'Mi cuenta'
+      perfil: 'Mi perfil'
     };
 
     this.breadcrumbActual = etiquetas[ruta] || 'Dashboard';

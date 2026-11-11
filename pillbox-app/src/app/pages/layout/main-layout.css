@@ -68,6 +68,15 @@
 .nav-item span:last-child { overflow: hidden; width: 0; opacity: 0; white-space: nowrap; transition: opacity .2s ease, width .2s ease; }
 .sidebar.abierto .nav-item span:last-child { width: auto; opacity: 1; }
 .logout { background: rgba(255,255,255,.04); }
+/* Tarjeta del perfil, encima de "Cerrar sesión" */
+.perfil-resumen { display: flex; align-items: center; gap: .7rem; padding: .6rem; margin-bottom: .2rem; border-top: 1px solid rgba(255,255,255,.1); border-radius: .375rem; color: #fff; text-decoration: none; transition: background .2s ease; }
+.perfil-resumen:hover, .perfil-resumen.selected { color: #fff; background: rgba(255,255,255,.1); }
+.perfil-avatar { display: flex; align-items: center; justify-content: center; overflow: hidden; flex: 0 0 auto; width: 2.6rem; height: 2.6rem; border-radius: 50%; background: var(--cui-primary); box-shadow: 0 0 0 2px rgba(255,255,255,.18); font-weight: 700; }
+.perfil-avatar img, .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.perfil-resumen-texto { display: flex; flex: 1 1 auto; flex-direction: column; min-width: 0; }
+.perfil-resumen-texto strong { overflow: hidden; font-size: .92rem; text-overflow: ellipsis; white-space: nowrap; }
+.perfil-resumen-texto small { color: rgba(255,255,255,.6); font-size: .76rem; }
+.perfil-resumen > .material-icons { color: rgba(255,255,255,.5); font-size: 1.2rem; }
 .logout:hover { color: #fecaca; background: rgba(229,83,83,.18); }
 .main-panel { display: flex; flex: 1; flex-direction: column; min-width: 0; margin-left: 0; transition: margin-left .35s cubic-bezier(.2, .8, .2, 1); }
 .main-panel.with-sidebar { margin-left: 256px; }
@@ -83,7 +92,7 @@
 .breadcrumb strong { color: var(--cui-body-color); font-weight: 500; }
 .topbar-user { display: flex; align-items: center; gap: .75rem; padding: .35rem .4rem; border: 0; border-radius: 999px; background: transparent; appearance: none; font: inherit; text-align: left; cursor: pointer; transition: background-color 160ms ease; }
 .topbar-user:hover, .topbar-user:focus-visible { background: var(--cui-tertiary-bg); }
-.user-avatar { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 2.2rem; height: 2.2rem; border-radius: 50%; color: #fff; background: var(--cui-primary); font-weight: 700; }
+.user-avatar { overflow: hidden; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 2.2rem; height: 2.2rem; border-radius: 50%; color: #fff; background: var(--cui-primary); font-weight: 700; }
 .topbar-user small { display: block; color: var(--cui-secondary-color); }
 .topbar-user strong { color: var(--cui-body-color); }
 .topbar-user-caret { color: var(--cui-secondary-color); font-size: 1.1rem; }

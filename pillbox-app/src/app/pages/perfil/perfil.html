@@ -1,0 +1,315 @@
+<div class="perfil-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Tu cuenta</p>
+      <h1>Mi perfil</h1>
+    </div>
+  </header>
+
+  <div *ngIf="mensaje" class="alert alert-success feedback" role="status">
+    <span class="material-icons" aria-hidden="true">check_circle</span>
+    <span>{{ mensaje }}</span>
+  </div>
+
+  <!-- Datos personales -->
+  <section class="perfil-card perfil-cabecera" aria-label="Datos personales">
+    <div class="avatar avatar-grande">
+      <img *ngIf="usuario?.foto; else inicialGrande" [src]="usuario?.foto" alt="" />
+      <ng-template #inicialGrande><span>{{ inicial }}</span></ng-template>
+    </div>
+    <h2 class="perfil-nombre">{{ usuario?.nombre || 'Sin nombre' }}</h2>
+    <p class="perfil-detalle">
+      <span *ngIf="edad !== null">{{ edad }} años</span>
+      <span *ngIf="edad !== null && usuario?.grupo_sanguineo" class="separador" aria-hidden="true">·</span>
+      <span *ngIf="usuario?.grupo_sanguineo">Grupo sanguíneo: <strong>{{ usuario?.grupo_sanguineo }}</strong></span>
+      <span *ngIf="edad === null && !usuario?.grupo_sanguineo" class="perfil-vacio">
+        Agrega tu fecha de nacimiento y grupo sanguíneo
+      </span>
+    </p>
+    <p class="perfil-correo">{{ usuario?.correo }}</p>
+    <button type="button" class="btn btn-secondary con-icono" (click)="abrirDatos()">
+      <span class="material-icons" aria-hidden="true">edit</span>
+      Editar datos personales
+    </button>
+  </section>
+
+  <!-- Ficha médica -->
+  <section class="perfil-card ficha" data-tour="ficha" aria-labelledby="ficha-titulo">
+    <div class="card-cabecera">
+      <span class="material-icons ficha-icono" aria-hidden="true">medical_information</span>
+      <div class="card-titulos">
+        <p class="section-kicker">Para emergencias</p>
+        <h2 id="ficha-titulo">Ficha médica</h2>
+      </div>
+      <button type="button" class="icon-button" (click)="abrirFicha()" aria-label="Editar ficha médica">
+        <span class="material-icons" aria-hidden="true">edit</span>
+      </button>
+    </div>
+
+    <ng-container *ngIf="tieneFicha; else fichaVacia">
+      <dl class="ficha-lista">
+        <div>
+          <dt>Alergias</dt>
+          <dd>{{ usuario?.alergias || 'Ninguna registrada' }}</dd>
+        </div>
+        <div>
+          <dt>Condiciones</dt>
+          <dd>{{ usuario?.condiciones || 'Ninguna registrada' }}</dd>
+        </div>
+      </dl>
+
+      <div *ngIf="usuario?.contacto_emergencia_nombre || usuario?.contacto_emergencia_telefono" class="contacto-sos">
+        <span class="material-icons" aria-hidden="true">sos</span>
+        <div class="contacto-datos">
+          <small>Contacto de emergencia</small>
+          <strong>{{ usuario?.contacto_emergencia_nombre || 'Sin nombre' }}</strong>
+          <span>{{ usuario?.contacto_emergencia_telefono }}</span>
+        </div>
+        <a
+          *ngIf="usuario?.contacto_emergencia_telefono"
+          class="btn btn-danger con-icono boton-llamar"
+          [href]="'tel:' + usuario?.contacto_emergencia_telefono"
+        >
+          <span class="material-icons" aria-hidden="true">call</span>
+          Llamar
+        </a>
+      </div>
+    </ng-container>
+
+    <ng-template #fichaVacia>
+      <div class="vacio">
+        <p>Anota tus alergias, condiciones y un contacto de emergencia. En una urgencia, quien te atienda lo verá enseguida.</p>
+        <button type="button" class="btn btn-primary con-icono" (click)="abrirFicha()">
+          <span class="material-icons" aria-hidden="true">add</span>
+          Completar ficha médica
+        </button>
+      </div>
+    </ng-template>
+  </section>
+
+  <!-- Adherencia -->
+  <section class="perfil-card" aria-labelledby="adherencia-titulo">
+    <div class="card-cabecera">
+      <span class="material-icons ficha-icono adherencia-icono" aria-hidden="true">insights</span>
+      <div class="card-titulos">
+        <p class="section-kicker">Últimos {{ adherencia?.dias || 30 }} días</p>
+        <h2 id="adherencia-titulo">Resumen de adherencia</h2>
+      </div>
+    </div>
+
+    <div *ngIf="adherenciaError" class="vacio">
+      <p>No se pudo cargar el resumen.</p>
+      <button type="button" class="btn btn-outline-secondary" (click)="cargarAdherencia()">Reintentar</button>
+    </div>
+
+    <div *ngIf="!adherenciaError && !adherencia" class="vacio"><p>Cargando…</p></div>
+
+    <div *ngIf="adherencia" class="adherencia" [ngClass]="claseAdherencia">
+      <div class="anillo" role="img" [attr.aria-label]="adherencia.porcentaje === null ? 'Sin tomas todavía' : 'Cumplimiento ' + adherencia.porcentaje + ' %'">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <circle class="anillo-fondo" cx="50" cy="50" r="42" />
+          <circle class="anillo-valor" cx="50" cy="50" r="42" [attr.stroke-dasharray]="trazoAnillo" />
+        </svg>
+        <strong>{{ adherencia.porcentaje === null ? '—' : adherencia.porcentaje + '%' }}</strong>
+      </div>
+      <div class="adherencia-datos">
+        <p class="dato-principal">Cumplimiento</p>
+        <p class="dato-secundario" *ngIf="adherencia.total > 0">
+          {{ adherencia.confirmadas }} de {{ adherencia.total }} tomas confirmadas
+        </p>
+        <p class="dato-secundario" *ngIf="adherencia.total === 0">Aún no hay tomas programadas en este periodo.</p>
+        <p class="racha">
+          <span class="material-icons" aria-hidden="true">local_fire_department</span>
+          Racha actual: <strong>{{ adherencia.racha_dias }} {{ adherencia.racha_dias === 1 ? 'día' : 'días' }}</strong>
+        </p>
+      </div>
+    </div>
+
+    <a routerLink="/registros" class="enlace-fila">
+      Ver historial de tomas
+      <span class="material-icons" aria-hidden="true">chevron_right</span>
+    </a>
+  </section>
+
+  <!-- Preferencias -->
+  <section class="perfil-card" aria-labelledby="preferencias-titulo">
+    <div class="card-cabecera">
+      <span class="material-icons ficha-icono" aria-hidden="true">tune</span>
+      <div class="card-titulos">
+        <p class="section-kicker">En este teléfono</p>
+        <h2 id="preferencias-titulo">Preferencias</h2>
+      </div>
+    </div>
+
+    <div class="preferencia preferencia-letra">
+      <div class="preferencia-texto">
+        <strong id="tamano-letra-etiqueta">Tamaño de letra</strong>
+        <span>Agranda el texto de toda la app.</span>
+      </div>
+      <div class="segmentado" role="radiogroup" aria-labelledby="tamano-letra-etiqueta">
+        <button
+          *ngFor="let t of tamanosLetra"
+          type="button"
+          role="radio"
+          [attr.aria-checked]="tamanoLetra === t.valor"
+          [class.activo]="tamanoLetra === t.valor"
+          (click)="cambiarTamanoLetra(t.valor)"
+        >
+          {{ t.etiqueta }}
+        </button>
+      </div>
+    </div>
+
+    <button type="button" class="preferencia preferencia-boton" (click)="abrirQr()">
+      <span class="material-icons preferencia-icono" aria-hidden="true">qr_code_2</span>
+      <div class="preferencia-texto">
+        <strong>Compartir ficha médica (QR)</strong>
+        <span>Muéstralo en consulta o en una urgencia.</span>
+      </div>
+      <span class="material-icons" aria-hidden="true">chevron_right</span>
+    </button>
+
+    <button type="button" class="preferencia preferencia-boton" data-tour="tutorial" (click)="verTutorial()">
+      <span class="material-icons preferencia-icono" aria-hidden="true">tour</span>
+      <div class="preferencia-texto">
+        <strong>Tutorial</strong>
+        <span>Vuelve a ver el recorrido por la app.</span>
+      </div>
+      <span class="material-icons" aria-hidden="true">chevron_right</span>
+    </button>
+  </section>
+</div>
+
+<!-- Modal: datos personales -->
+<div *ngIf="modal === 'datos'" class="perfil-modal-fondo" appBloquearScroll (click)="cerrarModal()">
+  <section class="perfil-modal" role="dialog" aria-modal="true" aria-labelledby="modal-datos-titulo" (click)="$event.stopPropagation()">
+    <header class="perfil-modal-cabecera">
+      <h2 id="modal-datos-titulo">Datos personales</h2>
+      <button type="button" class="modal-close" (click)="cerrarModal()" [disabled]="guardando" aria-label="Cerrar">×</button>
+    </header>
+
+    <form (ngSubmit)="guardarDatos()" novalidate>
+      <div class="foto-editor">
+        <div class="avatar avatar-grande">
+          <img *ngIf="datos.foto; else inicialModal" [src]="datos.foto" alt="Foto de perfil" />
+          <ng-template #inicialModal><span>{{ inicial }}</span></ng-template>
+        </div>
+        <div class="foto-acciones">
+          <label class="btn btn-secondary con-icono">
+            <span class="material-icons" aria-hidden="true">photo_camera</span>
+            {{ datos.foto ? 'Cambiar foto' : 'Agregar foto' }}
+            <input type="file" accept="image/*" class="oculto" (change)="elegirFoto($event)" />
+          </label>
+          <button *ngIf="datos.foto" type="button" class="btn btn-outline-secondary" (click)="quitarFoto()">Quitar</button>
+        </div>
+      </div>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Nombre completo</mat-label>
+        <input matInput [(ngModel)]="datos.nombre" name="nombre" maxlength="100" autocomplete="name" required />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Teléfono</mat-label>
+        <input matInput [(ngModel)]="datos.telefono" name="telefono" inputmode="numeric" maxlength="15" autocomplete="tel" required />
+      </mat-form-field>
+
+      <div class="dos-columnas">
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha de nacimiento</mat-label>
+          <input matInput type="date" [(ngModel)]="datos.fecha_nacimiento" name="fecha_nacimiento" autocomplete="bday" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Grupo sanguíneo</mat-label>
+          <mat-select [(ngModel)]="datos.grupo_sanguineo" name="grupo_sanguineo">
+            <mat-option value="">No lo sé</mat-option>
+            <mat-option *ngFor="let g of gruposSanguineos" [value]="g">{{ g }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <p class="nota-correo">
+        <span class="material-icons" aria-hidden="true">{{ usuario?.correo_verificado ? 'verified' : 'mark_email_unread' }}</span>
+        {{ usuario?.correo }} · {{ usuario?.correo_verificado ? 'verificado' : 'sin verificar' }}
+      </p>
+
+      <div *ngIf="errorModal" class="alert alert-danger feedback" role="alert">
+        <span class="material-icons" aria-hidden="true">error_outline</span>
+        <span>{{ errorModal }}</span>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline-secondary" (click)="cerrarModal()" [disabled]="guardando">Cancelar</button>
+        <button type="submit" class="btn btn-primary" [disabled]="guardando">{{ guardando ? 'Guardando...' : 'Guardar' }}</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<!-- Modal: ficha médica -->
+<div *ngIf="modal === 'ficha'" class="perfil-modal-fondo" appBloquearScroll (click)="cerrarModal()">
+  <section class="perfil-modal" role="dialog" aria-modal="true" aria-labelledby="modal-ficha-titulo" (click)="$event.stopPropagation()">
+    <header class="perfil-modal-cabecera">
+      <h2 id="modal-ficha-titulo">Ficha médica</h2>
+      <button type="button" class="modal-close" (click)="cerrarModal()" [disabled]="guardando" aria-label="Cerrar">×</button>
+    </header>
+
+    <form (ngSubmit)="guardarFicha()" novalidate>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Alergias</mat-label>
+        <textarea matInput [(ngModel)]="ficha.alergias" name="alergias" rows="2" maxlength="500" placeholder="Ej. Penicilina, nueces"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Condiciones o enfermedades</mat-label>
+        <textarea matInput [(ngModel)]="ficha.condiciones" name="condiciones" rows="2" maxlength="500" placeholder="Ej. Hipertensión, diabetes tipo 2"></textarea>
+      </mat-form-field>
+
+      <p class="subtitulo-form">Contacto de emergencia</p>
+      <div class="dos-columnas">
+        <mat-form-field appearance="outline">
+          <mat-label>Nombre</mat-label>
+          <input matInput [(ngModel)]="ficha.contacto_emergencia_nombre" name="contacto_nombre" maxlength="100" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Teléfono</mat-label>
+          <input matInput [(ngModel)]="ficha.contacto_emergencia_telefono" name="contacto_telefono" inputmode="numeric" maxlength="15" />
+        </mat-form-field>
+      </div>
+
+      <div *ngIf="errorModal" class="alert alert-danger feedback" role="alert">
+        <span class="material-icons" aria-hidden="true">error_outline</span>
+        <span>{{ errorModal }}</span>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline-secondary" (click)="cerrarModal()" [disabled]="guardando">Cancelar</button>
+        <button type="submit" class="btn btn-primary" [disabled]="guardando">{{ guardando ? 'Guardando...' : 'Guardar' }}</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<!-- Modal: QR -->
+<div *ngIf="modal === 'qr'" class="perfil-modal-fondo" appBloquearScroll (click)="cerrarModal()">
+  <section class="perfil-modal modal-qr" role="dialog" aria-modal="true" aria-labelledby="modal-qr-titulo" (click)="$event.stopPropagation()">
+    <header class="perfil-modal-cabecera">
+      <h2 id="modal-qr-titulo">Ficha médica (QR)</h2>
+      <button type="button" class="modal-close" (click)="cerrarModal()" aria-label="Cerrar">×</button>
+    </header>
+
+    <p *ngIf="qrCargando" class="qr-estado">Generando código…</p>
+    <p *ngIf="qrError" class="qr-estado error">{{ qrError }}</p>
+    <img *ngIf="!qrCargando && !qrError && qrSrc" class="qr-imagen" [src]="qrSrc" alt="Código QR con tu ficha médica" />
+
+    <p class="qr-nota">
+      Al escanearlo con la cámara de cualquier teléfono se ven tu nombre, edad, grupo sanguíneo, alergias, condiciones,
+      medicamentos y contacto de emergencia. No hace falta tener la app. Muéstralo solo a quien deba verlo.
+    </p>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-primary" (click)="cerrarModal()">Listo</button>
+    </div>
+  </section>
+</div>

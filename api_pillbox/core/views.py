@@ -24,7 +24,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import SimpleRateThrottle
 from rest_framework_simplejwt.views import TokenViewBase
 
-from . import restablecer_contrasena, verificacion, vinculaciones
+from . import perfil, restablecer_contrasena, verificacion, vinculaciones
 from .inventory import calcular_cobertura_medicamento
 from .modulos import (
     configuracion_modulos,
@@ -410,6 +410,23 @@ class UsuarioViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Usuario.objects.filter(id=self.request.user.id)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def perfil_adherencia(request):
+    """Cumplimiento de los últimos 30 días y racha de días con todas las tomas."""
+    return Response(perfil.calcular_adherencia(request.user))
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def perfil_ficha_medica(request):
+    """Ficha médica de emergencia del propio usuario, en texto y como QR (SVG)."""
+    return Response({
+        'texto': perfil.texto_ficha_medica(request.user),
+        'qr_svg': perfil.qr_ficha_medica_svg(request.user),
+    })
 
 
 class DispositivoViewSet(viewsets.ModelViewSet):
